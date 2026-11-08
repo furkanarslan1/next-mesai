@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useMesai } from "@/lib/use-data";
+import { holidayName } from "@/lib/holidays";
 import { hhmm, levelFor, monthSummary, money, hrs } from "@/lib/calc";
 import { TYPE_META, type EntryType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export function HomeClient({ name }: { name: string }) {
   const [custom, setCustom] = useState(false);
   const [customHours, setCustomHours] = useState("");
   const [onHoliday, setOnHoliday] = useState(false);
+  const holiday = holidayName(date);
   const sum = monthSummary(entries, settings);
   const lvl = levelFor(totalHours);
 
@@ -47,6 +49,13 @@ export function HomeClient({ name }: { name: string }) {
         </div>
         <Input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="w-40" />
       </header>
+
+      {holiday && (
+        <div className="glass flex items-center justify-between px-4 py-3 text-sm">
+          <span>🎉 {holiday}</span>
+          <Button size="sm" variant="secondary" onClick={() => add("holiday", 0)}>Tatil olarak işaretle</Button>
+        </div>
+      )}
 
       <Card>
         <CardContent className="space-y-3">
@@ -85,7 +94,7 @@ export function HomeClient({ name }: { name: string }) {
               {s.label}<span className="text-xs font-normal opacity-80">{s.start_time ? `${hhmm(s.start_time)} – ${hhmm(s.end_time)}` : "+ ekle"}</span>
             </Button>
           ))}
-          <Button variant="secondary" className="h-20 flex-col" onClick={() => setCustom(true)}>
+          <Button variant="secondary" className="h-20 flex-col" onClick={() => { setOnHoliday(!!holiday); setCustom(true); }}>
             <Plus className="size-5" />Farklı mesai
           </Button>
         </div>
