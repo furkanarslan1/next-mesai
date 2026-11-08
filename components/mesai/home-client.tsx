@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useMesai } from "@/lib/use-data";
-import { levelFor, monthSummary, money, hrs } from "@/lib/calc";
+import { hhmm, levelFor, monthSummary, money, hrs } from "@/lib/calc";
 import { TYPE_META, type EntryType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,10 +27,10 @@ export function HomeClient({ name }: { name: string }) {
   const sum = monthSummary(entries, settings);
   const lvl = levelFor(totalHours);
 
-  async function add(type: EntryType, hours: number) {
+  async function add(type: EntryType, hours: number, start?: string | null, end?: string | null) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("entries").insert({ user_id: user!.id, work_date: date, type, hours });
+    const { error } = await supabase.from("entries").insert({ user_id: user!.id, work_date: date, type, hours, start_time: start ?? null, end_time: end ?? null });
     if (error) return toast.error(error.message);
     toast.success(`${TYPE_META[type].label} eklendi`);
     reload();
@@ -81,8 +81,8 @@ export function HomeClient({ name }: { name: string }) {
         <h2 className="font-semibold">Mesai kısayolları</h2>
         <div className="grid grid-cols-2 gap-3">
           {shortcuts.map((s) => (
-            <Button key={s.id} className="h-20 flex-col text-lg" onClick={() => add("overtime", Number(s.hours))}>
-              {s.label}<span className="text-xs font-normal opacity-80">+ ekle</span>
+            <Button key={s.id} className="h-20 flex-col text-lg" onClick={() => add("overtime", Number(s.hours), s.start_time, s.end_time)}>
+              {s.label}<span className="text-xs font-normal opacity-80">{s.start_time ? `${hhmm(s.start_time)} – ${hhmm(s.end_time)}` : "+ ekle"}</span>
             </Button>
           ))}
           <Button variant="secondary" className="h-20 flex-col" onClick={() => setCustom(true)}>
@@ -107,7 +107,7 @@ export function HomeClient({ name }: { name: string }) {
           <h2 className="font-semibold">Bu günün kayıtları</h2>
           {todays.map((e) => (
             <div key={e.id} className="glass flex items-center justify-between px-4 py-3 text-sm">
-              <span>{TYPE_META[e.type].label} {e.hours > 0 && `· ${hrs(Number(e.hours))}`}</span>
+              <span>{TYPE_META[e.type].label} {e.hours > 0 && `· ${hrs(Number(e.hours))}`}{e.start_time && ` · ${hhmm(e.start_time)}–${hhmm(e.end_time)}`}</span>
               <button className="text-destructive" onClick={async () => { await createClient().from("entries").delete().eq("id", e.id); reload(); }}>Sil</button>
             </div>
           ))}

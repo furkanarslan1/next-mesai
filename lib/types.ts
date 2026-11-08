@@ -7,6 +7,8 @@ export interface Entry {
   type: EntryType;
   hours: number;
   note: string | null;
+  start_time: string | null; // HH:MM:SS
+  end_time: string | null;
 }
 export interface Settings {
   hourly_rate: number;
@@ -15,7 +17,7 @@ export interface Settings {
   monthly_goal_amount: number;
   currency: string;
 }
-export interface Shortcut { id: string; label: string; hours: number; sort: number }
+export interface Shortcut { id: string; label: string; hours: number; sort: number; start_time: string | null; end_time: string | null }
 export interface Profile { id: string; full_name: string; role: "employee" | "manager"; invite_code: string }
 
 export const TYPE_META: Record<EntryType, { label: string; color: string }> = {
