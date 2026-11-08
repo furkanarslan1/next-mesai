@@ -5,6 +5,7 @@ import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth 
 import { tr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMesai } from "@/lib/use-data";
+import { holidayName } from "@/lib/holidays";
 import { hrs, money, monthSummary } from "@/lib/calc";
 import { TYPE_META } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,8 @@ export default function CalendarPage() {
               const status = list.find((e) => e.type !== "overtime");
               const alpha = worked > 0 ? 0.25 + 0.75 * (worked / maxH) : 0;
               return (
-                <div key={key} title={list.map((e) => TYPE_META[e.type].label).join(", ")}
-                  className="relative grid aspect-square place-items-center rounded-xl text-sm text-foreground"
+                <div key={key} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
+                  className={`relative grid aspect-square place-items-center rounded-xl text-sm text-foreground ${holidayName(key) ? "ring-2 ring-pink-500" : ""}`}
                   style={{ background: worked > 0 ? `oklch(0.58 0.21 270 / ${alpha})` : "var(--muted)", color: alpha > 0.55 ? "white" : undefined }}>
                   {format(d, "d")}
                   {status && <span className={`absolute bottom-1 size-1.5 rounded-full ${TYPE_META[status.type].color}`} />}
@@ -53,6 +54,12 @@ export default function CalendarPage() {
           <span key={m.label} className="flex items-center gap-1"><span className={`size-2 rounded-full ${m.color}`} />{m.label}</span>
         ))}
       </div>
+      {days.some((d) => holidayName(format(d, "yyyy-MM-dd"))) && (
+        <p className="text-xs text-muted-foreground">
+          <span className="mr-1 inline-block size-2 rounded-full ring-2 ring-pink-500" />
+          {days.filter((d) => holidayName(format(d, "yyyy-MM-dd"))).map((d) => `${format(d, "d")} ${holidayName(format(d, "yyyy-MM-dd"))}`).join(" · ")}
+        </p>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <Card><CardContent><p className="text-xs text-muted-foreground">Toplam mesai</p><p className="text-xl font-bold">{hrs(sum.hours)}</p></CardContent></Card>
         <Card><CardContent><p className="text-xs text-muted-foreground">Kazanç</p><p className="text-xl font-bold">{money(sum.earned, settings.currency)}</p></CardContent></Card>

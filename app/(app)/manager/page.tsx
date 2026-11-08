@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { endOfMonth, format, startOfMonth } from "date-fns";
+import { addMonths, endOfMonth, format, startOfMonth } from "date-fns";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { download, toCSV } from "@/lib/backup";
@@ -17,20 +17,21 @@ export default function ManagerPage() {
   const [emps, setEmps] = useState<Emp[]>([]);
   const [code, setCode] = useState("");
   const [open, setOpen] = useState<string | null>(null);
+  const [month, setMonth] = useState(new Date());
 
   const load = useCallback(async () => {
     const supabase = createClient();
     const { data: links } = await supabase.from("manager_links").select("employee_id").eq("status", "accepted");
     const ids = (links ?? []).map((l) => l.employee_id);
     if (!ids.length) return setEmps([]);
-    const from = format(startOfMonth(new Date()), "yyyy-MM-dd");
-    const to = format(endOfMonth(new Date()), "yyyy-MM-dd");
+    const from = format(startOfMonth(month), "yyyy-MM-dd");
+    const to = format(endOfMonth(month), "yyyy-MM-dd");
     const [{ data: ps }, { data: es }] = await Promise.all([
       supabase.from("profiles").select("id, full_name").in("id", ids),
       supabase.from("entries").select("*").in("user_id", ids).gte("work_date", from).lte("work_date", to),
     ]);
     setEmps((ps ?? []).map((p) => ({ ...p, entries: ((es ?? []) as Entry[]).filter((e) => e.user_id === p.id) })));
-  }, []);
+  }, [month]);
   useEffect(() => { load(); }, [load]);
 
   async function invite() {
@@ -40,12 +41,16 @@ export default function ManagerPage() {
   }
   function exportCSV() {
     const rows = emps.flatMap((e) => e.entries.map((x) => ({ calisan: e.full_name, tarih: x.work_date, tur: TYPE_META[x.type].label, baslangic: hhmm(x.start_time), bitis: hhmm(x.end_time), saat: x.hours })));
-    download(`ekip-${format(new Date(), "yyyy-MM")}.csv`, toCSV(rows), "text/csv");
+    download(`ekip-${format(month, "yyyy-MM")}.csv`, toCSV(rows), "text/csv");
   }
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold">Ekip · {format(new Date(), "MMMM")}</h1>
+      <div className="flex items-center justify-between">
+        <Button size="sm" variant="secondary" onClick={() => setMonth(addMonths(month, -1))}>←</Button>
+        <h1 className="text-xl font-bold">Ekip · {format(month, "MM/yyyy")}</h1>
+        <Button size="sm" variant="secondary" onClick={() => setMonth(addMonths(month, 1))}>→</Button>
+      </div>
       <Card><CardContent className="flex gap-2">
         <Input placeholder="Çalışan davet kodu" value={code} onChange={(e) => setCode(e.target.value)} />
         <Button onClick={invite}>İstek gönder</Button>
