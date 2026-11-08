@@ -53,3 +53,13 @@ export function levelFor(totalHours: number) {
 export const money = (n: number, cur = "TRY") =>
   new Intl.NumberFormat("tr-TR", { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(n);
 export const hrs = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)} sa`;
+
+/** "07:30" - "19:00" arası saat farkı (gece vardiyası için ertesi güne taşar). */
+export function hoursBetween(start: string, end: string) {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  let mins = eh * 60 + em - (sh * 60 + sm);
+  if (mins <= 0) mins += 24 * 60;
+  return Math.round((mins / 60) * 100) / 100;
+}
+export const hhmm = (t: string | null) => (t ? t.slice(0, 5) : "");

@@ -5,7 +5,7 @@ import { endOfMonth, format, startOfMonth } from "date-fns";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { download, toCSV } from "@/lib/backup";
-import { hrs } from "@/lib/calc";
+import { hhmm, hrs } from "@/lib/calc";
 import { TYPE_META, type Entry } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +39,7 @@ export default function ManagerPage() {
     toast(m[data as string] ?? "Hata"); setCode("");
   }
   function exportCSV() {
-    const rows = emps.flatMap((e) => e.entries.map((x) => ({ calisan: e.full_name, tarih: x.work_date, tur: TYPE_META[x.type].label, saat: x.hours })));
+    const rows = emps.flatMap((e) => e.entries.map((x) => ({ calisan: e.full_name, tarih: x.work_date, tur: TYPE_META[x.type].label, baslangic: hhmm(x.start_time), bitis: hhmm(x.end_time), saat: x.hours })));
     download(`ekip-${format(new Date(), "yyyy-MM")}.csv`, toCSV(rows), "text/csv");
   }
 
@@ -66,7 +66,7 @@ export default function ManagerPage() {
               </div>
               <button className="text-primary" onClick={() => setOpen(open === e.id ? null : e.id)}>{open === e.id ? "Gizle" : "Kayıtları göster"}</button>
               {open === e.id && e.entries.sort((a, b) => a.work_date.localeCompare(b.work_date)).map((x) => (
-                <div key={x.id} className="flex justify-between border-t py-1"><span>{x.work_date}</span><span>{TYPE_META[x.type].label} {Number(x.hours) > 0 && hrs(Number(x.hours))}</span></div>
+                <div key={x.id} className="flex justify-between border-t py-1"><span>{x.work_date}</span><span>{TYPE_META[x.type].label} {x.start_time && `${hhmm(x.start_time)}–${hhmm(x.end_time)} `}{Number(x.hours) > 0 && hrs(Number(x.hours))}</span></div>
               ))}
             </CardContent>
           </Card>
