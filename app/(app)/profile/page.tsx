@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { download, toCSV } from "@/lib/backup";
+import { restoreBackup } from "@/lib/restore";
 import type { Profile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,16 @@ export default function ProfilePage() {
     toast.success("Yedek indirildi");
   }
 
+  async function restore(file?: File) {
+    if (!file) return;
+    try {
+      const c = await restoreBackup(await file.text());
+      toast.success(`Geri yüklendi: ${c.entries} kayıt, ${c.shortcuts} kısayol, ${c.finance} gelir/gider`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Geri yükleme başarısız");
+    }
+  }
+
   if (!profile) return null;
   return (
     <div className="space-y-5">
@@ -70,6 +81,12 @@ export default function ProfilePage() {
         <CardContent className="grid grid-cols-2 gap-3">
           <Button variant="secondary" onClick={() => backup("json")}>JSON (tam yedek)</Button>
           <Button variant="secondary" onClick={() => backup("csv")}>CSV (Excel)</Button>
+          {profile.role === "employee" && (
+            <label className="col-span-2 cursor-pointer">
+              <span className="inline-flex h-9 w-full items-center justify-center rounded-lg border text-sm font-medium">JSON yedeğinden geri yükle</span>
+              <input type="file" accept="application/json,.json" className="hidden" onChange={(e) => { restore(e.target.files?.[0]); e.target.value = ""; }} />
+            </label>
+          )}
         </CardContent>
       </Card>
       <Button variant="outline" className="w-full" onClick={async () => { await createClient().auth.signOut(); router.replace("/login"); router.refresh(); }}>Çıkış yap</Button>
