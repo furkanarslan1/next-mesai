@@ -39,8 +39,8 @@ export default function CalendarPage() {
               const alpha = worked > 0 ? 0.25 + 0.75 * (worked / maxH) : 0;
               return (
                 <div key={key} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
-                  className={`relative grid aspect-square place-items-center rounded-xl text-sm text-foreground ${holidayName(key) ? "ring-2 ring-teal-400" : ""}`}
-                  style={{ background: worked > 0 ? `oklch(0.82 0.13 85 / ${alpha})` : "var(--muted)", color: alpha > 0.55 ? "oklch(0.18 0.02 70)" : undefined }}>
+                  className={`relative grid aspect-square place-items-center rounded-xl text-sm text-foreground ${holidayName(key) ? "ring-2 ring-amber-400" : ""}`}
+                  style={{ background: worked > 0 ? `oklch(0.78 0.15 165 / ${alpha})` : "var(--muted)", color: alpha > 0.55 ? "oklch(0.16 0.03 175)" : undefined }}>
                   {format(d, "d")}
                   {status && <span className={`absolute bottom-1 size-1.5 rounded-full ${TYPE_META[status.type].color}`} />}
                 </div>
@@ -56,7 +56,7 @@ export default function CalendarPage() {
       </div>
       {days.some((d) => holidayName(format(d, "yyyy-MM-dd"))) && (
         <p className="text-xs text-muted-foreground">
-          <span className="mr-1 inline-block size-2 rounded-full ring-2 ring-teal-400" />
+          <span className="mr-1 inline-block size-2 rounded-full ring-2 ring-amber-400" />
           {days.filter((d) => holidayName(format(d, "yyyy-MM-dd"))).map((d) => `${format(d, "d")} ${holidayName(format(d, "yyyy-MM-dd"))}`).join(" · ")}
         </p>
       )}
