@@ -31,10 +31,10 @@ export interface Shortcut { id: string; label: string; hours: number; sort: numb
 export interface Profile { id: string; full_name: string; role: "employee" | "manager"; invite_code: string }
 
 export const TYPE_META: Record<EntryType, { label: string; color: string }> = {
-  overtime: { label: "Mesai", color: "bg-indigo-500" },
-  holiday: { label: "Resmi tatil", color: "bg-pink-500" },
+  overtime: { label: "Mesai", color: "bg-amber-400" },
+  holiday: { label: "Resmi tatil", color: "bg-teal-400" },
   paid_leave: { label: "Ücretli izin", color: "bg-emerald-500" },
-  unpaid_leave: { label: "Ücretsiz izin", color: "bg-amber-500" },
+  unpaid_leave: { label: "Ücretsiz izin", color: "bg-orange-600" },
   sick: { label: "Raporlu", color: "bg-sky-500" },
   absent: { label: "İşe gelmedim", color: "bg-rose-500" },
 };
