@@ -109,7 +109,7 @@ export default function LoginPage() {
             </>
             )}
             {msg && <p className="text-sm text-destructive">{msg}</p>}
-            <Button className="w-full" disabled={busy}>
+            <Button type="submit" className="w-full" disabled={busy}>
               {mode === "in" ? "Giriş yap" : role === "employee" && step === 1 ? "Devam" : "Kayıt ol"}
             </Button>
             {mode === "up" && step === 2 && (
