@@ -7,5 +7,5 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("full_name, role").eq("id", user!.id).single();
   if (profile?.role === "manager") redirect("/manager");
-  return <HomeClient name={profile?.full_name ?? ""} />;
+  return <HomeClient name={profile?.full_name ?? ""} userId={user!.id} />;
 }

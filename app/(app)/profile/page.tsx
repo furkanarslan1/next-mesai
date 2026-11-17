@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { download, toCSV } from "@/lib/backup";
 import { restoreBackup } from "@/lib/restore";
+import { mutate, resetStore } from "@/lib/store";
 import type { Profile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,7 +48,7 @@ export default function ProfilePage() {
   async function restore(file?: File) {
     if (!file) return;
     try {
-      const c = await restoreBackup(await file.text());
+      const c = await restoreBackup(await file.text()); await mutate.refresh.all();
       toast.success(`Geri yüklendi: ${c.entries} kayıt, ${c.shortcuts} kısayol, ${c.finance} gelir/gider`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Geri yükleme başarısız");
@@ -89,7 +90,7 @@ export default function ProfilePage() {
           )}
         </CardContent>
       </Card>
-      <Button variant="outline" className="w-full" onClick={async () => { await createClient().auth.signOut(); router.replace("/login"); router.refresh(); }}>Çıkış yap</Button>
+      <Button variant="outline" className="w-full" onClick={async () => { await createClient().auth.signOut(); resetStore(); router.replace("/login"); router.refresh(); }}>Çıkış yap</Button>
     </div>
   );
 }
