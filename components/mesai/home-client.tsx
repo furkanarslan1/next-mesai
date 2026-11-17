@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { format } from "date-fns";
+import { useOptimistic, useState, useTransition } from "react";
+import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { useMesai } from "@/lib/use-data";
+import { monthKey, mutate, useMonthEntries, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
 import { holidayName } from "@/lib/holidays";
-import { hhmm, levelFor, monthSummary, money, hrs } from "@/lib/calc";
-import { TYPE_META, type EntryType } from "@/lib/types";
+import { hhmm, levelFor, hrs } from "@/lib/calc";
+import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
+import { GoalHero } from "@/components/mesai/goal-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,23 +19,44 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 const STATUS: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent", "holiday"];
 
-export function HomeClient({ name }: { name: string }) {
+type Opt = { add: Entry } | { remove: string };
+const isWork = (e: { type: string }) => e.type === "overtime" || e.type === "holiday";
+
+export function HomeClient({ name, userId }: { name: string; userId: string }) {
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const { entries, settings, shortcuts, totalHours, reload } = useMesai(new Date(date));
+  const key = monthKey(parseISO(date));
+  const realEntries = useMonthEntries(key);
+  const settings = useSettings();
+  const shortcuts = useShortcuts();
+  const realTotal = useTotalHours();
+  const [entries, applyOpt] = useOptimistic(realEntries ?? [], (list, a: Opt) =>
+    "add" in a ? [...list, a.add] : list.filter((e) => e.id !== a.remove));
+  const [, startTransition] = useTransition();
   const [custom, setCustom] = useState(false);
   const [customHours, setCustomHours] = useState("");
   const [onHoliday, setOnHoliday] = useState(false);
   const holiday = holidayName(date);
-  const sum = monthSummary(entries, settings);
+
+  // Seviye için toplam saat: gerçek toplam + henüz sunucuya yazılmamış anlık fark
+  const pendingDelta = entries.filter(isWork).reduce((a, e) => a + Number(e.hours), 0)
+    - (realEntries ?? []).filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
+  const totalHours = (realTotal ?? 0) + pendingDelta;
   const lvl = levelFor(totalHours);
 
-  async function add(type: EntryType, hours: number, start?: string | null, end?: string | null) {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("entries").insert({ user_id: user!.id, work_date: date, type, hours, start_time: start ?? null, end_time: end ?? null });
-    if (error) return toast.error(error.message);
-    toast.success(`${TYPE_META[type].label} eklendi`);
-    reload();
+  function add(type: EntryType, hours: number, start?: string | null, end?: string | null) {
+    const row = { user_id: userId, work_date: date, type, hours, note: null, start_time: start ?? null, end_time: end ?? null };
+    startTransition(async () => {
+      applyOpt({ add: { ...row, id: `tmp-${crypto.randomUUID()}` } });
+      try { await mutate.addEntry(row); toast.success(`${TYPE_META[type].label} eklendi`); }
+      catch (e) { toast.error(e instanceof Error ? e.message : "Eklenemedi"); }
+    });
+  }
+  function remove(e: Entry) {
+    startTransition(async () => {
+      applyOpt({ remove: e.id });
+      try { await mutate.removeEntry(e); }
+      catch (err) { toast.error(err instanceof Error ? err.message : "Silinemedi"); }
+    });
   }
 
   const todays = entries.filter((e) => e.work_date === date);
@@ -57,39 +78,16 @@ export function HomeClient({ name }: { name: string }) {
         </div>
       )}
 
-      <Card>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Seviye {lvl.level}</p>
-              <p className="text-lg font-semibold">{lvl.emoji} {lvl.name}</p>
-            </div>
-            <p className="text-sm text-muted-foreground">{hrs(totalHours)} toplam</p>
-          </div>
-          <Progress value={lvl.progress} />
-          {lvl.next && <p className="text-xs text-muted-foreground">{lvl.next.emoji} {lvl.next.name} için {hrs(lvl.toNext)} kaldı</p>}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-3">
-          <div className="flex items-baseline justify-between">
-            <p className="font-semibold">Aylık hedef</p>
-            <p className="text-sm text-muted-foreground">%{sum.percent.toFixed(0)}</p>
-          </div>
-          <Progress value={sum.percent} />
-          <div className="flex justify-between text-sm">
-            <span>Kazanılan <b>{money(sum.earned, settings.currency)}</b></span>
-            <span className="text-muted-foreground">Hedef {money(sum.goal, settings.currency)}</span>
-          </div>
-          {sum.goal > 0 && <p className="text-xs text-muted-foreground">Hedefe ~{hrs(sum.remainingHours)} mesai kaldı · {hrs(sum.hours)} yapıldı</p>}
-        </CardContent>
-      </Card>
+      {settings && realEntries ? (
+        <GoalHero userId={userId} settings={settings} entries={entries} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })} />
+      ) : (
+        <div className="glass h-56 w-full animate-pulse" aria-busy />
+      )}
 
       <section className="space-y-2">
         <h2 className="font-semibold">Mesai kısayolları</h2>
         <div className="grid grid-cols-2 gap-3">
-          {shortcuts.map((s) => (
+          {(shortcuts ?? []).map((s) => (
             <Button key={s.id} className="h-20 flex-col text-lg" onClick={() => add("overtime", Number(s.hours), s.start_time, s.end_time)}>
               {s.label}<span className="text-xs font-normal opacity-80">{s.start_time ? `${hhmm(s.start_time)} – ${hhmm(s.end_time)}` : "+ ekle"}</span>
             </Button>
@@ -111,13 +109,27 @@ export function HomeClient({ name }: { name: string }) {
         </div>
       </section>
 
+      <Card>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Seviye {lvl.level}</p>
+              <p className="text-lg font-semibold">{lvl.emoji} {lvl.name}</p>
+            </div>
+            <p className="text-sm text-muted-foreground">{hrs(totalHours)} toplam</p>
+          </div>
+          <Progress value={lvl.progress} />
+          {lvl.next && <p className="text-xs text-muted-foreground">{lvl.next.emoji} {lvl.next.name} için {hrs(lvl.toNext)} kaldı</p>}
+        </CardContent>
+      </Card>
+
       {todays.length > 0 && (
         <section className="space-y-2">
           <h2 className="font-semibold">Bu günün kayıtları</h2>
           {todays.map((e) => (
             <div key={e.id} className="glass flex items-center justify-between px-4 py-3 text-sm">
               <span>{TYPE_META[e.type].label} {e.hours > 0 && `· ${hrs(Number(e.hours))}`}{e.start_time && ` · ${hhmm(e.start_time)}–${hhmm(e.end_time)}`}</span>
-              <button className="text-destructive" onClick={async () => { await createClient().from("entries").delete().eq("id", e.id); reload(); }}>Sil</button>
+              <button className="text-destructive" onClick={() => remove(e)}>Sil</button>
             </div>
           ))}
         </section>

@@ -16,6 +16,16 @@ export interface Settings {
   holiday_multiplier: number;
   monthly_goal_amount: number;
   currency: string;
+  monthly_salary: number;
+  daily_hours: number;
+  has_shift: boolean;
+  shift_start: string | null;
+  shift_end: string | null;
+  /** 0 = belirtilmedi (saatlik ücret x çarpan kullanılır) */
+  sunday_rate: number;
+  holiday_rate: number;
+  goal_mode: "amount" | "hours";
+  monthly_goal_hours: number;
 }
 export interface Shortcut { id: string; label: string; hours: number; sort: number; start_time: string | null; end_time: string | null }
 export interface Profile { id: string; full_name: string; role: "employee" | "manager"; invite_code: string }
