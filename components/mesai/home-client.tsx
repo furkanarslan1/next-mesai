@@ -69,12 +69,16 @@ function HomeView({ today }: { today: Date }) {
   const totalHours = (realTotal ?? 0) + pendingDelta;
   const lvl = levelFor(totalHours);
 
-  function add(type: EntryType, hours: number, start?: string | null, end?: string | null) {
+  function add(type: EntryType, hours: number, start?: string | null, end?: string | null, undo = false) {
     if (!userId) { toast.info("Hesap bilgileri yükleniyor, birkaç saniye sonra tekrar dene"); return; }
     const row = { user_id: userId, work_date: date, type, hours, note: null, start_time: start ?? null, end_time: end ?? null };
     startTransition(async () => {
       applyOpt({ add: { ...row, id: `tmp-${crypto.randomUUID()}` } });
-      try { await mutate.addEntry(row); toast.success(`${TYPE_META[type].label} eklendi`); }
+      try {
+        const saved = await mutate.addEntry(row);
+        // Kısayol/durum kartları ikinci dokunuşla geri alır; "Farklı mesai"nin geri alma yolu bu bildirimdeki düğme
+        toast.success(`${TYPE_META[type].label} eklendi`, undo ? { duration: 4500, action: { label: "Geri al", onClick: () => remove(saved) } } : undefined);
+      }
       catch (e) { toast.error(e instanceof Error ? e.message : "Eklenemedi"); }
     });
   }
@@ -201,17 +205,6 @@ function HomeView({ today }: { today: Date }) {
             </CardContent>
           </Card>
 
-          {todays.length > 0 && (
-            <section className="space-y-2">
-              <h2 className="font-semibold">Bu günün kayıtları</h2>
-              {todays.map((e) => (
-                <div key={e.id} className="glass flex items-center justify-between px-4 py-3 text-sm">
-                  <span>{TYPE_META[e.type].label} {e.hours > 0 && `· ${hrs(Number(e.hours))}`}{e.start_time && ` · ${hhmm(e.start_time)}–${hhmm(e.end_time)}`}</span>
-                  <button className="text-destructive" onClick={() => remove(e)}>Sil</button>
-                </div>
-              ))}
-            </section>
-          )}
         </div>
       </div>
 
@@ -237,8 +230,8 @@ function HomeView({ today }: { today: Date }) {
           <Button onClick={() => {
             const h = byExit ? exitHours : parseFloat(customHours);
             if (!(h > 0)) return;
-            if (byExit) add(onHoliday ? "holiday" : "overtime", h, workEnd, exitTime);
-            else add(onHoliday ? "holiday" : "overtime", h);
+            if (byExit) add(onHoliday ? "holiday" : "overtime", h, workEnd, exitTime, true);
+            else add(onHoliday ? "holiday" : "overtime", h, null, null, true);
             setCustom(false); setCustomHours(""); setExitTime("");
           }}>Ekle</Button>
         </DialogContent>
