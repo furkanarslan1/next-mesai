@@ -9,7 +9,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
-import type { Entry, Settings, Shortcut } from "./types";
+import type { Entry, Profile, Settings, Shortcut } from "./types";
 
 export const DEFAULT_SETTINGS: Settings = {
   hourly_rate: 0, sunday_multiplier: 2, holiday_multiplier: 2, monthly_goal_amount: 0, currency: "TRY",
@@ -18,14 +18,25 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 interface State {
+  profile: Profile | null;
   settings: Settings | null;
   shortcuts: Shortcut[] | null;
   totalHours: number | null;
   entries: Record<string, Entry[]>; // "yyyy-MM" -> kayıtlar
 }
 
-const EMPTY: State = { settings: null, shortcuts: null, totalHours: null, entries: {} };
-let state: State = EMPTY;
+const EMPTY: State = { profile: null, settings: null, shortcuts: null, totalHours: null, entries: {} };
+// Profil (ad, rol) bir sonraki açılışta ilk çizimde hazır olsun diye tarayıcıda da tutulur
+const PROFILE_KEY = "mesai.profile";
+function readSavedProfile(): Profile | null {
+  try {
+    const raw = typeof window !== "undefined" ? window.localStorage.getItem(PROFILE_KEY) : null;
+    return raw ? (JSON.parse(raw) as Profile) : null;
+  } catch { return null; }
+}
+let state: State = { ...EMPTY, profile: readSavedProfile() };
+// Kaydedilmiş profil oturum başına bir kez tazelenir
+let profileFresh = false;
 const listeners = new Set<() => void>();
 const inflight = new Map<string, Promise<void>>();
 // Kullanıcı değişirse eski isteklerin sonucu yeni oturuma yazılmasın
@@ -39,7 +50,9 @@ const subscribe = (l: () => void) => { listeners.add(l); return () => { listener
 
 /** Çıkış/giriş sırasında başka kullanıcının verisi kalmasın. */
 export function resetStore() {
+  try { window.localStorage.removeItem(PROFILE_KEY); } catch { /* yok say */ }
   epoch++;
+  profileFresh = false;
   inflight.clear();
   set({ ...EMPTY, entries: {} });
 }
@@ -57,6 +70,18 @@ function once(key: string, fn: () => Promise<void>) {
 
 /* ---------- yükleyiciler (yoksa getirir, varsa dokunmaz; force ile yeniler) ---------- */
 export const load = {
+  profile: (force = false) => (!force && state.profile && profileFresh ? Promise.resolve() : once("profile", async () => {
+    const ep = epoch;
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
+    if (ep === epoch && data) {
+      profileFresh = true;
+      set({ profile: data as Profile });
+      try { window.localStorage.setItem(PROFILE_KEY, JSON.stringify(data)); } catch { /* yok say */ }
+    }
+  })),
   settings: (force = false) => (!force && state.settings ? Promise.resolve() : once("settings", async () => {
     const ep = epoch;
     const { data } = await createClient().from("user_settings").select("*").single();
@@ -83,6 +108,12 @@ export const load = {
 };
 
 /* ---------- dilim okuyucu hook'lar (sadece kendi diliminde yeniden çizilir) ---------- */
+export function useProfile() {
+  const v = useSyncExternalStore(subscribe, () => state.profile, () => null);
+  // Kaydedilmiş profil olsa bile arka planda tazele (rol/ad değişmiş olabilir)
+  useEffect(() => { load.profile(); }, []);
+  return v;
+}
 export function useSettings() {
   const v = useSyncExternalStore(subscribe, () => state.settings, () => null);
   useEffect(() => { load.settings(); }, []);

@@ -1,11 +1,13 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
 import { CalendarCheck, CalendarMinus, Check, PartyPopper, Plus, Stethoscope, UserX, type LucideIcon } from "lucide-react";
-import { monthKey, mutate, useMonthEntries, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
+import { monthKey, mutate, useMonthEntries, useProfile, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
+import { useToday } from "@/lib/now";
 import { holidayName } from "@/lib/holidays";
 import { hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
@@ -31,8 +33,19 @@ const STATUS_META: Record<string, { icon: LucideIcon; tint: string; hint: string
 type Opt = { add: Entry } | { remove: string };
 const isWork = (e: { type: string }) => e.type === "overtime" || e.type === "holiday";
 
-export function HomeClient({ name, userId }: { name: string; userId: string }) {
-  const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+export function HomeClient() {
+  const today = useToday();
+  if (!today) return <div className="glass min-h-[24rem] w-full animate-pulse" aria-busy />;
+  return <HomeView today={today} />;
+}
+
+function HomeView({ today }: { today: Date }) {
+  const router = useRouter();
+  const profile = useProfile();
+  const name = profile?.full_name ?? "";
+  const userId = profile?.id ?? "";
+  useEffect(() => { if (profile?.role === "manager") router.replace("/manager"); }, [profile?.role, router]);
+  const [date, setDate] = useState(format(today, "yyyy-MM-dd"));
   const key = monthKey(parseISO(date));
   const realEntries = useMonthEntries(key);
   const settings = useSettings();
@@ -57,6 +70,7 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
   const lvl = levelFor(totalHours);
 
   function add(type: EntryType, hours: number, start?: string | null, end?: string | null) {
+    if (!userId) { toast.info("Hesap bilgileri yükleniyor, birkaç saniye sonra tekrar dene"); return; }
     const row = { user_id: userId, work_date: date, type, hours, note: null, start_time: start ?? null, end_time: end ?? null };
     startTransition(async () => {
       applyOpt({ add: { ...row, id: `tmp-${crypto.randomUUID()}` } });
@@ -81,7 +95,7 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
       <header className="flex items-end justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{format(new Date(date), "d MMMM EEEE", { locale: tr })}</p>
-          <h1 className="text-2xl font-bold">Merhaba, {name.split(" ")[0] || "👋"}</h1>
+          <h1 className="text-2xl font-bold">Merhaba{name ? `, ${name.split(" ")[0]}` : " 👋"}</h1>
         </div>
         <Input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="w-40" />
       </header>
@@ -93,10 +107,10 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
         </div>
       )}
 
-      {settings && realEntries ? (
+      {settings && realEntries && userId ? (
         <GoalHero userId={userId} settings={settings} entries={entries} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })} />
       ) : (
-        <div className="glass h-56 w-full animate-pulse" aria-busy />
+        <div className="glass min-h-[15.5rem] w-full animate-pulse" aria-busy />
       )}
 
       <div className="grid grid-cols-2 gap-3">
@@ -116,6 +130,7 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
           <span className="text-xs text-muted-foreground">Ekle · tekrar dokun, geri al</span>
         </div>
         <div className="snap-row">
+          {shortcuts === null && [0, 1].map((i) => <div key={i} className="glass h-24 w-36 animate-pulse md:w-40" aria-busy />)}
           {(shortcuts ?? []).map((s) => {
             const existing = [...todays].reverse().find((e) => e.type === "overtime" && Number(e.hours) === Number(s.hours));
             return (
@@ -165,7 +180,7 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
         </section>
 
         <div className="space-y-5">
-          <Card>
+          <Card className={`transition-opacity duration-300 ${realTotal === null ? "opacity-0" : ""}`}>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

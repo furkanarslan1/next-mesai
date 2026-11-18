@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 export const fmtHours = (h: number) => `${Number.isInteger(h) ? h : +h.toFixed(2)} saat`;
 
 /** Sık yapılan mesai saatlerini (2.5, 6.5 gibi) ekleyip çıkarmak için küçük düzenleyici. */
-export function HoursChips({ items, onAdd, onRemove, max = 8 }: {
+export function HoursChips({ items, onAdd, onRemove, max = 8, loading = false }: {
   items: { key: string; hours: number }[];
   onAdd: (hours: number) => void | Promise<void>;
   onRemove: (key: string) => void | Promise<void>;
   max?: number;
+  loading?: boolean;
 }) {
   const [v, setV] = useState("");
   const h = parseFloat(v.replace(",", "."));
@@ -27,7 +28,8 @@ export function HoursChips({ items, onAdd, onRemove, max = 8 }: {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
-        {items.length === 0 && <p className="text-sm text-muted-foreground">Henüz kısayol yok.</p>}
+        {loading && <div className="glass h-8 w-32 animate-pulse" aria-busy />}
+        {!loading && items.length === 0 && <p className="text-sm text-muted-foreground">Henüz kısayol yok.</p>}
         {items.map((i) => (
           <span key={i.key} className="glass inline-flex items-center gap-1 py-1 pr-1 pl-3 text-sm font-medium">
             {fmtHours(i.hours)}

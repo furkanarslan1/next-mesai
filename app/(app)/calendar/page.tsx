@@ -5,6 +5,7 @@ import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth 
 import { tr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMesai } from "@/lib/use-data";
+import { useToday } from "@/lib/now";
 import { holidayName } from "@/lib/holidays";
 import { hrs, money, monthSummary } from "@/lib/calc";
 import { TYPE_META } from "@/lib/types";
@@ -12,7 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function CalendarPage() {
-  const [month, setMonth] = useState(new Date());
+  const today = useToday();
+  if (!today) return <div className="glass min-h-[28rem] w-full animate-pulse" aria-busy />;
+  return <CalendarView today={today} />;
+}
+
+function CalendarView({ today }: { today: Date }) {
+  const [month, setMonth] = useState(today);
   const { entries, settings } = useMesai(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
   const offset = (getDay(startOfMonth(month)) + 6) % 7; // Pzt başlangıç
