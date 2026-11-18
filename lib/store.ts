@@ -155,6 +155,7 @@ export const mutate = {
     // Yüklenmemiş ay dilimine tek kayıt yazmayalım (eksik liste olur)
     if (state.entries[key]) set({ entries: { ...state.entries, [key]: [...state.entries[key], e] } });
     if (state.totalHours !== null && counts(e)) set({ totalHours: state.totalHours + Number(e.hours) });
+    return e;
   },
   async removeEntry(e: Entry) {
     const { error } = await createClient().from("entries").delete().eq("id", e.id);
