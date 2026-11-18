@@ -17,7 +17,7 @@ async function Nav() {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto min-h-dvh max-w-2xl px-4 pb-28 pt-6">
+    <div className="mx-auto min-h-dvh max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))]">
       <Suspense fallback={<div className="glass h-40 animate-pulse" />}>{children}</Suspense>
       <Suspense fallback={null}><Nav /></Suspense>
       <Toaster />
