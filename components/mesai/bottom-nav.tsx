@@ -49,10 +49,12 @@ export function BottomNav() {
       <nav className="glass-nav fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md touch-manipulation justify-around p-2 md:hidden">
         {items.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined}
-            className={cn("flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-[11px] font-medium transition",
+            aria-label={label}
+            className={cn("flex flex-col items-center justify-center gap-0.5 rounded-2xl py-2 text-[11px] font-medium transition",
+              href === "/" ? "flex-[0.8]" : "flex-1",
               isActive(href) ? "nav-active" : "text-muted-foreground")}>
-            <Icon className="size-5" />
-            {label}
+            <Icon className={href === "/" ? "size-6" : "size-5"} />
+            {href !== "/" && label}
           </Link>
         ))}
       </nav>

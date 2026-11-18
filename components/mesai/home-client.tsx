@@ -133,8 +133,8 @@ function HomeView({ today }: { today: Date }) {
           <h2 className="font-semibold">Mesai kısayolları</h2>
           <span className="text-xs text-muted-foreground">Ekle · tekrar dokun, geri al</span>
         </div>
-        <div className="snap-row">
-          {shortcuts === null && [0, 1].map((i) => <div key={i} className="glass h-24 w-36 animate-pulse md:w-40" aria-busy />)}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          {shortcuts === null && [0, 1].map((i) => <div key={i} className="glass h-24 animate-pulse" aria-busy />)}
           {(shortcuts ?? []).map((s) => {
             const existing = [...todays].reverse().find((e) => e.type === "overtime" && Number(e.hours) === Number(s.hours));
             return (
