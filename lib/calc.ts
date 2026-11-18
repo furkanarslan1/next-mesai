@@ -53,12 +53,12 @@ export function monthSummary(entries: Entry[], s: Settings) {
 }
 
 export const LEVELS = [
-  { min: 0, name: "Çaylak", emoji: "🌱" },
-  { min: 10, name: "Gayretli", emoji: "⚡" },
-  { min: 20, name: "Çalışkan", emoji: "🔥" },
-  { min: 50, name: "Usta", emoji: "🛠️" },
-  { min: 100, name: "Uzman", emoji: "💎" },
-  { min: 200, name: "Efsane", emoji: "👑" },
+  { min: 0, name: "Çaylak" },
+  { min: 10, name: "Gayretli" },
+  { min: 20, name: "Çalışkan" },
+  { min: 50, name: "Usta" },
+  { min: 100, name: "Uzman" },
+  { min: 200, name: "Efsane" },
 ];
 
 export function levelFor(totalHours: number) {

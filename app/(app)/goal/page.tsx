@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { mutate, useSettings, useMonthEntries, monthKey, useTotalHours } from "@/lib/store";
 import { goalProgress, hrs, levelFor, LEVELS, money } from "@/lib/calc";
 import type { Settings } from "@/lib/types";
+import { LevelIcon } from "@/components/mesai/level-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -119,11 +120,11 @@ function GoalView({ settings }: { settings: Settings }) {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Seviyeler · {lvl.emoji} {lvl.name}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-3"><LevelIcon level={lvl.level} className="size-10" />Seviyeler · {lvl.name}</CardTitle></CardHeader>
         <CardContent className="space-y-2 text-sm">
           {LEVELS.map((l, i) => (
-            <div key={l.name} className={`flex justify-between ${i + 1 <= lvl.level ? "font-semibold" : "text-muted-foreground"}`}>
-              <span>{l.emoji} Seviye {i + 1} · {l.name}</span><span>{l.min} sa</span>
+            <div key={l.name} className={`flex items-center justify-between ${i + 1 <= lvl.level ? "font-semibold" : "text-muted-foreground opacity-60"}`}>
+              <span className="flex items-center gap-3"><LevelIcon level={i + 1} className="size-8" />Seviye {i + 1} · {l.name}</span><span>{l.min} sa</span>
             </div>
           ))}
         </CardContent>

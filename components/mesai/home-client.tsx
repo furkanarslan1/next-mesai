@@ -4,12 +4,13 @@ import { useOptimistic, useState, useTransition } from "react";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { CalendarCheck, CalendarMinus, Check, PartyPopper, Plus, Stethoscope, UserX, type LucideIcon } from "lucide-react";
 import { monthKey, mutate, useMonthEntries, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
 import { holidayName } from "@/lib/holidays";
 import { hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
 import { ShortcutButton } from "@/components/mesai/shortcut-button";
+import { LevelIcon } from "@/components/mesai/level-icon";
 import { GoalHero } from "@/components/mesai/goal-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +20,13 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const STATUS: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent", "holiday"];
+const STATUS_META: Record<string, { icon: LucideIcon; tint: string; hint: string }> = {
+  paid_leave: { icon: CalendarCheck, tint: "bg-sky-400/15 text-sky-300", hint: "Ücretli izin kullandım" },
+  unpaid_leave: { icon: CalendarMinus, tint: "bg-orange-500/15 text-orange-300", hint: "Ücretsiz izindeydim" },
+  sick: { icon: Stethoscope, tint: "bg-slate-300/15 text-slate-200", hint: "Raporluydum" },
+  absent: { icon: UserX, tint: "bg-rose-500/15 text-rose-300", hint: "Hiç gelmedim" },
+  holiday: { icon: PartyPopper, tint: "bg-amber-400/15 text-amber-300", hint: "Resmi tatildi" },
+};
 
 type Opt = { add: Entry } | { remove: string };
 const isWork = (e: { type: string }) => e.type === "overtime" || e.type === "holiday";
@@ -105,28 +113,53 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
         </div>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="font-semibold">Gün durumu</h2>
-        <div className="grid grid-cols-2 gap-2">
-          {STATUS.map((t) => (
-            <Button key={t} variant="outline" onClick={() => add(t, 0)}>
-              <span className={`mr-2 size-2.5 rounded-full ${TYPE_META[t].color}`} />{TYPE_META[t].label}
-            </Button>
-          ))}
+      <section className="space-y-3">
+        <div>
+          <h2 className="font-semibold">Bugün işe gitmedin mi?</h2>
+          <p className="text-xs text-muted-foreground">Çalışmadığın günün nedenini seç, takvimine işlensin. Yanlışsa tekrar dokunup geri al.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          {STATUS.map((t) => {
+            const m = STATUS_META[t];
+            const existing = todays.find((e) => e.type === t);
+            const pending = existing?.id.startsWith("tmp-");
+            return (
+              <button
+                key={t} type="button" disabled={pending} aria-pressed={!!existing}
+                onClick={() => (existing ? remove(existing) : add(t, 0))}
+                className={`glass flex items-center gap-3 p-3 text-left transition active:scale-[0.97] disabled:opacity-60 ${existing ? "ring-2 ring-primary" : ""}`}
+              >
+                <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${m.tint}`}>
+                  {existing ? <Check className="size-5" /> : <m.icon className="size-5" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
+                  <span className="block text-[11px] leading-tight text-muted-foreground">{existing ? "İşaretlendi · geri almak için dokun" : m.hint}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
       <Card>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Seviye {lvl.level}</p>
-              <p className="text-lg font-semibold">{lvl.emoji} {lvl.name}</p>
+            <div className="flex items-center gap-3">
+              <LevelIcon level={lvl.level} className="size-14" />
+              <div>
+                <p className="text-xs text-muted-foreground">Seviye {lvl.level}</p>
+                <p className="text-lg font-semibold">{lvl.name}</p>
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">{hrs(totalHours)} toplam</p>
           </div>
           <Progress value={lvl.progress} />
-          {lvl.next && <p className="text-xs text-muted-foreground">{lvl.next.emoji} {lvl.next.name} için {hrs(lvl.toNext)} kaldı</p>}
+          {lvl.next && (
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <LevelIcon level={lvl.level + 1} className="size-6 opacity-80" />{lvl.next.name} için {hrs(lvl.toNext)} kaldı
+            </p>
+          )}
         </CardContent>
       </Card>
 
