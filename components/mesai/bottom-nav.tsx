@@ -29,7 +29,7 @@ export function BottomNav() {
 
   return (
     <>
-      <aside className="glass-nav sticky top-6 hidden h-[calc(100dvh-3rem)] w-56 shrink-0 flex-col gap-1 p-3 md:flex">
+      <aside className="glass-nav sticky top-6 hidden h-[calc(100dvh-3rem)] w-56 shrink-0 flex-col gap-1 p-3 md:flex xl:fixed xl:left-6">
         <div className="mb-4 flex items-center gap-2.5 px-2 pt-1">
           <span className="grid size-9 place-items-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30"><Clock className="size-5" /></span>
           <span className="text-lg font-bold tracking-tight">Mesai</span>

@@ -142,11 +142,11 @@ function HomeView({ today }: { today: Date }) {
               />
             );
           })}
-          <button type="button" onClick={() => { setOnHoliday(!!holiday); setCustom(true); }}
-            className="glass flex h-24 w-36 flex-col items-center justify-center gap-1 text-sm font-medium md:w-40">
-            <Plus className="size-5" />Farklı mesai
-          </button>
         </div>
+        <button type="button" onClick={() => { setOnHoliday(!!holiday); setCustom(true); }}
+          className="glass flex w-full items-center justify-center gap-2 py-3 text-sm font-medium">
+          <Plus className="size-4" />Farklı mesai ekle
+        </button>
       </section>
 
       <div className="grid items-start gap-5 md:grid-cols-2">

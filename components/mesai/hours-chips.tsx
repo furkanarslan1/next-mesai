@@ -27,11 +27,11 @@ export function HoursChips({ items, onAdd, onRemove, max = 8, loading = false }:
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="snap-row !mx-0 !px-0 !pb-1 md:!flex-nowrap md:!overflow-x-auto">
         {loading && <div className="glass h-8 w-32 animate-pulse" aria-busy />}
         {!loading && items.length === 0 && <p className="text-sm text-muted-foreground">Henüz kısayol yok.</p>}
         {items.map((i) => (
-          <span key={i.key} className="glass inline-flex items-center gap-1 py-1 pr-1 pl-3 text-sm font-medium">
+          <span key={i.key} className="glass inline-flex items-center gap-1 whitespace-nowrap py-1 pr-1 pl-3 text-sm font-medium">
             {fmtHours(i.hours)}
             <button type="button" aria-label={`${fmtHours(i.hours)} kısayolunu sil`} onClick={() => onRemove(i.key)}
               className="grid size-6 place-items-center rounded-full text-muted-foreground hover:text-destructive">
