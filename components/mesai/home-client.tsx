@@ -7,6 +7,7 @@ import { tr } from "date-fns/locale";
 import { toast } from "sonner";
 import { CalendarCheck, CalendarMinus, Check, PartyPopper, Plus, Stethoscope, UserX, type LucideIcon } from "lucide-react";
 import { monthKey, mutate, useMonthEntries, useProfile, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
+import { realTap } from "@/lib/tap";
 import { useToday } from "@/lib/now";
 import { holidayName } from "@/lib/holidays";
 import { hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
@@ -107,7 +108,7 @@ function HomeView({ today }: { today: Date }) {
       {holiday && (
         <div className="glass flex items-center justify-between px-4 py-3 text-sm">
           <span>🎉 {holiday}</span>
-          <Button size="sm" variant="secondary" onClick={() => add("holiday", 0)}>Tatil olarak işaretle</Button>
+          <Button size="sm" variant="secondary" {...realTap(() => add("holiday", 0))}>Tatil olarak işaretle</Button>
         </div>
       )}
 
@@ -147,7 +148,7 @@ function HomeView({ today }: { today: Date }) {
             );
           })}
         </div>
-        <button type="button" onClick={() => { setOnHoliday(!!holiday); setCustom(true); }}
+        <button type="button" {...realTap(() => { setOnHoliday(!!holiday); setCustom(true); })}
           className="glass flex w-full items-center justify-center gap-2 py-3 text-sm font-medium">
           <Plus className="size-4" />Farklı mesai ekle
         </button>
@@ -167,7 +168,7 @@ function HomeView({ today }: { today: Date }) {
               return (
                 <button
                   key={t} type="button" disabled={pending} aria-pressed={!!existing}
-                  onClick={() => (existing ? remove(existing) : add(t, 0))}
+                  {...realTap(() => (existing ? remove(existing) : add(t, 0)))}
                   className={`glass relative flex flex-col items-start gap-2.5 p-3.5 text-left transition active:scale-[0.97] disabled:opacity-60 ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
                 >
                   <span className={`grid size-9 place-items-center rounded-xl ${existing ? "bg-primary text-primary-foreground" : m.tint}`}>
