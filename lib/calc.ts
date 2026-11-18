@@ -88,3 +88,17 @@ export function hoursBetween(start: string, end: string) {
   return Math.round((mins / 60) * 100) / 100;
 }
 export const hhmm = (t: string | null) => (t ? t.slice(0, 5) : "");
+
+/**
+ * Normal çıkış saatinden sonra çalışılan süre (saat). Çıkış, normal saatten önce
+ * ya da 12 saatten fazla sonraysa mesai yok sayılır (gece vardiyasında gün aşımı desteklenir).
+ */
+export function overtimeAfter(workEnd: string, exit: string) {
+  if (!workEnd || !exit) return 0;
+  const [wh, wm] = workEnd.split(":").map(Number);
+  const [eh, em] = exit.split(":").map(Number);
+  let mins = eh * 60 + em - (wh * 60 + wm);
+  if (mins < 0) mins += 24 * 60;
+  if (mins > 12 * 60) return 0;
+  return Math.round((mins / 60) * 100) / 100;
+}

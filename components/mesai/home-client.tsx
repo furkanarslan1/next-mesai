@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { monthKey, mutate, useMonthEntries, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
 import { holidayName } from "@/lib/holidays";
-import { hhmm, levelFor, hrs } from "@/lib/calc";
+import { hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
 import { ShortcutButton } from "@/components/mesai/shortcut-button";
 import { GoalHero } from "@/components/mesai/goal-hero";
@@ -35,8 +35,12 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
   const [, startTransition] = useTransition();
   const [custom, setCustom] = useState(false);
   const [customHours, setCustomHours] = useState("");
+  const [byExit, setByExit] = useState(false);
+  const [exitTime, setExitTime] = useState("");
   const [onHoliday, setOnHoliday] = useState(false);
   const holiday = holidayName(date);
+  const workEnd = settings?.work_end ? hhmm(settings.work_end) : "";
+  const exitHours = overtimeAfter(workEnd, exitTime);
 
   // Seviye için toplam saat: gerçek toplam + henüz sunucuya yazılmamış anlık fark
   const pendingDelta = entries.filter(isWork).reduce((a, e) => a + Number(e.hours), 0)
@@ -140,10 +144,30 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
 
       <Dialog open={custom} onOpenChange={setCustom}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Farklı mesai saati</DialogTitle></DialogHeader>
-          <Input type="number" step="0.25" min="0" max="24" placeholder="Örn. 4" value={customHours} onChange={(e) => setCustomHours(e.target.value)} />
+          <DialogHeader><DialogTitle>Farklı mesai</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Giriş yöntemi">
+            <Button type="button" role="radio" aria-checked={!byExit} variant={!byExit ? "default" : "secondary"} onClick={() => setByExit(false)}>Saat gir</Button>
+            <Button type="button" role="radio" aria-checked={byExit} variant={byExit ? "default" : "secondary"} onClick={() => setByExit(true)} disabled={!workEnd}>Çıkış saatine göre</Button>
+          </div>
+          {byExit ? (
+            <div className="space-y-1.5">
+              <label htmlFor="exit-time" className="text-sm font-medium">Bugün kaçta çıktın?</label>
+              <Input id="exit-time" type="time" value={exitTime} onChange={(e) => setExitTime(e.target.value)} />
+              <p className="text-xs text-muted-foreground">
+                Normal çıkışın {workEnd}. {exitTime ? (exitHours > 0 ? <>Mesai: <b className="text-foreground">{hrs(exitHours)}</b></> : "Bu çıkış saatinde mesai oluşmaz.") : "Çıkış saatini girince fazla süre otomatik hesaplanır."}
+              </p>
+            </div>
+          ) : (
+            <Input type="number" step="0.25" min="0" max="24" placeholder="Örn. 4" value={customHours} onChange={(e) => setCustomHours(e.target.value)} />
+          )}
           <label className="flex items-center justify-between text-sm">Resmi tatilde çalıştım (tatil çarpanı)<Switch checked={onHoliday} onCheckedChange={setOnHoliday} /></label>
-          <Button onClick={() => { const h = parseFloat(customHours); if (h > 0) { add(onHoliday ? "holiday" : "overtime", h); setCustom(false); setCustomHours(""); } }}>Ekle</Button>
+          <Button onClick={() => {
+            const h = byExit ? exitHours : parseFloat(customHours);
+            if (!(h > 0)) return;
+            if (byExit) add(onHoliday ? "holiday" : "overtime", h, workEnd, exitTime);
+            else add(onHoliday ? "holiday" : "overtime", h);
+            setCustom(false); setCustomHours(""); setExitTime("");
+          }}>Ekle</Button>
         </DialogContent>
       </Dialog>
     </div>
