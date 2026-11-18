@@ -9,6 +9,7 @@ import { monthKey, mutate, useMonthEntries, useSettings, useShortcuts, useTotalH
 import { holidayName } from "@/lib/holidays";
 import { hhmm, levelFor, hrs } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
+import { ShortcutButton } from "@/components/mesai/shortcut-button";
 import { GoalHero } from "@/components/mesai/goal-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -88,9 +89,11 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
         <h2 className="font-semibold">Mesai kısayolları</h2>
         <div className="grid grid-cols-2 gap-3">
           {(shortcuts ?? []).map((s) => (
-            <Button key={s.id} className="h-20 flex-col text-lg" onClick={() => add("overtime", Number(s.hours), s.start_time, s.end_time)}>
-              {s.label}<span className="text-xs font-normal opacity-80">{s.start_time ? `${hhmm(s.start_time)} – ${hhmm(s.end_time)}` : "+ ekle"}</span>
-            </Button>
+            <ShortcutButton
+              key={s.id} label={s.label} hoursText={hrs(Number(s.hours))}
+              hint={s.start_time ? `${hhmm(s.start_time)} – ${hhmm(s.end_time)}` : "dokun, ekle"}
+              onPress={() => add("overtime", Number(s.hours), s.start_time, s.end_time)}
+            />
           ))}
           <Button variant="secondary" className="h-20 flex-col" onClick={() => { setOnHoliday(!!holiday); setCustom(true); }}>
             <Plus className="size-5" />Farklı mesai

@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { resetStore } from "@/lib/store";
-import { hoursBetween } from "@/lib/calc";
+import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
+import { HoursChips } from "@/components/mesai/hours-chips";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,18 +22,11 @@ export default function LoginPage() {
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
-  const [w, setW] = useState({
-    daily_hours: "8", has_shift: false, shift_start: "08:00", shift_end: "17:00",
-    monthly_salary: "", hourly_rate: "", sunday_rate: "", holiday_rate: "",
+  const [sched, setSched] = useState<WorkSchedule>({
+    work_start: "08:00", work_end: "16:00", has_shift: false, shift_type: "day",
   });
-  const setWork = (patch: Partial<typeof w>) => setW((cur) => {
-    const next = { ...cur, ...patch };
-    // Vardiya açıksa günlük çalışma saati vardiyadan hesaplanır
-    if (next.has_shift && next.shift_start && next.shift_end && ("shift_start" in patch || "shift_end" in patch || "has_shift" in patch)) {
-      next.daily_hours = String(hoursBetween(next.shift_start, next.shift_end));
-    }
-    return next;
-  });
+  const [pay, setPay] = useState({ monthly_salary: "", hourly_rate: "", sunday_rate: "", holiday_rate: "" });
+  const [shortcutHours, setShortcutHours] = useState<number[]>([2.5, 6.5]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,10 +44,12 @@ export default function LoginPage() {
               data: {
                 full_name: name, role,
                 ...(role === "employee" && {
-                  daily_hours: Number(w.daily_hours) || 8, has_shift: w.has_shift,
-                  shift_start: w.has_shift ? w.shift_start : "", shift_end: w.has_shift ? w.shift_end : "",
-                  monthly_salary: Number(w.monthly_salary) || 0, hourly_rate: Number(w.hourly_rate) || 0,
-                  sunday_rate: Number(w.sunday_rate) || 0, holiday_rate: Number(w.holiday_rate) || 0,
+                  daily_hours: dailyHoursOf(sched) || 8, has_shift: sched.has_shift,
+                  shift_type: sched.has_shift ? sched.shift_type : "",
+                  work_start: sched.work_start, work_end: sched.work_end,
+                  shortcut_hours: shortcutHours.join(","),
+                  monthly_salary: Number(pay.monthly_salary) || 0, hourly_rate: Number(pay.hourly_rate) || 0,
+                  sunday_rate: Number(pay.sunday_rate) || 0, holiday_rate: Number(pay.holiday_rate) || 0,
                 }),
               },
             },
@@ -80,7 +75,10 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={submit} className="space-y-4">
             {mode === "up" && step === 2 && role === "employee" ? (
-              <WorkStep w={w} setWork={setWork} />
+              <WorkStep
+                sched={sched} setSched={setSched} pay={pay} setPay={setPay}
+                shortcutHours={shortcutHours} setShortcutHours={setShortcutHours}
+              />
             ) : (
             <>
             {mode === "up" && (
@@ -125,51 +123,46 @@ export default function LoginPage() {
   );
 }
 
-type Work = {
-  daily_hours: string; has_shift: boolean; shift_start: string; shift_end: string;
-  monthly_salary: string; hourly_rate: string; sunday_rate: string; holiday_rate: string;
-};
+type Pay = { monthly_salary: string; hourly_rate: string; sunday_rate: string; holiday_rate: string };
 
-function WorkStep({ w, setWork }: { w: Work; setWork: (p: Partial<Work>) => void }) {
-  const num = (k: keyof Work, label: string, hint?: string, placeholder = "0") => (
+function WorkStep({ sched, setSched, pay, setPay, shortcutHours, setShortcutHours }: {
+  sched: WorkSchedule; setSched: (s: WorkSchedule) => void;
+  pay: Pay; setPay: (p: Pay) => void;
+  shortcutHours: number[]; setShortcutHours: (h: number[]) => void;
+}) {
+  const num = (k: keyof Pay, label: string, hint?: string, placeholder = "0") => (
     <div className="space-y-1.5">
       <Label htmlFor={k}>{label}</Label>
       <Input id={k} type="number" inputMode="decimal" min="0" step="0.01" placeholder={placeholder}
-        value={String(w[k])} onChange={(e) => setWork({ [k]: e.target.value })} />
+        value={pay[k]} onChange={(e) => setPay({ ...pay, [k]: e.target.value })} />
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
-  const doubled = Number(w.hourly_rate) > 0 ? String(Number(w.hourly_rate) * 2) : "0";
+  const doubled = Number(pay.hourly_rate) > 0 ? String(Number(pay.hourly_rate) * 2) : "0";
   return (
     <>
       <div>
         <p className="font-semibold">Çalışma bilgilerin</p>
-        <p className="text-xs text-muted-foreground">Hesaplamalar bu bilgilere göre yapılır, sonra değiştirebilirsin.</p>
+        <p className="text-xs text-muted-foreground">Hesaplamalar bu bilgilere göre yapılır, sonra ayarlardan değiştirebilirsin.</p>
       </div>
-      <label className="flex items-center justify-between text-sm">
-        Vardiyalı çalışıyorum
-        <Switch checked={w.has_shift} onCheckedChange={(v) => setWork({ has_shift: v })} />
-      </label>
-      {w.has_shift && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5"><Label htmlFor="ss">Vardiya başlangıç</Label>
-            <Input id="ss" type="time" required value={w.shift_start} onChange={(e) => setWork({ shift_start: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label htmlFor="se">Vardiya bitiş</Label>
-            <Input id="se" type="time" required value={w.shift_end} onChange={(e) => setWork({ shift_end: e.target.value })} /></div>
-        </div>
-      )}
-      <div className="space-y-1.5">
-        <Label htmlFor="dh">Günlük normal çalışma saati</Label>
-        <Input id="dh" type="number" inputMode="decimal" min="0.5" max="24" step="0.25" required
-          value={w.daily_hours} onChange={(e) => setWork({ daily_hours: e.target.value })} readOnly={w.has_shift} />
-        {w.has_shift && <p className="text-xs text-muted-foreground">Vardiya saatlerinden hesaplandı.</p>}
-      </div>
+      <WorkScheduleFields value={sched} onChange={setSched} idPrefix="su" />
       {num("monthly_salary", "Aylık maaş (₺)")}
       <div className="grid grid-cols-2 gap-3">
         {num("hourly_rate", "Saatlik mesai ücreti (₺)")}
         {num("sunday_rate", "Pazar saatlik (₺)", undefined, doubled)}
       </div>
       {num("holiday_rate", "Resmi tatil saatlik (₺)", "Pazar/tatil boş kalırsa saatlik ücretin 2 katı hesaplanır.", doubled)}
+      <div className="space-y-2">
+        <div>
+          <p className="text-sm font-medium">Sık yaptığın mesailer</p>
+          <p className="text-xs text-muted-foreground">Ana sayfada tek dokunuşla eklemek için (örn. 2.5, 6.5 saat).</p>
+        </div>
+        <HoursChips
+          items={shortcutHours.map((h) => ({ key: String(h), hours: h }))}
+          onAdd={(h) => setShortcutHours([...shortcutHours, h])}
+          onRemove={(k) => setShortcutHours(shortcutHours.filter((h) => String(h) !== k))}
+        />
+      </div>
     </>
   );
 }

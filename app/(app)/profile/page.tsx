@@ -6,8 +6,11 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { download, toCSV } from "@/lib/backup";
 import { restoreBackup } from "@/lib/restore";
-import { mutate, resetStore } from "@/lib/store";
-import type { Profile } from "@/lib/types";
+import { mutate, resetStore, useSettings, useShortcuts } from "@/lib/store";
+import type { Profile, Settings } from "@/lib/types";
+import { SHIFTS } from "@/lib/types";
+import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
+import { fmtHours, HoursChips } from "@/components/mesai/hours-chips";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -59,6 +62,8 @@ export default function ProfilePage() {
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-bold">{profile.full_name}</h1>
+      {profile.role === "employee" && <WorkSettings userId={profile.id} />}
+      {profile.role === "employee" && <ShortcutSettings userId={profile.id} />}
       {profile.role === "employee" && (
         <Card>
           <CardHeader><CardTitle>Yöneticim</CardTitle></CardHeader>
@@ -92,5 +97,73 @@ export default function ProfilePage() {
       </Card>
       <Button variant="outline" className="w-full" onClick={async () => { await createClient().auth.signOut(); resetStore(); router.replace("/login"); router.refresh(); }}>Çıkış yap</Button>
     </div>
+  );
+}
+
+const hhmm5 = (t: string | null, fallback: string) => (t ? t.slice(0, 5) : fallback);
+
+function WorkSettings({ userId }: { userId: string }) {
+  const settings = useSettings();
+  if (!settings) return <div className="glass h-64 w-full animate-pulse" aria-busy />;
+  return <WorkSettingsForm userId={userId} settings={settings} />;
+}
+
+function WorkSettingsForm({ userId, settings }: { userId: string; settings: Settings }) {
+  const [w, setW] = useState<WorkSchedule>({
+    work_start: hhmm5(settings.work_start, "08:00"), work_end: hhmm5(settings.work_end, "16:00"),
+    has_shift: settings.has_shift, shift_type: settings.shift_type ?? "day",
+  });
+  const [busy, setBusy] = useState(false);
+  const daily = dailyHoursOf(w);
+  const dirty = w.work_start !== hhmm5(settings.work_start, "08:00") || w.work_end !== hhmm5(settings.work_end, "16:00")
+    || w.has_shift !== settings.has_shift || (w.has_shift && w.shift_type !== settings.shift_type);
+
+  async function save() {
+    if (daily <= 0) return toast.error("Giriş ve çıkış saatini gir");
+    setBusy(true);
+    try {
+      await mutate.saveSettings(userId, {
+        work_start: w.work_start, work_end: w.work_end, daily_hours: daily,
+        has_shift: w.has_shift, shift_type: w.has_shift ? w.shift_type : null,
+      });
+      toast.success(w.has_shift ? `${SHIFTS[w.shift_type].label} vardiyası kaydedildi` : "Çalışma saati kaydedildi");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kaydedilemedi");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <Card>
+      <CardHeader><CardTitle>Çalışma saati & vardiya</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <WorkScheduleFields value={w} onChange={setW} idPrefix="set" />
+        <Button type="button" className="w-full" onClick={save} disabled={busy || !dirty}>Kaydet</Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ShortcutSettings({ userId }: { userId: string }) {
+  const shortcuts = useShortcuts();
+  async function add(hours: number) {
+    const { error } = await createClient().from("shortcuts").insert({
+      user_id: userId, label: fmtHours(hours), hours, sort: (shortcuts?.length ?? 0) + 1,
+    });
+    if (error) { toast.error(error.message); return; }
+    await mutate.refresh.shortcuts();
+  }
+  async function remove(id: string) {
+    const { error } = await createClient().from("shortcuts").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    await mutate.refresh.shortcuts();
+  }
+  return (
+    <Card>
+      <CardHeader><CardTitle>Mesai kısayolları</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">Sık yaptığın mesai saatlerini ekle; ana sayfada tek dokunuşla o güne eklenir.</p>
+        <HoursChips items={(shortcuts ?? []).map((s) => ({ key: s.id, hours: Number(s.hours) }))} onAdd={add} onRemove={remove} />
+      </CardContent>
+    </Card>
   );
 }

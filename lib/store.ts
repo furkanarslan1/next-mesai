@@ -13,7 +13,7 @@ import type { Entry, Settings, Shortcut } from "./types";
 
 export const DEFAULT_SETTINGS: Settings = {
   hourly_rate: 0, sunday_multiplier: 2, holiday_multiplier: 2, monthly_goal_amount: 0, currency: "TRY",
-  monthly_salary: 0, daily_hours: 8, has_shift: false, shift_start: null, shift_end: null,
+  monthly_salary: 0, daily_hours: 8, has_shift: false, shift_type: null, work_start: "08:00", work_end: "16:00",
   sunday_rate: 0, holiday_rate: 0, goal_mode: "amount", monthly_goal_hours: 0,
 };
 

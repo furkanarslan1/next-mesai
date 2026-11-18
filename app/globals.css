@@ -238,3 +238,34 @@ body {
   .goal-fill { transition: none; }
   .goal-fill::after { animation: none; }
 }
+
+/* Mesai kısayolu: dokununca yukarı uçan "+X sa" ve yayılan halka */
+@keyframes shortcut-press {
+  0% { scale: 1; }
+  35% { scale: 0.94; }
+  100% { scale: 1; }
+}
+@keyframes shortcut-float {
+  0% { opacity: 0; translate: 0 0.5rem; scale: 0.8; }
+  20% { opacity: 1; }
+  100% { opacity: 0; translate: 0 -3.5rem; scale: 1.15; }
+}
+@keyframes shortcut-ring {
+  0% { opacity: 0.7; scale: 0.6; }
+  100% { opacity: 0; scale: 1.5; }
+}
+.shortcut-pressed { animation: shortcut-press 0.35s ease-out; }
+.shortcut-float {
+  position: absolute; left: 50%; top: 35%; translate: -50% 0; pointer-events: none;
+  font-weight: 700; text-shadow: 0 0 0.75rem oklch(0.82 0.15 168 / 80%);
+  animation: shortcut-float 0.9s ease-out forwards;
+}
+.shortcut-ring {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  border: 2px solid oklch(0.82 0.15 168);
+  animation: shortcut-ring 0.6s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shortcut-pressed, .shortcut-ring { animation: none; }
+  .shortcut-float { animation-duration: 0.01s; opacity: 1; }
+}
