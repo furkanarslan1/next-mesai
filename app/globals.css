@@ -318,3 +318,11 @@ body {
 @media (min-width: 768px) { .snap-row { margin-inline: 0; padding-inline: 0; flex-wrap: wrap; overflow: visible; } }
 
 html { scrollbar-gutter: stable; }
+
+/* Alt menünün arkasındaki dokunma kalkanı: menü + çevresindeki boşluğu kaplar, görsel olarak yukarı doğru solar (dokunma alanı tüm şerit) */
+.nav-shield {
+  height: calc(6.25rem + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, oklch(0.13 0.01 190 / 88%) 35%, oklch(0.13 0.01 190 / 0%));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
