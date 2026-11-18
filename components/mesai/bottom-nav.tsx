@@ -21,7 +21,7 @@ export function BottomNav({ role }: { role: string }) {
   const path = usePathname();
   const items = role === "manager" ? manager : employee;
   return (
-    <nav className="glass fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-md justify-around p-2">
+    <nav className="glass fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md justify-around p-2">
       {items.map(({ href, label, icon: Icon }) => {
         const active = href === "/" ? path === "/" : path.startsWith(href);
         return (
