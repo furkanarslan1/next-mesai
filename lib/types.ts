@@ -1,5 +1,7 @@
 export type EntryType = "overtime" | "paid_leave" | "unpaid_leave" | "sick" | "absent" | "holiday";
 
+export type ShiftType = "day" | "evening" | "night";
+
 export interface Entry {
   id: string;
   user_id: string;
@@ -19,8 +21,10 @@ export interface Settings {
   monthly_salary: number;
   daily_hours: number;
   has_shift: boolean;
-  shift_start: string | null;
-  shift_end: string | null;
+  shift_type: ShiftType | null;
+  /** Normal çalışma giriş/çıkış saati (HH:MM:SS) */
+  work_start: string | null;
+  work_end: string | null;
   /** 0 = belirtilmedi (saatlik ücret x çarpan kullanılır) */
   sunday_rate: number;
   holiday_rate: number;
@@ -37,4 +41,10 @@ export const TYPE_META: Record<EntryType, { label: string; color: string }> = {
   unpaid_leave: { label: "Ücretsiz izin", color: "bg-orange-600" },
   sick: { label: "Raporlu", color: "bg-slate-300" },
   absent: { label: "İşe gelmedim", color: "bg-rose-500" },
+};
+
+export const SHIFTS: Record<ShiftType, { label: string; start: string; end: string }> = {
+  day: { label: "Gündüz", start: "08:00", end: "16:00" },
+  evening: { label: "Akşam", start: "16:00", end: "00:00" },
+  night: { label: "Gece", start: "00:00", end: "08:00" },
 };
