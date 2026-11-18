@@ -12,6 +12,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 
+/** Supabase'in İngilizce hata mesajlarını Türkçeleştirir. */
+function trError(message: string) {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) return "E-posta veya şifre hatalı.";
+  if (m.includes("email not confirmed")) return "E-postan henüz doğrulanmamış. Gelen kutundaki bağlantıya tıkla.";
+  if (m.includes("already registered") || m.includes("already been registered")) return "Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.";
+  if (m.includes("password should be at least")) return "Şifre en az 6 karakter olmalı.";
+  if (m.includes("rate limit") || m.includes("too many")) return "Çok fazla deneme yapıldı, biraz bekleyip tekrar dene.";
+  if (m.includes("invalid email") || m.includes("unable to validate email")) return "Geçerli bir e-posta gir.";
+  if (m.includes("failed to fetch") || m.includes("network")) return "Bağlantı kurulamadı. İnternetini kontrol et.";
+  return message;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<"in" | "up">("in");
@@ -20,6 +33,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [msg, setMsg] = useState("");
+  const [info, setInfo] = useState("");
+  const [forgot, setForgot] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [sched, setSched] = useState<WorkSchedule>({
@@ -28,11 +44,30 @@ export default function LoginPage() {
   const [pay, setPay] = useState({ monthly_salary: "", hourly_rate: "", sunday_rate: "", holiday_rate: "" });
   const [shortcutHours, setShortcutHours] = useState<number[]>([2.5, 6.5]);
 
+  async function sendReset() {
+    setBusy(true); setMsg(""); setInfo("");
+    const { error } = await createClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) return setMsg(trError(error.message));
+    setInfo("Bu e-posta kayıtlıysa şifre sıfırlama bağlantısı gönderildi. Gelen kutunu (ve spam'i) kontrol et.");
+  }
+
+  async function resendConfirmation() {
+    setBusy(true); setMsg(""); setInfo("");
+    const { error } = await createClient().auth.resend({ type: "signup", email });
+    setBusy(false);
+    if (error) return setMsg(trError(error.message));
+    setInfo("Doğrulama e-postası tekrar gönderildi.");
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (forgot) return sendReset();
     if (mode === "up" && role === "employee" && step === 1) return setStep(2);
     setBusy(true);
-    setMsg("");
+    setMsg(""); setInfo(""); setUnconfirmed(false);
     const supabase = createClient();
     const { error, data } =
       mode === "in"
@@ -55,8 +90,14 @@ export default function LoginPage() {
             },
           });
     setBusy(false);
-    if (error) return setMsg(error.message);
-    if (mode === "up" && !data.session) return setMsg("E-postanı doğrulayıp giriş yapabilirsin.");
+    if (error) {
+      setUnconfirmed(error.message.toLowerCase().includes("email not confirmed"));
+      return setMsg(trError(error.message));
+    }
+    if (mode === "up" && !data.session) {
+      setUnconfirmed(true);
+      return setInfo("Doğrulama e-postası gönderdik. Bağlantıya tıkladıktan sonra giriş yapabilirsin.");
+    }
     resetStore();
     router.replace("/");
     router.refresh();
@@ -74,7 +115,18 @@ export default function LoginPage() {
       <Card>
         <CardContent>
           <form onSubmit={submit} className="space-y-4">
-            {mode === "up" && step === 2 && role === "employee" ? (
+            {forgot ? (
+              <>
+                <div>
+                  <p className="font-semibold">Şifreni sıfırla</p>
+                  <p className="text-xs text-muted-foreground">E-postanı yaz, sana yeni şifre belirleme bağlantısı gönderelim.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-posta</Label>
+                  <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+              </>
+            ) : mode === "up" && step === 2 && role === "employee" ? (
               <WorkStep
                 sched={sched} setSched={setSched} pay={pay} setPay={setPay}
                 shortcutHours={shortcutHours} setShortcutHours={setShortcutHours}
@@ -106,16 +158,32 @@ export default function LoginPage() {
             </div>
             </>
             )}
-            {msg && <p className="text-sm text-destructive">{msg}</p>}
+            {mode === "in" && !forgot && (
+              <button type="button" className="w-full text-right text-xs text-muted-foreground" onClick={() => { setForgot(true); setMsg(""); setInfo(""); }}>
+                Şifremi unuttum
+              </button>
+            )}
+            {msg && <p role="alert" className="text-sm text-destructive">{msg}</p>}
+            {info && <p role="status" className="text-sm text-primary">{info}</p>}
+            {unconfirmed && email && !forgot && (
+              <button type="button" className="w-full text-sm text-primary underline-offset-4 hover:underline" onClick={resendConfirmation} disabled={busy}>
+                Doğrulama e-postasını tekrar gönder
+              </button>
+            )}
             <Button type="submit" className="w-full" disabled={busy}>
-              {mode === "in" ? "Giriş yap" : role === "employee" && step === 1 ? "Devam" : "Kayıt ol"}
+              {forgot ? "Sıfırlama bağlantısı gönder" : mode === "in" ? "Giriş yap" : role === "employee" && step === 1 ? "Devam" : "Kayıt ol"}
             </Button>
-            {mode === "up" && step === 2 && (
+            {forgot && (
+              <button type="button" className="w-full text-sm text-muted-foreground" onClick={() => { setForgot(false); setMsg(""); setInfo(""); }}>← Girişe dön</button>
+            )}
+            {!forgot && mode === "up" && step === 2 && (
               <button type="button" className="w-full text-sm text-muted-foreground" onClick={() => setStep(1)}>← Geri</button>
             )}
-            <button type="button" className="w-full text-sm text-muted-foreground" onClick={() => { setMode(mode === "in" ? "up" : "in"); setStep(1); setMsg(""); }}>
-              {mode === "in" ? "Hesabın yok mu? Kayıt ol" : "Zaten hesabın var mı? Giriş yap"}
-            </button>
+            {!forgot && (
+              <button type="button" className="w-full text-sm text-muted-foreground" onClick={() => { setMode(mode === "in" ? "up" : "in"); setStep(1); setMsg(""); setInfo(""); setUnconfirmed(false); }}>
+                {mode === "in" ? "Hesabın yok mu? Kayıt ol" : "Zaten hesabın var mı? Giriş yap"}
+              </button>
+            )}
           </form>
         </CardContent>
       </Card>

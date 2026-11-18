@@ -18,7 +18,10 @@ export async function proxy(request: NextRequest) {
     },
   );
   const { data } = await supabase.auth.getClaims();
-  const isAuthPage = request.nextUrl.pathname.startsWith("/login");
+  const path = request.nextUrl.pathname;
+  const isAuthPage = path.startsWith("/login");
+  // Şifre sıfırlama bağlantısı oturumsuz da, bağlantıdan sonra oturumlu da açılabilmeli
+  if (path.startsWith("/reset-password")) return response;
   if (!data?.claims && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
@@ -29,5 +32,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|ico)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|ico)$).*)"],
 };
