@@ -357,3 +357,11 @@ html { scrollbar-gutter: stable; }
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
+
+/* Yaprak köşeler: sol üst ve sağ alt çok oval, diğer iki köşe daha dar. Oranı değiştirmek için iki değişken yeter. */
+:root { --r-big: 2rem; --r-small: 0.7rem; }
+.glass,
+[data-slot="card"],
+.leaf {
+  border-radius: var(--r-big) var(--r-small) var(--r-big) var(--r-small);
+}
