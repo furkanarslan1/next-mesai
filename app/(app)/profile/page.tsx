@@ -10,6 +10,7 @@ import { mutate, resetStore, useSettings, useShortcuts } from "@/lib/store";
 import type { Profile, Settings } from "@/lib/types";
 import { SHIFTS } from "@/lib/types";
 import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
+import { InstallCard } from "@/components/mesai/install-card";
 import { fmtHours, HoursChips } from "@/components/mesai/hours-chips";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,8 +61,9 @@ export default function ProfilePage() {
 
   if (!profile) return null;
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-bold">{profile.full_name}</h1>
+    <div className="grid items-start gap-5 md:grid-cols-2">
+      <h1 className="text-2xl font-bold md:col-span-2">{profile.full_name}</h1>
+      <InstallCard className="md:col-span-2" />
       {profile.role === "employee" && <WorkSettings userId={profile.id} />}
       {profile.role === "employee" && <ShortcutSettings userId={profile.id} />}
       {profile.role === "employee" && (
@@ -95,7 +97,7 @@ export default function ProfilePage() {
           )}
         </CardContent>
       </Card>
-      <Button variant="outline" className="w-full" onClick={async () => { await createClient().auth.signOut(); resetStore(); router.replace("/login"); router.refresh(); }}>Çıkış yap</Button>
+      <Button variant="outline" className="w-full md:col-span-2" onClick={async () => { await createClient().auth.signOut(); resetStore(); router.replace("/login"); router.refresh(); }}>Çıkış yap</Button>
     </div>
   );
 }

@@ -71,8 +71,8 @@ function GoalView({ settings }: { settings: Settings }) {
   );
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-bold">Hedef & Ücret</h1>
+    <div className="grid items-start gap-5 md:grid-cols-2">
+      <h1 className="text-2xl font-bold md:col-span-2">Hedef & Ücret</h1>
 
       <Card>
         <CardHeader><CardTitle>Ücret bilgilerin</CardTitle></CardHeader>
@@ -104,7 +104,7 @@ function GoalView({ settings }: { settings: Settings }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="md:col-span-2">
         <CardContent className="space-y-3">
           <p className="font-semibold">Bu ay: %{g.percent.toFixed(0)} tamamlandı</p>
           <Progress value={g.percent} />

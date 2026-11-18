@@ -21,11 +21,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 const STATUS: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent", "holiday"];
 const STATUS_META: Record<string, { icon: LucideIcon; tint: string; hint: string }> = {
-  paid_leave: { icon: CalendarCheck, tint: "bg-sky-400/15 text-sky-300", hint: "Ücretli izin kullandım" },
-  unpaid_leave: { icon: CalendarMinus, tint: "bg-orange-500/15 text-orange-300", hint: "Ücretsiz izindeydim" },
-  sick: { icon: Stethoscope, tint: "bg-slate-300/15 text-slate-200", hint: "Raporluydum" },
-  absent: { icon: UserX, tint: "bg-rose-500/15 text-rose-300", hint: "Hiç gelmedim" },
-  holiday: { icon: PartyPopper, tint: "bg-amber-400/15 text-amber-300", hint: "Resmi tatildi" },
+  paid_leave: { icon: CalendarCheck, tint: "bg-sky-400/15 text-sky-300", hint: "Maaş kesilmez" },
+  unpaid_leave: { icon: CalendarMinus, tint: "bg-orange-500/15 text-orange-300", hint: "Maaştan düşer" },
+  sick: { icon: Stethoscope, tint: "bg-slate-300/15 text-slate-200", hint: "Doktor raporu" },
+  absent: { icon: UserX, tint: "bg-rose-500/15 text-rose-300", hint: "Habersiz" },
+  holiday: { icon: PartyPopper, tint: "bg-amber-400/15 text-amber-300", hint: "Çalışılmadı" },
 };
 
 type Opt = { add: Entry } | { remove: string };
@@ -73,6 +73,8 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
   }
 
   const todays = entries.filter((e) => e.work_date === date);
+  const todayHours = todays.filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
+  const monthHours = entries.filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
 
   return (
     <div className="space-y-5">
@@ -97,83 +99,106 @@ export function HomeClient({ name, userId }: { name: string; userId: string }) {
         <div className="glass h-56 w-full animate-pulse" aria-busy />
       )}
 
-      <section className="space-y-2">
-        <h2 className="font-semibold">Mesai kısayolları</h2>
-        <div className="grid grid-cols-2 gap-3">
-          {(shortcuts ?? []).map((s) => (
-            <ShortcutButton
-              key={s.id} label={s.label} hoursText={hrs(Number(s.hours))}
-              hint={s.start_time ? `${hhmm(s.start_time)} – ${hhmm(s.end_time)}` : "dokun, ekle"}
-              onPress={() => add("overtime", Number(s.hours), s.start_time, s.end_time)}
-            />
-          ))}
-          <Button variant="secondary" className="h-20 flex-col" onClick={() => { setOnHoliday(!!holiday); setCustom(true); }}>
-            <Plus className="size-5" />Farklı mesai
-          </Button>
-        </div>
-      </section>
+      <div className="grid grid-cols-2 gap-3">
+        <Card size="sm"><CardContent>
+          <p className="text-xs text-muted-foreground">Bugünün mesaisi</p>
+          <p className="text-xl font-bold tabular-nums">{hrs(todayHours)}</p>
+        </CardContent></Card>
+        <Card size="sm"><CardContent>
+          <p className="text-xs text-muted-foreground">{format(parseISO(date), "LLLL", { locale: tr })} toplamı</p>
+          <p className="text-xl font-bold tabular-nums">{hrs(monthHours)}</p>
+        </CardContent></Card>
+      </div>
 
-      <section className="space-y-3">
-        <div>
-          <h2 className="font-semibold">Bugün işe gitmedin mi?</h2>
-          <p className="text-xs text-muted-foreground">Çalışmadığın günün nedenini seç, takvimine işlensin. Yanlışsa tekrar dokunup geri al.</p>
+      <section className="space-y-2">
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-semibold">Mesai kısayolları</h2>
+          <span className="text-xs text-muted-foreground">Ekle · tekrar dokun, geri al</span>
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
-          {STATUS.map((t) => {
-            const m = STATUS_META[t];
-            const existing = todays.find((e) => e.type === t);
-            const pending = existing?.id.startsWith("tmp-");
+        <div className="snap-row">
+          {(shortcuts ?? []).map((s) => {
+            const existing = [...todays].reverse().find((e) => e.type === "overtime" && Number(e.hours) === Number(s.hours));
             return (
-              <button
-                key={t} type="button" disabled={pending} aria-pressed={!!existing}
-                onClick={() => (existing ? remove(existing) : add(t, 0))}
-                className={`glass flex items-center gap-3 p-3 text-left transition active:scale-[0.97] disabled:opacity-60 ${existing ? "ring-2 ring-primary" : ""}`}
-              >
-                <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${m.tint}`}>
-                  {existing ? <Check className="size-5" /> : <m.icon className="size-5" />}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
-                  <span className="block text-[11px] leading-tight text-muted-foreground">{existing ? "İşaretlendi · geri almak için dokun" : m.hint}</span>
-                </span>
-              </button>
+              <ShortcutButton
+                key={s.id} label={s.label} hoursText={hrs(Number(s.hours))}
+                hint={s.start_time ? `${hhmm(s.start_time)}–${hhmm(s.end_time)}` : "Dokun, ekle"}
+                active={!!existing} disabled={existing?.id.startsWith("tmp-")}
+                onPress={() => (existing ? remove(existing) : add("overtime", Number(s.hours), s.start_time, s.end_time))}
+              />
             );
           })}
+          <button type="button" onClick={() => { setOnHoliday(!!holiday); setCustom(true); }}
+            className="glass flex h-24 w-36 flex-col items-center justify-center gap-1 text-sm font-medium md:w-40">
+            <Plus className="size-5" />Farklı mesai
+          </button>
         </div>
       </section>
 
-      <Card>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <LevelIcon level={lvl.level} className="size-14" />
-              <div>
-                <p className="text-xs text-muted-foreground">Seviye {lvl.level}</p>
-                <p className="text-lg font-semibold">{lvl.name}</p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">{hrs(totalHours)} toplam</p>
+      <div className="grid items-start gap-5 md:grid-cols-2">
+        <section className="space-y-3">
+          <div>
+            <h2 className="font-semibold">Bugün işe gitmedin mi?</h2>
+            <p className="text-xs text-muted-foreground">Nedenini seç, takvimine işlensin. Tekrar dokunursan geri alınır.</p>
           </div>
-          <Progress value={lvl.progress} />
-          {lvl.next && (
-            <p className="flex items-center gap-2 text-xs text-muted-foreground">
-              <LevelIcon level={lvl.level + 1} className="size-6 opacity-80" />{lvl.next.name} için {hrs(lvl.toNext)} kaldı
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {todays.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="font-semibold">Bu günün kayıtları</h2>
-          {todays.map((e) => (
-            <div key={e.id} className="glass flex items-center justify-between px-4 py-3 text-sm">
-              <span>{TYPE_META[e.type].label} {e.hours > 0 && `· ${hrs(Number(e.hours))}`}{e.start_time && ` · ${hhmm(e.start_time)}–${hhmm(e.end_time)}`}</span>
-              <button className="text-destructive" onClick={() => remove(e)}>Sil</button>
-            </div>
-          ))}
+          <div className="grid grid-cols-2 gap-3">
+            {STATUS.map((t) => {
+              const m = STATUS_META[t];
+              const existing = todays.find((e) => e.type === t);
+              const pending = existing?.id.startsWith("tmp-");
+              return (
+                <button
+                  key={t} type="button" disabled={pending} aria-pressed={!!existing}
+                  onClick={() => (existing ? remove(existing) : add(t, 0))}
+                  className={`glass relative flex flex-col items-start gap-2.5 p-3.5 text-left transition active:scale-[0.97] disabled:opacity-60 ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
+                >
+                  <span className={`grid size-9 place-items-center rounded-xl ${existing ? "bg-primary text-primary-foreground" : m.tint}`}>
+                    {existing ? <Check className="size-5" /> : <m.icon className="size-5" />}
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
+                    <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri al" : m.hint}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </section>
-      )}
+
+        <div className="space-y-5">
+          <Card>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <LevelIcon level={lvl.level} className="size-14" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Seviye {lvl.level}</p>
+                    <p className="text-lg font-semibold">{lvl.name}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">{hrs(totalHours)} toplam</p>
+              </div>
+              <Progress value={lvl.progress} />
+              {lvl.next && (
+                <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <LevelIcon level={lvl.level + 1} className="size-6 opacity-80" />{lvl.next.name} için {hrs(lvl.toNext)} kaldı
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {todays.length > 0 && (
+            <section className="space-y-2">
+              <h2 className="font-semibold">Bu günün kayıtları</h2>
+              {todays.map((e) => (
+                <div key={e.id} className="glass flex items-center justify-between px-4 py-3 text-sm">
+                  <span>{TYPE_META[e.type].label} {e.hours > 0 && `· ${hrs(Number(e.hours))}`}{e.start_time && ` · ${hhmm(e.start_time)}–${hhmm(e.end_time)}`}</span>
+                  <button className="text-destructive" onClick={() => remove(e)}>Sil</button>
+                </div>
+              ))}
+            </section>
+          )}
+        </div>
+      </div>
 
       <Dialog open={custom} onOpenChange={setCustom}>
         <DialogContent>
