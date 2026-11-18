@@ -149,7 +149,7 @@ function HomeView({ today }: { today: Date }) {
           })}
         </div>
         <button type="button" {...realTap(() => { setOnHoliday(!!holiday); setCustom(true); })}
-          className="glass flex w-full items-center justify-center gap-2 py-3 text-sm font-medium">
+          className="glass mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
           <Plus className="size-4" />Farklı mesai ekle
         </button>
       </section>
