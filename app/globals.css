@@ -211,8 +211,37 @@ body {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: 9999px;
-  background: linear-gradient(90deg, oklch(0.5 0.11 175), oklch(0.72 0.15 165) 55%, oklch(0.88 0.12 170));
+  /* üstte süzülen ışık şeridi (sürekli akar), altta zümrüt geçiş */
+  background:
+    linear-gradient(100deg, transparent 35%, oklch(1 0 0 / 38%) 50%, transparent 65%) 0 0 / 220% 100% no-repeat,
+    linear-gradient(90deg, oklch(0.5 0.11 175), oklch(0.72 0.15 165) 55%, oklch(0.88 0.12 170));
+  animation: goal-shimmer 2.4s linear infinite;
   transition: width 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes goal-shimmer {
+  from { background-position: 160% 0, 0 0; }
+  to { background-position: -60% 0, 0 0; }
+}
+/* Barın ucundan saçılan kıvılcımlar */
+.goal-spark {
+  position: absolute;
+  right: 0.1rem;
+  top: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-top: -0.21rem;
+  border-radius: 9999px;
+  background: oklch(0.97 0.08 170);
+  box-shadow: 0 0 0.6rem 0.2rem oklch(0.85 0.15 168 / 95%);
+  opacity: 0;
+  pointer-events: none;
+  animation: goal-spark 1.2s ease-out infinite;
+  animation-delay: var(--d);
+}
+@keyframes goal-spark {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.1); }
 }
 .goal-fill::after {
   content: "";
@@ -237,6 +266,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .goal-fill { transition: none; }
   .goal-fill::after { animation: none; }
+  .goal-fill { animation: none; }
+  .goal-spark { display: none; }
 }
 
 /* Mesai kısayolu: dokununca yukarı uçan "+X sa" ve yayılan halka */
