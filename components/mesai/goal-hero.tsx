@@ -11,6 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+// Kıvılcımlar: [yatay uçuş px, dikey uçuş px, başlama gecikmesi sn]
+const SPARKS: [number, number, number][] = [
+  [34, -30, 0], [52, 6, 0.2], [28, 26, 0.4], [60, -10, 0.6], [40, -42, 0.8], [46, 22, 1.0],
+];
+
 export function GoalHero({ userId, settings, entries, monthLabel }: {
   userId: string; settings: Settings; entries: Entry[]; monthLabel: string;
 }) {
@@ -69,7 +74,13 @@ export function GoalHero({ userId, settings, entries, monthLabel }: {
           className="goal-track"
           role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(g.percent)}
         >
-          {g.percent > 0 && <div className="goal-fill" style={{ width: `${Math.max(g.percent, 2)}%` }} />}
+          {g.percent > 0 && (
+            <div className="goal-fill" style={{ width: `${Math.max(g.percent, 2)}%` }}>
+              {SPARKS.map(([dx, dy, d], i) => (
+                <span key={i} className="goal-spark" style={{ "--dx": `${dx}px`, "--dy": `${dy}px`, "--d": `${d}s` } as React.CSSProperties} aria-hidden />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
