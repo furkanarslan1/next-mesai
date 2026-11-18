@@ -43,7 +43,10 @@ export function BottomNav() {
         ))}
       </aside>
 
-      <nav className="glass-nav fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md justify-around p-1.5 md:hidden">
+      {/* Telefonda alt şerit: menünün çevresindeki boşluğa (köşeler, kenar aralıkları) dokunmak arkadaki
+          butonlara (2.5 saat gibi) geçmesin diye tam genişlikte, dokunmayı yutan bir kalkan */}
+      <div className="nav-shield fixed inset-x-0 bottom-0 z-30 md:hidden" aria-hidden />
+      <nav className="glass-nav fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md touch-manipulation justify-around p-2 md:hidden">
         {items.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined}
             className={cn("flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-[11px] font-medium transition",
