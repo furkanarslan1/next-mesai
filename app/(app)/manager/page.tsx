@@ -5,6 +5,7 @@ import { addMonths, endOfMonth, format, startOfMonth } from "date-fns";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { download, toCSV } from "@/lib/backup";
+import { useToday } from "@/lib/now";
 import { hhmm, hrs } from "@/lib/calc";
 import { TYPE_META, type Entry } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -14,10 +15,16 @@ import { Input } from "@/components/ui/input";
 interface Emp { id: string; full_name: string; entries: Entry[] }
 
 export default function ManagerPage() {
+  const today = useToday();
+  if (!today) return <div className="glass min-h-[28rem] w-full animate-pulse" aria-busy />;
+  return <ManagerView today={today} />;
+}
+
+function ManagerView({ today }: { today: Date }) {
   const [emps, setEmps] = useState<Emp[]>([]);
   const [code, setCode] = useState("");
   const [open, setOpen] = useState<string | null>(null);
-  const [month, setMonth] = useState(new Date());
+  const [month, setMonth] = useState(today);
 
   const load = useCallback(async () => {
     const supabase = createClient();

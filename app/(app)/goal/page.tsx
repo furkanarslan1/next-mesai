@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useToday } from "@/lib/now";
 import { createClient } from "@/lib/supabase/client";
 import { mutate, useSettings, useMonthEntries, monthKey, useTotalHours } from "@/lib/store";
 import { goalProgress, hrs, levelFor, LEVELS, money } from "@/lib/calc";
@@ -26,12 +27,13 @@ const toForm = (s: Settings): Form => ({
 
 export default function GoalPage() {
   const settings = useSettings();
-  if (!settings) return <div className="glass h-96 w-full animate-pulse" aria-busy />;
-  return <GoalView settings={settings} />;
+  const today = useToday();
+  if (!settings || !today) return <div className="glass min-h-[40rem] w-full animate-pulse" aria-busy />;
+  return <GoalView settings={settings} today={today} />;
 }
 
-function GoalView({ settings }: { settings: Settings }) {
-  const entries = useMonthEntries(monthKey(new Date()));
+function GoalView({ settings, today }: { settings: Settings; today: Date }) {
+  const entries = useMonthEntries(monthKey(today));
   const totalHours = useTotalHours() ?? 0;
   const [f, setF] = useState<Form>(() => toForm(settings));
   const [busy, setBusy] = useState(false);

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Calculator, Clock, Home, Target, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useProfile } from "@/lib/store";
 import "@/lib/install"; // kurulum isteğini sayfa açılır açılmaz yakalamak için
 
 const employee = [
@@ -19,9 +20,11 @@ const manager = [
 ];
 
 /** Telefonda alttaki cam çubuk, geniş ekranda soldaki cam kenar çubuğu. */
-export function BottomNav({ role }: { role: string }) {
+export function BottomNav() {
   const path = usePathname();
-  const items = role === "manager" ? manager : employee;
+  const profile = useProfile();
+  // Rol gelene kadar çalışan menüsü (sabit boyut) gösterilir; yönetici ilk açılışta bile kaymasın diye rol saklanır
+  const items = profile?.role === "manager" ? manager : employee;
   const isActive = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
 
   return (

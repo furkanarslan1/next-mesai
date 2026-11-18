@@ -44,7 +44,7 @@ export function GoalHero({ userId, settings, entries, monthLabel }: {
   }
 
   return (
-    <section className="glass w-full space-y-5 p-5 sm:p-6" aria-label="Aylık hedef">
+    <section className="glass min-h-[15.5rem] w-full space-y-5 p-5 sm:p-6" aria-label="Aylık hedef">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wider text-muted-foreground">{monthLabel} hedefi</p>

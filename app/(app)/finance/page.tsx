@@ -5,6 +5,7 @@ import { addMonths, format, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
 import { createClient } from "@/lib/supabase/client";
 import { useMesai } from "@/lib/use-data";
+import { useToday } from "@/lib/now";
 import { money, monthSummary } from "@/lib/calc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +16,13 @@ const EXPENSE_PRESETS = ["Kira", "Yakıt", "Elektrik", "Su", "Doğalgaz", "İnte
 const INCOME_PRESETS = ["Maaş", "Ek gelir"];
 
 export default function FinancePage() {
-  const [month, setMonth] = useState(startOfMonth(new Date()));
+  const today = useToday();
+  if (!today) return <div className="glass min-h-[28rem] w-full animate-pulse" aria-busy />;
+  return <FinanceView today={today} />;
+}
+
+function FinanceView({ today }: { today: Date }) {
+  const [month, setMonth] = useState(startOfMonth(today));
   const { entries, settings } = useMesai(month);
   const [items, setItems] = useState<Item[]>([]);
   const [cat, setCat] = useState("");

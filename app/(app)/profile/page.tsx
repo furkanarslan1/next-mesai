@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { download, toCSV } from "@/lib/backup";
 import { restoreBackup } from "@/lib/restore";
-import { mutate, resetStore, useSettings, useShortcuts } from "@/lib/store";
-import type { Profile, Settings } from "@/lib/types";
+import { mutate, resetStore, useProfile, useSettings, useShortcuts } from "@/lib/store";
+import type { Settings } from "@/lib/types";
 import { SHIFTS } from "@/lib/types";
 import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
 import { InstallCard } from "@/components/mesai/install-card";
@@ -19,14 +19,13 @@ interface Link { id: string; status: string; manager_id: string; employee_id: st
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const profile = useProfile();
   const [links, setLinks] = useState<Link[]>([]);
 
   const load = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: p } = await supabase.from("profiles").select("*").eq("id", user!.id).single();
-    setProfile(p as Profile);
+    const { data: p } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
     const { data: l } = await supabase.from("manager_links").select("*").eq(p?.role === "manager" ? "manager_id" : "employee_id", user!.id);
     const ids = (l ?? []).map((x) => (p?.role === "manager" ? x.employee_id : x.manager_id));
     const { data: names } = ids.length ? await supabase.from("profiles").select("id, full_name").in("id", ids) : { data: [] };
@@ -59,7 +58,7 @@ export default function ProfilePage() {
     }
   }
 
-  if (!profile) return null;
+  if (!profile) return <div className="glass min-h-72 w-full animate-pulse" aria-busy />;
   return (
     <div className="grid items-start gap-5 md:grid-cols-2">
       <h1 className="text-2xl font-bold md:col-span-2">{profile.full_name}</h1>
@@ -106,7 +105,7 @@ const hhmm5 = (t: string | null, fallback: string) => (t ? t.slice(0, 5) : fallb
 
 function WorkSettings({ userId }: { userId: string }) {
   const settings = useSettings();
-  if (!settings) return <div className="glass h-64 w-full animate-pulse" aria-busy />;
+  if (!settings) return <div className="glass min-h-[24rem] w-full animate-pulse" aria-busy />;
   return <WorkSettingsForm userId={userId} settings={settings} />;
 }
 
@@ -164,7 +163,7 @@ function ShortcutSettings({ userId }: { userId: string }) {
       <CardHeader><CardTitle>Mesai kısayolları</CardTitle></CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">Sık yaptığın mesai saatlerini ekle; ana sayfada tek dokunuşla o güne eklenir.</p>
-        <HoursChips items={(shortcuts ?? []).map((s) => ({ key: s.id, hours: Number(s.hours) }))} onAdd={add} onRemove={remove} />
+        <HoursChips loading={shortcuts === null} items={(shortcuts ?? []).map((s) => ({ key: s.id, hours: Number(s.hours) }))} onAdd={add} onRemove={remove} />
       </CardContent>
     </Card>
   );
