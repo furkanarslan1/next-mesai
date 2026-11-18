@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Calculator, Home, Target, User, Users } from "lucide-react";
+import { CalendarDays, Calculator, Clock, Home, Target, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import "@/lib/install"; // kurulum isteğini sayfa açılır açılmaz yakalamak için
 
 const employee = [
   { href: "/", label: "Ana sayfa", icon: Home },
@@ -17,22 +18,38 @@ const manager = [
   { href: "/profile", label: "Profil", icon: User },
 ];
 
+/** Telefonda alttaki cam çubuk, geniş ekranda soldaki cam kenar çubuğu. */
 export function BottomNav({ role }: { role: string }) {
   const path = usePathname();
   const items = role === "manager" ? manager : employee;
+  const isActive = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+
   return (
-    <nav className="glass fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md justify-around p-2">
-      {items.map(({ href, label, icon: Icon }) => {
-        const active = href === "/" ? path === "/" : path.startsWith(href);
-        return (
-          <Link key={href} href={href}
+    <>
+      <aside className="glass-nav sticky top-6 hidden h-[calc(100dvh-3rem)] w-56 shrink-0 flex-col gap-1 p-3 md:flex">
+        <div className="mb-4 flex items-center gap-2.5 px-2 pt-1">
+          <span className="grid size-9 place-items-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30"><Clock className="size-5" /></span>
+          <span className="text-lg font-bold tracking-tight">Mesai</span>
+        </div>
+        {items.map(({ href, label, icon: Icon }) => (
+          <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined}
+            className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition",
+              isActive(href) ? "nav-active" : "text-muted-foreground hover:bg-white/5 hover:text-foreground")}>
+            <Icon className="size-5" />{label}
+          </Link>
+        ))}
+      </aside>
+
+      <nav className="glass-nav fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md justify-around p-1.5 md:hidden">
+        {items.map(({ href, label, icon: Icon }) => (
+          <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined}
             className={cn("flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-[11px] font-medium transition",
-              active ? "bg-primary text-primary-foreground shadow-lg" : "text-muted-foreground")}>
+              isActive(href) ? "nav-active" : "text-muted-foreground")}>
             <Icon className="size-5" />
             {label}
           </Link>
-        );
-      })}
-    </nav>
+        ))}
+      </nav>
+    </>
   );
 }

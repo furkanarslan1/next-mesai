@@ -269,3 +269,50 @@ body {
   .shortcut-pressed, .shortcut-ring { animation: none; }
   .shortcut-float { animation-duration: 0.01s; opacity: 1; }
 }
+
+/* ---------- Sıvı cam (liquid glass) ---------- */
+body {
+  background:
+    radial-gradient(46rem 34rem at 8% -8%, oklch(0.72 0.14 165 / 22%), transparent 62%),
+    radial-gradient(40rem 34rem at 104% 8%, oklch(0.6 0.12 205 / 18%), transparent 62%),
+    radial-gradient(38rem 30rem at 85% 100%, oklch(0.55 0.14 290 / 14%), transparent 62%),
+    radial-gradient(44rem 34rem at 0% 105%, oklch(0.62 0.12 150 / 14%), transparent 62%),
+    var(--background);
+  background-attachment: fixed;
+}
+.dark .glass,
+.dark [data-slot="card"] {
+  background:
+    radial-gradient(120% 70% at 12% -10%, oklch(1 0 0 / 13%), transparent 55%),
+    linear-gradient(150deg, oklch(1 0 0 / 9%), oklch(1 0 0 / 3%) 60%, oklch(1 0 0 / 5%));
+  backdrop-filter: blur(28px) saturate(1.9);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9);
+  border: 1px solid oklch(1 0 0 / 12%);
+  box-shadow:
+    0 12px 40px oklch(0 0 0 / 38%),
+    inset 0 1px 0 oklch(1 0 0 / 24%),
+    inset 0 -1px 0 oklch(1 0 0 / 5%),
+    inset 0 0 28px oklch(1 0 0 / 3%);
+}
+.glass-nav {
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(120% 90% at 15% -20%, oklch(1 0 0 / 16%), transparent 55%),
+    linear-gradient(150deg, oklch(1 0 0 / 10%), oklch(1 0 0 / 4%));
+  backdrop-filter: blur(32px) saturate(2);
+  -webkit-backdrop-filter: blur(32px) saturate(2);
+  border: 1px solid oklch(1 0 0 / 14%);
+  box-shadow: 0 16px 48px oklch(0 0 0 / 45%), inset 0 1px 0 oklch(1 0 0 / 28%), inset 0 -1px 0 oklch(1 0 0 / 6%);
+}
+.nav-active {
+  color: var(--primary);
+  background: linear-gradient(150deg, oklch(0.78 0.15 165 / 24%), oklch(0.78 0.15 165 / 10%));
+  box-shadow: inset 0 0 0 1px oklch(0.78 0.15 165 / 38%), 0 0 22px oklch(0.78 0.15 165 / 22%);
+}
+.snap-row {
+  display: flex; gap: 0.75rem; overflow-x: auto; scroll-snap-type: x mandatory;
+  margin-inline: -1rem; padding: 0.25rem 1rem 0.75rem; scrollbar-width: none;
+}
+.snap-row::-webkit-scrollbar { display: none; }
+.snap-row > * { scroll-snap-align: start; flex: 0 0 auto; }
+@media (min-width: 768px) { .snap-row { margin-inline: 0; padding-inline: 0; flex-wrap: wrap; overflow: visible; } }
