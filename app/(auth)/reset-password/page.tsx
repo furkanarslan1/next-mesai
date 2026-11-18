@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-5">
+    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 p-5">
       <div className="text-center">
         <div className="glass mx-auto mb-4 grid size-16 place-items-center text-primary"><KeyRound className="size-8" /></div>
         <h1 className="text-2xl font-bold tracking-tight">Yeni şifre belirle</h1>
