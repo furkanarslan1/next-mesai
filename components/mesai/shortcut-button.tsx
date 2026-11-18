@@ -15,7 +15,7 @@ export function ShortcutButton({ label, hint, hoursText, active, disabled, onPre
     <button
       key={`b${burst}`} type="button" disabled={disabled} aria-pressed={active}
       onClick={() => { if (!active) setBurst((n) => n + 1); onPress(); }}
-      className={`relative flex h-24 w-36 flex-col items-center justify-center gap-0.5 rounded-3xl border text-lg font-semibold transition active:scale-[0.96] disabled:opacity-60 md:w-40 ${
+      className={`relative flex h-24 w-full flex-col items-center justify-center gap-0.5 rounded-3xl border text-lg font-semibold transition active:scale-[0.96] disabled:opacity-60 ${
         active
           ? "border-primary/60 bg-primary/20 text-primary shadow-[0_0_28px_oklch(0.78_0.15_165/25%)]"
           : "border-white/10 bg-primary text-primary-foreground"
