@@ -10,12 +10,13 @@ import { monthKey, mutate, useMonthEntries, useProfile, useSettings, useShortcut
 import { realTap } from "@/lib/tap";
 import { useToday } from "@/lib/now";
 import { holidayName } from "@/lib/holidays";
-import { hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
+import { goalProgress, hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
 import { ShortcutButton } from "@/components/mesai/shortcut-button";
 import { DatePicker } from "@/components/mesai/date-picker";
 import { StatusIcon } from "@/components/mesai/status-icon";
 import { LevelIcon } from "@/components/mesai/level-icon";
+import { MonthSummary } from "@/components/mesai/month-summary";
 import { GoalHero } from "@/components/mesai/goal-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -244,6 +245,10 @@ function HomeView({ today }: { today: Date }) {
               );
             })}
           </div>
+          {/* Hedef belirlenmişse özet burada; hedef yokken hedef kartının içinde görünür */}
+          {settings && realEntries && goalProgress(entries, settings).set && (
+            <div className="glass mt-2 p-5 sm:p-6"><MonthSummary entries={entries} settings={settings} /></div>
+          )}
         </section>
 
         <div className="space-y-5">
