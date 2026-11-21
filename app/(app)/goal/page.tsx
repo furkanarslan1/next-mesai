@@ -14,13 +14,13 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 
 type Form = {
-  monthly_salary: string; hourly_rate: string; sunday_rate: string; holiday_rate: string;
+  monthly_salary: string; hourly_rate: string; sunday_rate: string; holiday_rate: string; included_overtime_hours: string;
   goal_mode: Settings["goal_mode"]; monthly_goal_amount: string; monthly_goal_hours: string;
 };
 const str = (n: number) => (n > 0 ? String(n) : "");
 const toForm = (s: Settings): Form => ({
   monthly_salary: str(s.monthly_salary), hourly_rate: str(s.hourly_rate),
-  sunday_rate: str(s.sunday_rate), holiday_rate: str(s.holiday_rate),
+  sunday_rate: str(s.sunday_rate), holiday_rate: str(s.holiday_rate), included_overtime_hours: str(s.included_overtime_hours),
   goal_mode: s.goal_mode, monthly_goal_amount: str(s.monthly_goal_amount), monthly_goal_hours: str(s.monthly_goal_hours),
 });
 
@@ -41,7 +41,7 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
 
   const next: Partial<Settings> = {
     monthly_salary: n(f.monthly_salary), hourly_rate: n(f.hourly_rate),
-    sunday_rate: n(f.sunday_rate), holiday_rate: n(f.holiday_rate),
+    sunday_rate: n(f.sunday_rate), holiday_rate: n(f.holiday_rate), included_overtime_hours: Math.min(200, n(f.included_overtime_hours)),
     goal_mode: f.goal_mode, monthly_goal_amount: n(f.monthly_goal_amount), monthly_goal_hours: n(f.monthly_goal_hours),
   };
   const dirty = (Object.keys(next) as (keyof Settings)[]).some((k) => next[k] !== settings[k]);
@@ -84,6 +84,7 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
             {field("sunday_rate", "Pazar saatlik (₺)", { placeholder: doubled })}
           </div>
           {field("holiday_rate", "Resmi tatil saatlik (₺)", { placeholder: doubled, hint: "Pazar/tatil boş kalırsa saatlik ücretin 2 katı hesaplanır." })}
+          {field("included_overtime_hours", "Maaşa dahil aylık mesai (saat)", { step: "0.5", placeholder: "Örn. 10", hint: "Maaşın bu kadar saat mesaiyi zaten içeriyorsa gir. Ayın ilk bu kadar saatine ayrıca ücret hesaplanmaz, üstü saatlik ücretle eklenir." })}
         </CardContent>
       </Card>
 

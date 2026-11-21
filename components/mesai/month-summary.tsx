@@ -28,6 +28,11 @@ export function MonthSummary({ entries, settings }: { entries: Entry[]; settings
           </div>
         ))}
       </div>
+      {sum.includedHours > 0 && (
+        <p className="text-center text-xs text-muted-foreground tabular-nums">
+          {hrs(sum.includedHours)} maaşa dahil · {hrs(sum.paidHours)} ücretli mesai
+        </p>
+      )}
     </div>
   );
 }

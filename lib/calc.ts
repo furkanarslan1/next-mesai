@@ -32,7 +32,6 @@ export function goalProgress(entries: Entry[], s: Settings) {
   const m = monthSummary(entries, s);
   const ded = salaryDeduction(entries, s);
   const income = s.monthly_salary - ded.amount + m.earned;
-  const avgRate = m.hours > 0 ? m.earned / m.hours : s.hourly_rate;
   if (s.goal_mode === "hours") {
     const goal = s.monthly_goal_hours;
     return {
@@ -42,22 +41,47 @@ export function goalProgress(entries: Entry[], s: Settings) {
   }
   const goal = s.monthly_goal_amount;
   const remaining = Math.max(0, goal - income);
-  const hoursLeft = avgRate > 0 ? remaining / avgRate : 0;
+  // Kalan tutar için ücretli saat + henüz dolmamış (ücretsiz) dahil saatler
+  const hoursLeft = remaining > 0 && m.paidRate > 0 ? remaining / m.paidRate + m.quotaLeft : 0;
   return {
     mode: "amount" as const, set: goal > 0, percent: goal > 0 ? Math.min(100, (income / goal) * 100) : 0,
     done: income, goal, income, earned: m.earned, deduction: ded.amount, hoursNeeded: m.hours + hoursLeft,
   };
 }
 
+/**
+ * Maaşa dahil mesai: ayın ilk `included_overtime_hours` saati maaşın içindedir ve ayrıca ücretlenmez.
+ * Saatler günlük sırayla tüketilir; bir kaydın yalnızca dahil saati aşan kısmı ücret getirir.
+ */
+function paidSplit(worked: Entry[], s: Settings) {
+  let quota = Math.max(0, s.included_overtime_hours ?? 0);
+  const extra = new Map<string, number>();
+  [...worked].sort((a, b) => a.work_date.localeCompare(b.work_date)).forEach((e) => {
+    const covered = Math.min(quota, Number(e.hours));
+    quota -= covered;
+    extra.set(e.id, Number(e.hours) - covered);
+  });
+  return { extra, quotaLeft: quota };
+}
+
 export function monthSummary(entries: Entry[], s: Settings) {
-  const worked = entries.filter((e) => e.type === "overtime" || e.type === "holiday");
-  const hours = worked.reduce((a, e) => a + e.hours, 0);
-  const earned = entries.reduce((a, e) => a + entryPay(e, s), 0);
+  const worked = entries.filter((e) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0);
+  const hours = worked.reduce((a, e) => a + Number(e.hours), 0);
+  const { extra, quotaLeft } = paidSplit(worked, s);
+  const earned = worked.reduce((a, e) => a + entryPay({ ...e, hours: extra.get(e.id) ?? 0 }, s), 0);
+  const paidHours = [...extra.values()].reduce((a, h) => a + h, 0);
+  const includedHours = hours - paidHours;
+  // Ücretli saat başına ortalama ücret (pazar/tatil çarpanları dahil)
+  const paidRate = paidHours > 0 ? earned / paidHours : s.hourly_rate;
   const goal = s.monthly_goal_amount;
-  const avgRate = hours > 0 ? earned / hours : s.hourly_rate;
+  const avgRate = paidRate;
   return {
     hours,
     earned,
+    paidHours,
+    includedHours,
+    quotaLeft,
+    paidRate,
     goal,
     percent: goal > 0 ? Math.min(100, (earned / goal) * 100) : 0,
     remainingMoney: Math.max(0, goal - earned),

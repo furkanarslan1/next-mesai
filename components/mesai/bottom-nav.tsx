@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Calculator, Clock, Home, Target, User, Users } from "lucide-react";
+import { BarChart3, CalendarDays, Calculator, Clock, Home, Target, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/lib/store";
 import "@/lib/install"; // kurulum isteğini sayfa açılır açılmaz yakalamak için
@@ -12,6 +12,7 @@ const employee = [
   { href: "/calendar", label: "Takvim", icon: CalendarDays },
   { href: "/goal", label: "Hedef", icon: Target },
   { href: "/finance", label: "Hesap", icon: Calculator },
+  { href: "/reports", label: "Rapor", icon: BarChart3 },
   { href: "/profile", label: "Profil", icon: User },
 ];
 const manager = [

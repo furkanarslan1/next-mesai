@@ -17,6 +17,30 @@ const STATUS: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent", "ho
 const isStatusRow = (e: Entry) => STATUS.includes(e.type) && !(e.type === "holiday" && Number(e.hours) > 0);
 const isWork = (e: Entry) => e.type === "overtime" || e.type === "holiday";
 
+/** Günün notu: günün ana kaydına (mesai varsa o, yoksa ilk kayıt) yazılır. */
+function NoteEditor({ entry }: { entry: Entry | undefined }) {
+  const [text, setText] = useState(entry?.note ?? "");
+  const [busy, setBusy] = useState(false);
+  const dirty = (text.trim() || null) !== (entry?.note ?? null);
+  async function save() {
+    if (!entry) return;
+    setBusy(true);
+    try { await mutate.updateEntry(entry, { note: text.trim() || null }); toast.success("Not kaydedildi"); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Kaydedilemedi"); }
+    finally { setBusy(false); }
+  }
+  return (
+    <section className="space-y-2">
+      <p className="text-sm font-semibold">Not</p>
+      <div className="flex gap-2">
+        <Input placeholder={entry ? "Örn. acil sevkiyat, fazla yoğundu" : "Not için önce bir kayıt ekle"} value={text} maxLength={200} disabled={!entry}
+          onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (dirty) void save(); } }} aria-label="Gün notu" />
+        <Button variant="secondary" disabled={!entry || !dirty || busy} onClick={save}>Kaydet</Button>
+      </div>
+    </section>
+  );
+}
+
 type Pending = { title: string; desc: string; yes: string; run: () => Promise<unknown> };
 
 /** Takvimde seçilen günün kayıtlarını gösterir; mesai ekleme/değiştirme/silme ve gün durumunu burada yönetirsin. Her değişiklik onay ister. */
@@ -33,6 +57,7 @@ export function DaySheet({ date, entries, userId, onClose }: {
   const status = day.find(isStatusRow);
   // Günde tek mesai kaydı: varsa yeni eklenemez, saati kalemle değiştirilir ya da silinir
   const hasWork = day.some((e) => isWork(e) && Number(e.hours) > 0);
+  const primary = day.find((e) => isWork(e) && Number(e.hours) > 0) ?? day[0];
   const label = date ? format(parseISO(date), "d MMMM EEEE", { locale: tr }) : "";
   const valid = (v: string) => { const h = parseFloat(v.replace(",", ".")); return h > 0 && h <= 24 ? h : 0; };
 
@@ -106,6 +131,7 @@ export function DaySheet({ date, entries, userId, onClose }: {
                   {isStatusRow(e) ? <StatusIcon type={e.type} className="size-7 shrink-0" /> : <span className="size-2.5 shrink-0 rounded-full bg-primary" aria-hidden />}
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{TYPE_META[e.type].label}</p>
+                    {e.note && <p className="truncate text-xs italic text-muted-foreground">{e.note}</p>}
                     {isWork(e) && Number(e.hours) > 0 && (
                       <p className="text-xs text-muted-foreground tabular-nums">
                         {editId === e.id ? "" : hrs(Number(e.hours))}{e.start_time ? ` · ${hhmm(e.start_time)}–${hhmm(e.end_time)}` : ""}
@@ -141,6 +167,8 @@ export function DaySheet({ date, entries, userId, onClose }: {
               </div>
               )}
             </section>
+
+            <NoteEditor key={primary?.id ?? "none"} entry={primary} />
 
             <section className="space-y-2">
               <p className="text-sm font-semibold">Gün durumu</p>

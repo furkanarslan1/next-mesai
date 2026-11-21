@@ -32,6 +32,12 @@ export interface Settings {
   holiday_rate: number;
   goal_mode: "amount" | "hours";
   monthly_goal_hours: number;
+  /** Yıllık izin hakkı (gün) */
+  /** Maaşa dahil aylık mesai saati (bu kadarına ayrıca ücret ödenmez) */
+  included_overtime_hours: number;
+  annual_leave_days: number;
+  /** Gider kategorisi (CategoryKey) -> aylık limit */
+  budgets: Record<string, number>;
 }
 export interface Shortcut { id: string; label: string; hours: number; sort: number; start_time: string | null; end_time: string | null }
 export interface Profile { id: string; full_name: string; role: "employee" | "manager"; invite_code: string }
@@ -63,4 +69,13 @@ export interface FinanceItem {
   spent_on: string | null; // YYYY-MM-DD
   recurring: boolean;
   ends_month: string | null;
+}
+
+export interface Payslip {
+  id: string;
+  user_id: string;
+  month: string; // ayın ilk günü
+  paid_hours: number;
+  paid_amount: number;
+  note: string | null;
 }

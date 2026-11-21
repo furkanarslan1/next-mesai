@@ -16,6 +16,7 @@ import { ShortcutButton } from "@/components/mesai/shortcut-button";
 import { DatePicker } from "@/components/mesai/date-picker";
 import { StatusIcon } from "@/components/mesai/status-icon";
 import { LevelIcon } from "@/components/mesai/level-icon";
+import { ReminderCard } from "@/components/mesai/reminder-card";
 import { MonthSummary } from "@/components/mesai/month-summary";
 import { GoalHero } from "@/components/mesai/goal-hero";
 import { Button } from "@/components/ui/button";
@@ -153,6 +154,8 @@ function HomeView({ today }: { today: Date }) {
         </div>
       )}
 
+      <ReminderCard todayStr={todayStr} now={today} hasRecords={todays.length > 0} isToday={date === todayStr} />
+
       {holiday && !activeStatus && (
         <div className="glass r-lg flex items-center justify-between px-4 py-3 text-sm">
           <span>🎉 {holiday}</span>
@@ -161,7 +164,7 @@ function HomeView({ today }: { today: Date }) {
       )}
 
       {settings && realEntries && userId ? (
-        <GoalHero userId={userId} settings={settings} entries={entries} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })} />
+        <GoalHero userId={userId} settings={settings} entries={entries} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} />
       ) : (
         <div className="glass min-h-[15.5rem] w-full animate-pulse" aria-busy />
       )}

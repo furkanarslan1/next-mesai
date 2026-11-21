@@ -480,3 +480,52 @@ body {
 }
 .shortcut-float { text-shadow: none; }
 .shortcut-ring { border-color: var(--teal); }
+
+/* Yazdırma / PDF: menü ve düğmeler gizlenir, zemin beyaz olur */
+@media print {
+  aside, nav, .nav-shield, .no-print, [data-slot="toaster"] { display: none !important; }
+  body { background: #fff !important; }
+  .glass, [data-slot="card"] { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+}
+
+/* =====================================================================
+   Koyu tema: aynı palet (071B2B zemin, 131B2B yüzey, CFEAE0 metin/vurgu, 5B91A3 ikincil)
+   ===================================================================== */
+:root { --fill: var(--navy); }
+.dark {
+  --fill: color-mix(in oklch, var(--teal) 42%, var(--navy));
+  --background: var(--ink);
+  --foreground: color-mix(in oklch, var(--mint) 88%, white);
+  --card: var(--navy);
+  --card-foreground: color-mix(in oklch, var(--mint) 88%, white);
+  --popover: var(--navy);
+  --popover-foreground: color-mix(in oklch, var(--mint) 88%, white);
+  --primary: var(--mint);
+  --primary-foreground: var(--ink);
+  --secondary: color-mix(in oklch, var(--teal) 18%, var(--navy));
+  --secondary-foreground: var(--mint);
+  --muted: color-mix(in oklch, var(--teal) 13%, var(--navy));
+  --muted-foreground: color-mix(in oklch, var(--mint) 62%, var(--navy));
+  --accent: color-mix(in oklch, var(--teal) 22%, var(--navy));
+  --accent-foreground: var(--mint);
+  --border: color-mix(in oklch, var(--teal) 26%, var(--navy));
+  --input: color-mix(in oklch, var(--teal) 32%, var(--navy));
+  --ring: color-mix(in oklch, var(--teal) 60%, transparent);
+  --destructive: oklch(0.7 0.19 22);
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 40%), 0 14px 34px oklch(0 0 0 / 35%);
+}
+.dark .glass,
+.dark [data-slot="card"],
+.dark .glass-nav {
+  background: var(--card);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid color-mix(in oklch, var(--teal) 20%, transparent);
+  box-shadow: var(--shadow-soft);
+}
+.dark .glass-nav { box-shadow: 0 2px 4px oklch(0 0 0 / 45%), 0 18px 44px oklch(0 0 0 / 55%); }
+.dark .glass-navy { box-shadow: 0 8px 20px oklch(0 0 0 / 40%); }
+.dark .nav-active { box-shadow: 0 8px 20px oklch(0 0 0 / 40%); }
+.dark .goal-track { background: color-mix(in oklch, var(--teal) 22%, transparent); }
+.dark [data-slot="input"] { background: var(--muted); }
+.dark [role="dialog"] { border: 1px solid color-mix(in oklch, var(--teal) 24%, transparent); }
