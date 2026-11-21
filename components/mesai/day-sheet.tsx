@@ -87,14 +87,14 @@ export function DaySheet({ date, entries, userId, onClose }: {
         </SheetHeader>
 
         {pending ? (
-          <div className="space-y-4 rounded-[1.5rem] bg-muted p-4">
-            <div>
-              <p className="font-semibold">{pending.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{pending.desc}</p>
+          <div className="space-y-6 rounded-[1.75rem] bg-muted p-6">
+            <div className="space-y-2">
+              <p className="text-xl font-semibold leading-snug">{pending.title}</p>
+              <p className="text-base leading-relaxed text-muted-foreground">{pending.desc}</p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" autoFocus disabled={busy} onClick={() => setPending(null)}>Hayır</Button>
-              <Button disabled={busy} onClick={confirmYes}>{pending.yes}</Button>
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="secondary" autoFocus disabled={busy} className="h-14 bg-background text-base font-semibold" onClick={() => setPending(null)}>Hayır</Button>
+              <Button disabled={busy} className="h-14 text-base font-semibold" onClick={confirmYes}>{pending.yes}</Button>
             </div>
           </div>
         ) : (

@@ -267,14 +267,14 @@ function HomeView({ today }: { today: Date }) {
       </div>
 
       <Dialog open={!!confirm} onOpenChange={(o) => { if (!o) setConfirm(null); }}>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>{confirm?.title}</DialogTitle>
-            <DialogDescription>{confirm?.desc}</DialogDescription>
+        <DialogContent showCloseButton={false} className="gap-7 p-7 sm:max-w-md">
+          <DialogHeader className="gap-2.5">
+            <DialogTitle className="text-xl leading-snug">{confirm?.title}</DialogTitle>
+            <DialogDescription className="text-base leading-relaxed">{confirm?.desc}</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" autoFocus onClick={() => setConfirm(null)}>Hayır</Button>
-            <Button onClick={() => { const c = confirm; setConfirm(null); c?.run(); }}>{confirm?.yes ?? "Evet"}</Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="secondary" autoFocus className="h-14 text-base font-semibold" onClick={() => setConfirm(null)}>Hayır</Button>
+            <Button className="h-14 text-base font-semibold" onClick={() => { const c = confirm; setConfirm(null); c?.run(); }}>{confirm?.yes ?? "Evet"}</Button>
           </div>
         </DialogContent>
       </Dialog>
