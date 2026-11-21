@@ -103,6 +103,18 @@ function HomeView({ today }: { today: Date }) {
   }
 
   const todays = entries.filter((e) => e.work_date === date);
+  // Günün durumu (izin/rapor/gelmedim/tatil) tek olabilir; çalışılan tatil (saatli) durum sayılmaz
+  const isStatusRow = (e: Entry) => STATUS.includes(e.type) && !(e.type === "holiday" && Number(e.hours) > 0);
+  const activeStatus = todays.find(isStatusRow);
+  const dayLabel = format(parseISO(date), "d MMMM", { locale: tr });
+  function askStatus(t: EntryType) {
+    const existing = todays.find((e) => e.type === t && isStatusRow(e));
+    if (existing) {
+      setConfirm({ title: `${TYPE_META[t].label} geri alınsın mı?`, desc: `${dayLabel} tarihindeki "${TYPE_META[t].label}" kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(existing) });
+    } else if (!activeStatus) {
+      setConfirm({ title: `${TYPE_META[t].label} olarak işaretlensin mi?`, desc: `${dayLabel} günü "${TYPE_META[t].label}" olarak kaydedilecek. Bir gün için tek durum seçilebilir.`, yes: "Evet, işaretle", run: () => add(t, 0) });
+    }
+  }
   const todayHours = todays.filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
   const monthHours = entries.filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
 
@@ -126,10 +138,10 @@ function HomeView({ today }: { today: Date }) {
         </label>
       </header>
 
-      {holiday && !todays.some((e) => e.type === "holiday") && (
+      {holiday && !activeStatus && (
         <div className="glass r-lg flex items-center justify-between px-4 py-3 text-sm">
           <span>🎉 {holiday}</span>
-          <Button size="sm" variant="secondary" {...realTap(() => add("holiday", 0))}>Tatil olarak işaretle</Button>
+          <Button size="sm" variant="secondary" {...realTap(() => askStatus("holiday"))}>Tatil olarak işaretle</Button>
         </div>
       )}
 
@@ -186,20 +198,22 @@ function HomeView({ today }: { today: Date }) {
           <div className="grid grid-cols-2 gap-3">
             {STATUS.map((t) => {
               const m = STATUS_META[t];
-              const existing = todays.find((e) => e.type === t);
+              const existing = todays.find((e) => e.type === t && isStatusRow(e));
               const pending = existing?.id.startsWith("tmp-");
+              // Başka bir durum seçiliyse bu kart kilitlenir; önce seçili olan geri alınmalı
+              const locked = !existing && !!activeStatus;
               return (
                 <button
-                  key={t} type="button" disabled={pending} aria-pressed={!!existing}
-                  {...realTap(() => (existing ? remove(existing) : add(t, 0)))}
-                  className={`glass r-lg relative flex flex-col items-center gap-2.5 p-4 text-center transition active:scale-[0.97] disabled:opacity-60 ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
+                  key={t} type="button" disabled={pending || locked} aria-pressed={!!existing}
+                  {...realTap(() => askStatus(t))}
+                  className={`glass r-lg relative flex flex-col items-center gap-2.5 p-4 text-center transition active:scale-[0.97] disabled:opacity-50 ${locked ? "grayscale" : ""} ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
                 >
                   <span className={`grid size-12 place-items-center r-md ring-1 ${existing ? "bg-primary text-primary-foreground ring-primary" : m.tint}`}>
                     {existing ? <Check className="size-6" /> : <StatusIcon type={t} className="size-8" />}
                   </span>
                   <span>
                     <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
-                    <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri al" : m.hint}</span>
+                    <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri almak için dokun" : locked ? "Önce seçileni geri al" : m.hint}</span>
                   </span>
                 </button>
               );
