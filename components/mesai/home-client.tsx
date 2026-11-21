@@ -190,18 +190,17 @@ function HomeView({ today }: { today: Date }) {
               />
             );
           })}
+          {/* "Farklı mesai" ile girilen (ya da silinmiş kısayoldan gelen) kayıt da kısayol gibi görünür; dokununca geri alınır */}
+          {workEntry && !(shortcuts ?? []).some((x) => x.id === workEntry.shortcut_id) && (
+            <ShortcutButton
+              label={hrs(Number(workEntry.hours))} hoursText={hrs(Number(workEntry.hours))}
+              hint={workEntry.start_time ? `${hhmm(workEntry.start_time)}–${hhmm(workEntry.end_time)}` : workEntry.type === "holiday" ? "Resmi tatil" : "Farklı mesai"}
+              active disabled={workEntry.id.startsWith("tmp-")}
+              onPress={() => askRemoveWork(workEntry)}
+            />
+          )}
         </div>
-        {workEntry ? (
-          <div className="glass r-lg mt-5 flex items-center justify-between gap-3 px-4 py-3 text-sm">
-            <div>
-              <p className="font-semibold">{dayLabel} mesaisi: {hrs(Number(workEntry.hours))}</p>
-              <p className="text-xs text-muted-foreground">
-                {workEntry.start_time ? `${hhmm(workEntry.start_time)}–${hhmm(workEntry.end_time)} · ` : ""}{workEntry.type === "holiday" ? "Resmi tatil" : workEntry.shortcut_id ? "Kısayoldan eklendi" : "Elle girildi"} · günde tek mesai
-              </p>
-            </div>
-            <Button size="sm" variant="secondary" disabled={workEntry.id.startsWith("tmp-")} {...realTap(() => askRemoveWork(workEntry))}>Geri al</Button>
-          </div>
-        ) : (
+        {!workEntry && (
           <button type="button" {...realTap(() => { setOnHoliday(!!holiday); setCustom(true); })}
             className="glass r-pill mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
             <Plus className="size-4" />Farklı mesai ekle
