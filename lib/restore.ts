@@ -51,6 +51,7 @@ export async function restoreBackup(text: string) {
   const finance = rows("finance_items").filter((r) => date(r.month) && ["income", "expense"].includes(String(r.kind))).map((r) => ({
     id: str(r.id) ?? undefined, user_id: uid, month: date(r.month)!, kind: r.kind,
     category: str(r.category) ?? "Diğer", amount: Math.max(0, num(r.amount)),
+    ...("recurring" in r ? { spent_on: date(r.spent_on), recurring: r.recurring === true, ends_month: date(r.ends_month) } : {}),
   }));
 
   // id'si olmayanlar insert, olanlar upsert

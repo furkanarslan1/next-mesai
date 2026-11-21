@@ -52,3 +52,15 @@ export const SHIFTS: Record<ShiftType, { label: string; start: string; end: stri
 };
 
 export interface ManagerLink { id: string; status: string; manager_id: string; employee_id: string; name?: string }
+
+export interface FinanceItem {
+  id: string;
+  user_id: string;
+  month: string; // ayın ilk günü, YYYY-MM-01 (tekrarlayanlarda başladığı ay)
+  kind: "income" | "expense";
+  category: string;
+  amount: number;
+  spent_on: string | null; // YYYY-MM-DD
+  recurring: boolean;
+  ends_month: string | null;
+}

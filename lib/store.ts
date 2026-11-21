@@ -12,7 +12,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
-import type { Entry, ManagerLink, Profile, Settings, Shortcut } from "./types";
+import type { Entry, FinanceItem, ManagerLink, Profile, Settings, Shortcut } from "./types";
 
 export const DEFAULT_SETTINGS: Settings = {
   hourly_rate: 0, sunday_multiplier: 2, holiday_multiplier: 2, monthly_goal_amount: 0, currency: "TRY",
@@ -27,13 +27,14 @@ interface State {
   totalHours: number | null;
   entries: Record<string, Entry[]>; // "yyyy-MM" -> kayıtlar
   links: ManagerLink[] | null;
+  finance: Record<string, FinanceItem[]>; // "yyyy-MM" -> o ayda geçerli kalemler (tekrarlayanlar dahil)
 }
 
-const EMPTY: State = { profile: null, settings: null, shortcuts: null, totalHours: null, entries: {}, links: null };
+const EMPTY: State = { profile: null, settings: null, shortcuts: null, totalHours: null, entries: {}, links: null, finance: {} };
 
 /** Dilim tazelik süreleri (ms). Kayıtlar en sık değişen veridir, ayarlar/profil nadiren. */
 const MIN = 60_000;
-const TTL = { profile: 30 * MIN, settings: 10 * MIN, shortcuts: 10 * MIN, total: 5 * MIN, entries: 3 * MIN, links: 2 * MIN };
+const TTL = { profile: 30 * MIN, settings: 10 * MIN, shortcuts: 10 * MIN, total: 5 * MIN, entries: 3 * MIN, links: 2 * MIN, finance: 3 * MIN };
 let stamps: Record<string, number> = {};
 const touch = (k: string) => { stamps[k] = Date.now(); };
 const fresh = (k: string, ttl: number) => Date.now() - (stamps[k] ?? 0) < ttl;
@@ -65,7 +66,7 @@ export function resetStore() {
   epoch++;
   stamps = {};
   inflight.clear();
-  set({ ...EMPTY, entries: {} });
+  set({ ...EMPTY, entries: {}, finance: {} });
 }
 
 export const monthKey = (d: Date) => format(d, "yyyy-MM");
@@ -133,6 +134,24 @@ export const load = {
       .order("work_date").order("created_at"));
     if (ep === epoch && rows) { touch(`e:${key}`); set({ entries: { ...state.entries, [key]: rows as Entry[] } }); }
   })),
+  /** Bir ayın gelir/gider kalemleri; o ayda geçerli tekrarlayanlar da gelir. */
+  finance: (key: string, force = false) => (!force && state.finance[key] && fresh(`f:${key}`, TTL.finance) ? Promise.resolve() : once(`f:${key}`, async () => {
+    const ep = epoch;
+    const first = `${key}-01`;
+    const supabase = createClient();
+    const rows = await readConsistent(async () => {
+      const r = await supabase.from("finance_items").select("*").or(`month.eq.${first},and(recurring.eq.true,month.lte.${first})`);
+      if (!r.error) return r;
+      // 0006 migration'ı henüz uygulanmadıysa yalnızca o ayın kalemleri
+      return await supabase.from("finance_items").select("*").eq("month", first);
+    });
+    if (ep !== epoch || !rows) return;
+    const items = (rows as Record<string, unknown>[])
+      .map((d) => ({ spent_on: null, recurring: false, ends_month: null, ...d, amount: Number(d.amount) }) as FinanceItem)
+      .filter((i) => (i.recurring ? !i.ends_month || i.ends_month >= first : i.month === first));
+    touch(`f:${key}`);
+    set({ finance: { ...state.finance, [key]: items } });
+  })),
   /** Yönetici bağlantıları (profil sayfası): profil yüklendikten sonra çağrılır. */
   links: (force = false) => (!force && state.links && fresh("links", TTL.links) ? Promise.resolve() : once("links", async () => {
     const ep = epoch;
@@ -158,6 +177,7 @@ function revalidateStale() {
   if (state.shortcuts) load.shortcuts();
   if (state.totalHours !== null) load.totalHours();
   Object.keys(state.entries).forEach((k) => load.entries(k));
+  Object.keys(state.finance).forEach((k) => load.finance(k));
   if (state.links) load.links();
 }
 if (typeof window !== "undefined") {
@@ -191,6 +211,11 @@ export function useLinks() {
   const v = useSyncExternalStore(subscribe, () => state.links, () => null);
   const ready = useSyncExternalStore(subscribe, () => state.profile?.id ?? "", () => "");
   useEffect(() => { if (ready) load.links(); }, [ready]);
+  return v;
+}
+export function useFinance(key: string) {
+  const v = useSyncExternalStore(subscribe, () => state.finance[key] ?? null, () => null);
+  useEffect(() => { load.finance(key); }, [key]);
   return v;
 }
 export function useMonthEntries(key: string) {
@@ -243,6 +268,38 @@ export const mutate = {
     if (state.entries[key]) set({ entries: { ...state.entries, [key]: state.entries[key].map((x) => (x.id === n.id ? n : x)) } });
     if (state.totalHours !== null && counts(n)) set({ totalHours: Math.max(0, state.totalHours + Number(n.hours) - Number(e.hours)) });
     return n;
+  },
+  /**
+   * Gelir/gider yazma işlemleri. Tekrarlayan kalemler birçok ayı etkilediği için yazmadan sonra
+   * diğer ayların önbelleği atılır, görüntülenen ay yeniden okunur.
+   */
+  finance: {
+    async add(viewKey: string, row: Omit<FinanceItem, "id">) {
+      writes++;
+      const { error } = await createClient().from("finance_items").insert(row);
+      writes++;
+      if (error) throw error;
+      await mutate.finance.refresh(viewKey);
+    },
+    async update(viewKey: string, id: string, patch: Partial<Omit<FinanceItem, "id" | "user_id">>) {
+      writes++;
+      const { error } = await createClient().from("finance_items").update(patch).eq("id", id);
+      writes++;
+      if (error) throw error;
+      await mutate.finance.refresh(viewKey);
+    },
+    async remove(viewKey: string, id: string) {
+      writes++;
+      const { error } = await createClient().from("finance_items").delete().eq("id", id);
+      writes++;
+      if (error) throw error;
+      await mutate.finance.refresh(viewKey);
+    },
+    async refresh(viewKey: string) {
+      // Görüntülenen ay ekranda kalsın (yanıp sönmesin), diğer aylar yeniden okunsun
+      set({ finance: state.finance[viewKey] ? { [viewKey]: state.finance[viewKey] } : {} });
+      await load.finance(viewKey, true);
+    },
   },
   async respondLink(id: string, status: "accepted" | "revoked") {
     const { error } = await createClient().from("manager_links").update({ status }).eq("id", id);
