@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
-import { CalendarCheck, CalendarMinus, Check, PartyPopper, Plus, Stethoscope, UserX, type LucideIcon } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { monthKey, mutate, useMonthEntries, useProfile, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
 import { realTap } from "@/lib/tap";
 import { useToday } from "@/lib/now";
@@ -13,6 +13,7 @@ import { holidayName } from "@/lib/holidays";
 import { hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
 import { ShortcutButton } from "@/components/mesai/shortcut-button";
+import { StatusIcon } from "@/components/mesai/status-icon";
 import { LevelIcon } from "@/components/mesai/level-icon";
 import { GoalHero } from "@/components/mesai/goal-hero";
 import { Button } from "@/components/ui/button";
@@ -23,12 +24,12 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const STATUS: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent", "holiday"];
-const STATUS_META: Record<string, { icon: LucideIcon; tint: string; hint: string }> = {
-  paid_leave: { icon: CalendarCheck, tint: "bg-sky-400/15 text-sky-700", hint: "Maaş kesilmez" },
-  unpaid_leave: { icon: CalendarMinus, tint: "bg-orange-500/15 text-orange-700", hint: "Maaştan düşer" },
-  sick: { icon: Stethoscope, tint: "bg-slate-300/15 text-slate-600", hint: "Doktor raporu" },
-  absent: { icon: UserX, tint: "bg-rose-500/15 text-rose-700", hint: "Habersiz" },
-  holiday: { icon: PartyPopper, tint: "bg-amber-400/15 text-amber-700", hint: "Çalışılmadı" },
+const STATUS_META: Record<string, { tint: string; hint: string }> = {
+  paid_leave: { tint: "bg-sky-500/10 ring-sky-500/20", hint: "Maaş kesilmez" },
+  unpaid_leave: { tint: "bg-orange-500/10 ring-orange-500/20", hint: "Maaştan düşer" },
+  sick: { tint: "bg-pink-500/10 ring-pink-500/20", hint: "Doktor raporu" },
+  absent: { tint: "bg-rose-500/10 ring-rose-500/20", hint: "Habersiz" },
+  holiday: { tint: "bg-amber-500/10 ring-amber-500/20", hint: "Çalışılmadı" },
 };
 
 type Opt = { add: Entry } | { remove: string };
@@ -169,10 +170,10 @@ function HomeView({ today }: { today: Date }) {
                 <button
                   key={t} type="button" disabled={pending} aria-pressed={!!existing}
                   {...realTap(() => (existing ? remove(existing) : add(t, 0)))}
-                  className={`glass relative flex flex-col items-start gap-2.5 p-3.5 text-left transition active:scale-[0.97] disabled:opacity-60 ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
+                  className={`glass relative flex flex-col items-center gap-2.5 p-4 text-center transition active:scale-[0.97] disabled:opacity-60 ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
                 >
-                  <span className={`grid size-9 place-items-center rounded-xl ${existing ? "bg-primary text-primary-foreground" : m.tint}`}>
-                    {existing ? <Check className="size-5" /> : <m.icon className="size-5" />}
+                  <span className={`grid size-12 place-items-center rounded-2xl ring-1 ${existing ? "bg-primary text-primary-foreground ring-primary" : m.tint}`}>
+                    {existing ? <Check className="size-6" /> : <StatusIcon type={t} className="size-8" />}
                   </span>
                   <span>
                     <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
