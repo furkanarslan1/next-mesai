@@ -16,11 +16,11 @@ import { Card, CardContent } from "@/components/ui/card";
 
 /** İzin/rapor gibi günlerin hücre rengi ve kısa etiketi (mesai olan günlerde saat yazar) */
 const STATUS_CELL: Record<string, { bg: string; text: string; short: string }> = {
-  paid_leave: { bg: "oklch(0.75 0.12 235 / 0.28)", text: "text-sky-700", short: "İzin" },
-  unpaid_leave: { bg: "oklch(0.7 0.16 50 / 0.28)", text: "text-orange-700", short: "Ücretsiz" },
-  sick: { bg: "oklch(0.8 0.02 250 / 0.22)", text: "text-slate-600", short: "Rapor" },
-  absent: { bg: "oklch(0.65 0.2 15 / 0.32)", text: "text-rose-700", short: "Gelmedi" },
-  holiday: { bg: "oklch(0.82 0.15 85 / 0.28)", text: "text-amber-700", short: "Tatil" },
+  paid_leave: { bg: "color-mix(in oklch, oklch(0.7 0.14 235) 38%, var(--navy))", text: "text-sky-200", short: "İzin" },
+  unpaid_leave: { bg: "color-mix(in oklch, oklch(0.68 0.16 50) 38%, var(--navy))", text: "text-orange-200", short: "Ücretsiz" },
+  sick: { bg: "color-mix(in oklch, oklch(0.7 0.14 340) 36%, var(--navy))", text: "text-pink-200", short: "Rapor" },
+  absent: { bg: "color-mix(in oklch, oklch(0.62 0.2 20) 42%, var(--navy))", text: "text-rose-200", short: "Gelmedi" },
+  holiday: { bg: "color-mix(in oklch, oklch(0.8 0.15 85) 36%, var(--navy))", text: "text-amber-200", short: "Tatil" },
 };
 
 export default function CalendarPage() {
@@ -57,13 +57,13 @@ function CalendarView({ today }: { today: Date }) {
               const worked = list.filter((e) => e.type === "overtime" || e.type === "holiday").reduce((a, e) => a + Number(e.hours), 0);
               const status = list.find((e) => e.type !== "overtime" && e.type !== "holiday") ?? list.find((e) => e.type === "holiday" && Number(e.hours) === 0);
               const alpha = worked > 0 ? 0.25 + 0.75 * (worked / maxH) : 0;
-              const strong = alpha > 0.55;
+              const strong = alpha > 0.6;
               const isToday = key === format(today, "yyyy-MM-dd");
               const st = status ? STATUS_CELL[status.type] : null;
               return (
                 <button key={key} type="button" onClick={() => setSelected(key)} aria-label={`${format(d, "d MMMM", { locale: tr })} kayıtlarını aç`} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
-                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none text-foreground transition active:scale-95 ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-primary" : ""}`}
-                  style={{ background: worked > 0 ? `color-mix(in oklch, var(--primary) ${Math.round(alpha * 100)}%, transparent)` : st ? st.bg : "var(--muted)", color: strong ? "oklch(0.99 0 0)" : undefined }}>
+                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none text-white transition active:scale-95 ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-[var(--teal)] ring-offset-2 ring-offset-card" : ""}`}
+                  style={{ background: worked > 0 ? `color-mix(in oklch, var(--teal) ${Math.round(alpha * 100)}%, var(--navy))` : st ? st.bg : "var(--navy)", color: strong ? "var(--ink)" : undefined }}>
                   <span className={isToday ? "font-bold" : ""}>{format(d, "d")}</span>
                   {worked > 0 ? (
                     <span className="mt-1 text-[10px] font-semibold tabular-nums">{+worked.toFixed(2)} sa</span>
@@ -79,7 +79,7 @@ function CalendarView({ today }: { today: Date }) {
         </CardContent>
       </Card>
       <div className="flex flex-wrap gap-3 text-xs">
-        <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-primary" />Mesai (saat yazar)</span>
+        <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--teal)]" />Mesai (saat yazar)</span>
         {Object.values(TYPE_META).slice(1).map((m) => (
           <span key={m.label} className="flex items-center gap-1"><span className={`size-2 rounded-full ${m.color}`} />{m.label}</span>
         ))}
