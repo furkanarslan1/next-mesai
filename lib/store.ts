@@ -232,6 +232,18 @@ export const mutate = {
     if (state.entries[key]) set({ entries: { ...state.entries, [key]: state.entries[key].filter((x) => x.id !== e.id) } });
     if (state.totalHours !== null && counts(e)) set({ totalHours: Math.max(0, state.totalHours - Number(e.hours)) });
   },
+  /** Bir kaydın saatini/saat aralığını değiştirir; toplam saat farkı kadar güncellenir. */
+  async updateEntry(e: Entry, patch: Partial<Pick<Entry, "hours" | "start_time" | "end_time">>) {
+    writes++;
+    const { data, error } = await createClient().from("entries").update(patch).eq("id", e.id).select().single();
+    writes++;
+    if (error) throw error;
+    const n = data as Entry;
+    const key = n.work_date.slice(0, 7);
+    if (state.entries[key]) set({ entries: { ...state.entries, [key]: state.entries[key].map((x) => (x.id === n.id ? n : x)) } });
+    if (state.totalHours !== null && counts(n)) set({ totalHours: Math.max(0, state.totalHours + Number(n.hours) - Number(e.hours)) });
+    return n;
+  },
   async respondLink(id: string, status: "accepted" | "revoked") {
     const { error } = await createClient().from("manager_links").update({ status }).eq("id", id);
     if (error) throw error;
