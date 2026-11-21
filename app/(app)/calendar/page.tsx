@@ -5,6 +5,8 @@ import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth 
 import { tr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMesai } from "@/lib/use-data";
+import { useProfile } from "@/lib/store";
+import { DaySheet } from "@/components/mesai/day-sheet";
 import { useToday } from "@/lib/now";
 import { holidayName } from "@/lib/holidays";
 import { hrs, money, monthSummary } from "@/lib/calc";
@@ -29,6 +31,8 @@ export default function CalendarPage() {
 
 function CalendarView({ today }: { today: Date }) {
   const [month, setMonth] = useState(today);
+  const [selected, setSelected] = useState<string | null>(null);
+  const userId = useProfile()?.id ?? "";
   const { entries, settings } = useMesai(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
   const offset = (getDay(startOfMonth(month)) + 6) % 7; // Pzt başlangıç
@@ -57,8 +61,8 @@ function CalendarView({ today }: { today: Date }) {
               const isToday = key === format(today, "yyyy-MM-dd");
               const st = status ? STATUS_CELL[status.type] : null;
               return (
-                <div key={key} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
-                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none text-foreground ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-primary" : ""}`}
+                <button key={key} type="button" onClick={() => setSelected(key)} aria-label={`${format(d, "d MMMM", { locale: tr })} kayıtlarını aç`} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
+                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none text-foreground transition active:scale-95 ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-primary" : ""}`}
                   style={{ background: worked > 0 ? `color-mix(in oklch, var(--primary) ${Math.round(alpha * 100)}%, transparent)` : st ? st.bg : "var(--muted)", color: strong ? "oklch(0.99 0 0)" : undefined }}>
                   <span className={isToday ? "font-bold" : ""}>{format(d, "d")}</span>
                   {worked > 0 ? (
@@ -67,10 +71,11 @@ function CalendarView({ today }: { today: Date }) {
                     <span className={`mt-1 text-[10px] font-medium ${st.text}`}>{st.short}</span>
                   ) : null}
                   {worked > 0 && status && <span className={`absolute right-1 top-1 size-1.5 rounded-full ${TYPE_META[status.type].color}`} />}
-                </div>
+                </button>
               );
             })}
           </div>
+          <p className="mt-3 text-center text-xs text-muted-foreground">Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil.</p>
         </CardContent>
       </Card>
       <div className="flex flex-wrap gap-3 text-xs">
@@ -85,6 +90,7 @@ function CalendarView({ today }: { today: Date }) {
           {days.filter((d) => holidayName(format(d, "yyyy-MM-dd"))).map((d) => `${format(d, "d")} ${holidayName(format(d, "yyyy-MM-dd"))}`).join(" · ")}
         </p>
       )}
+      <DaySheet date={selected} entries={entries} userId={userId} onClose={() => setSelected(null)} />
       <div className="grid grid-cols-2 gap-3">
         <Card><CardContent><p className="text-xs text-muted-foreground">Toplam mesai</p><p className="text-xl font-bold">{hrs(sum.hours)}</p></CardContent></Card>
         <Card><CardContent><p className="text-xs text-muted-foreground">Kazanç</p><p className="text-xl font-bold">{money(sum.earned, settings.currency)}</p></CardContent></Card>
