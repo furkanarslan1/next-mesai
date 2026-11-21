@@ -24,12 +24,12 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const STATUS: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent", "holiday"];
-const STATUS_META: Record<string, { tint: string; hint: string }> = {
-  paid_leave: { tint: "bg-sky-500/10 ring-sky-500/20", hint: "Maaş kesilmez" },
-  unpaid_leave: { tint: "bg-orange-500/10 ring-orange-500/20", hint: "Maaştan düşer" },
-  sick: { tint: "bg-pink-500/10 ring-pink-500/20", hint: "Doktor raporu" },
-  absent: { tint: "bg-rose-500/10 ring-rose-500/20", hint: "Habersiz" },
-  holiday: { tint: "bg-amber-500/10 ring-amber-500/20", hint: "Çalışılmadı" },
+const STATUS_META: Record<string, { hint: string }> = {
+  paid_leave: { hint: "Maaş kesilmez" },
+  unpaid_leave: { hint: "Maaştan düşer" },
+  sick: { hint: "Doktor raporu" },
+  absent: { hint: "Habersiz" },
+  holiday: { hint: "Çalışılmadı" },
 };
 
 type Opt = { add: Entry } | { remove: string };
@@ -152,11 +152,11 @@ function HomeView({ today }: { today: Date }) {
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Card size="sm" className="r-lg"><CardContent>
+        <Card size="sm" className="r-lg"><CardContent className="text-center">
           <p className="text-xs text-muted-foreground">Bugünün mesaisi</p>
           <p className="text-xl font-bold tabular-nums">{hrs(todayHours)}</p>
         </CardContent></Card>
-        <Card size="sm" className="r-lg"><CardContent>
+        <Card size="sm" className="r-lg"><CardContent className="text-center">
           <p className="text-xs text-muted-foreground">{format(parseISO(date), "LLLL", { locale: tr })} toplamı</p>
           <p className="text-xl font-bold tabular-nums">{hrs(monthHours)}</p>
         </CardContent></Card>
@@ -208,8 +208,8 @@ function HomeView({ today }: { today: Date }) {
                   {...realTap(() => askStatus(t))}
                   className={`glass r-lg relative flex flex-col items-center gap-2.5 p-4 text-center transition active:scale-[0.97] disabled:opacity-50 ${locked ? "grayscale" : ""} ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
                 >
-                  <span className={`grid size-12 place-items-center r-md ring-1 ${existing ? "bg-primary text-primary-foreground ring-primary" : m.tint}`}>
-                    {existing ? <Check className="size-6" /> : <StatusIcon type={t} className="size-8" />}
+                  <span className={`grid size-12 place-items-center ${existing ? "r-md bg-primary text-primary-foreground" : ""}`}>
+                    {existing ? <Check className="size-6" /> : <StatusIcon type={t} className="size-11" />}
                   </span>
                   <span>
                     <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
