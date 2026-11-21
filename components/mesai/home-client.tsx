@@ -24,11 +24,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 const STATUS: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent", "holiday"];
 const STATUS_META: Record<string, { icon: LucideIcon; tint: string; hint: string }> = {
-  paid_leave: { icon: CalendarCheck, tint: "bg-sky-400/15 text-sky-300", hint: "Maaş kesilmez" },
-  unpaid_leave: { icon: CalendarMinus, tint: "bg-orange-500/15 text-orange-300", hint: "Maaştan düşer" },
-  sick: { icon: Stethoscope, tint: "bg-slate-300/15 text-slate-200", hint: "Doktor raporu" },
-  absent: { icon: UserX, tint: "bg-rose-500/15 text-rose-300", hint: "Habersiz" },
-  holiday: { icon: PartyPopper, tint: "bg-amber-400/15 text-amber-300", hint: "Çalışılmadı" },
+  paid_leave: { icon: CalendarCheck, tint: "bg-sky-400/15 text-sky-700", hint: "Maaş kesilmez" },
+  unpaid_leave: { icon: CalendarMinus, tint: "bg-orange-500/15 text-orange-700", hint: "Maaştan düşer" },
+  sick: { icon: Stethoscope, tint: "bg-slate-300/15 text-slate-600", hint: "Doktor raporu" },
+  absent: { icon: UserX, tint: "bg-rose-500/15 text-rose-700", hint: "Habersiz" },
+  holiday: { icon: PartyPopper, tint: "bg-amber-400/15 text-amber-700", hint: "Çalışılmadı" },
 };
 
 type Opt = { add: Entry } | { remove: string };

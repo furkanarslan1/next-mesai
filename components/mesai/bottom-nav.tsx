@@ -37,7 +37,7 @@ export function BottomNav() {
         {items.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined}
             className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition",
-              isActive(href) ? "nav-active" : "text-muted-foreground hover:bg-white/5 hover:text-foreground")}>
+              isActive(href) ? "nav-active" : "text-muted-foreground hover:bg-primary/5 hover:text-foreground")}>
             <Icon className="size-5" />{label}
           </Link>
         ))}
