@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { download, toCSV } from "@/lib/backup";
 import { restoreBackup } from "@/lib/restore";
 import { mutate, resetStore, useLinks, useProfile, useSettings, useShortcuts } from "@/lib/store";
@@ -27,9 +28,14 @@ export default function ProfilePage() {
   }
   async function backup(format: "json" | "csv") {
     const supabase = createClient();
-    const tables = profile?.role === "manager" ? ["manager_links"] : ["user_settings", "shortcuts", "entries", "finance_items"];
+    const tables = profile?.role === "manager" ? ["manager_links"] : ["user_settings", "shortcuts", "entries", "finance_items", "payslips"];
     const data: Record<string, unknown[]> = {};
-    for (const t of tables) data[t] = (await supabase.from(t).select("*")).data ?? [];
+    for (const t of tables) {
+      // 1000 satır sınırına takılmadan tüm kayıtlar okunur (eksik yedek sessizce oluşmasın)
+      const rows = await fetchAll<Record<string, unknown>>((a, b) => supabase.from(t).select("*").order("id").range(a, b));
+      if (!rows) { toast.error("Yedek alınamadı, tekrar dene"); return; }
+      data[t] = rows;
+    }
     const stamp = new Date().toISOString().slice(0, 10);
     if (format === "json") download(`mesai-yedek-${stamp}.json`, JSON.stringify(data, null, 2), "application/json");
     else for (const t of tables) if (data[t].length) download(`mesai-${t}-${stamp}.csv`, toCSV(data[t] as Record<string, unknown>[]), "text/csv");
@@ -40,7 +46,7 @@ export default function ProfilePage() {
     if (!file) return;
     try {
       const c = await restoreBackup(await file.text()); await mutate.refresh.all();
-      toast.success(`Geri yüklendi: ${c.entries} kayıt, ${c.shortcuts} kısayol, ${c.finance} gelir/gider`);
+      toast.success(`Geri yüklendi: ${c.entries} kayıt, ${c.shortcuts} kısayol, ${c.finance} gelir/gider, ${c.payslips} bordro`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Geri yükleme başarısız");
     }

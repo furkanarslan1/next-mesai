@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { BellRing, X } from "lucide-react";
 import { setPrefs, usePrefs } from "@/lib/prefs";
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,14 @@ import { Button } from "@/components/ui/button";
  * o güne hiç kayıt girilmediyse görünür. Her gün kayıt girmek zorunlu değil: "Yapmadım" ya da kapatma, o gün için bir daha göstermez.
  * Gerçek (arka plan) bildirim sunucu tarafı altyapı gerektirir; bu kart uygulama açıkken çalışır.
  */
-export function ReminderCard({ todayStr, now, hasRecords, isToday }: { todayStr: string; now: Date; hasRecords: boolean; isToday: boolean }) {
+// Saat dakikada bir yenilenir: uygulama açık kalırken hatırlatma saati gelince kart kendiliğinden çıkar
+const subscribeMinute = (cb: () => void) => { const id = window.setInterval(cb, 60_000); return () => window.clearInterval(id); };
+const currentHour = () => new Date().getHours();
+
+export function ReminderCard({ todayStr, hasRecords, isToday }: { todayStr: string; hasRecords: boolean; isToday: boolean }) {
   const p = usePrefs();
-  if (!p.reminderOn || !isToday || hasRecords || p.reminderDismissed === todayStr || now.getHours() < p.reminderHour) return null;
+  const hour = useSyncExternalStore(subscribeMinute, currentHour, () => 0);
+  if (!p.reminderOn || !isToday || hasRecords || p.reminderDismissed === todayStr || hour < p.reminderHour) return null;
   const dismiss = () => setPrefs({ reminderDismissed: todayStr });
   return (
     <div className="glass r-lg flex items-center gap-3 px-4 py-3 text-sm" role="status">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
 import { mutate } from "@/lib/store";
@@ -49,7 +49,8 @@ export function PayslipSheet({ userId, months, item, defaultMonth, onClose }: {
           <Label htmlFor="ps-month">Ay</Label>
           <select id="ps-month" value={month} onChange={(e) => setMonth(e.target.value)} disabled={!!item}
             className="h-11 w-full rounded-[var(--r-md)] bg-muted px-4 text-sm font-medium capitalize outline-none">
-            {months.map((d) => <option key={format(d, "yyyy-MM")} value={format(d, "yyyy-MM")}>{format(d, "LLLL yyyy", { locale: tr })}</option>)}
+            {/* Düzenlenen bordronun ayı son 12 ay dışındaysa da seçenek olarak bulunur */}
+            {(item && !months.some((d) => format(d, "yyyy-MM") === month) ? [parseISO(item.month), ...months] : months).map((d) => <option key={format(d, "yyyy-MM")} value={format(d, "yyyy-MM")}>{format(d, "LLLL yyyy", { locale: tr })}</option>)}
           </select>
         </div>
         <div className="grid grid-cols-2 gap-3">

@@ -10,8 +10,9 @@
  *   Uygulamaya dönüldüğünde (sekme/uygulama öne gelince) yalnızca süresi dolmuş dilimler yenilenir.
  */
 import { useEffect, useSyncExternalStore } from "react";
-import { endOfMonth, format, startOfMonth } from "date-fns";
+import { endOfMonth, format } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll, monthSpan } from "./fetch-all";
 import type { Entry, FinanceItem, ManagerLink, Payslip, Profile, Settings, Shortcut } from "./types";
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -127,32 +128,66 @@ export const load = {
     }
     if (ep === epoch && total !== null) { touch("total"); set({ totalHours: Number(total) }); }
   })),
-  entries: (key: string, force = false) => (!force && state.entries[key] && fresh(`e:${key}`, TTL.entries) ? Promise.resolve() : once(`e:${key}`, async () => {
-    const ep = epoch;
-    const d = new Date(`${key}-01T00:00:00`);
-    const rows = await readConsistent(async () => await createClient().from("entries").select("*")
-      .gte("work_date", format(startOfMonth(d), "yyyy-MM-dd")).lte("work_date", format(endOfMonth(d), "yyyy-MM-dd"))
-      .order("work_date").order("created_at"));
-    if (ep === epoch && rows) { touch(`e:${key}`); set({ entries: { ...state.entries, [key]: rows as Entry[] } }); }
-  })),
-  /** Bir ayın gelir/gider kalemleri; o ayda geçerli tekrarlayanlar da gelir. */
-  finance: (key: string, force = false) => (!force && state.finance[key] && fresh(`f:${key}`, TTL.finance) ? Promise.resolve() : once(`f:${key}`, async () => {
-    const ep = epoch;
-    const first = `${key}-01`;
-    const supabase = createClient();
-    const rows = await readConsistent(async () => {
-      const r = await supabase.from("finance_items").select("*").or(`month.eq.${first},and(recurring.eq.true,month.lte.${first})`);
-      if (!r.error) return r;
-      // 0006 migration'ı henüz uygulanmadıysa yalnızca o ayın kalemleri
-      return await supabase.from("finance_items").select("*").eq("month", first);
+  entries: (key: string, force = false) => load.entriesRange([key], force),
+  /**
+   * Birden çok ayın kayıtlarını TEK istekle okur (eksik/eskimiş aylar arasındaki aralık). Raporlar gibi çok aylı
+   * ekranlarda ay başına ayrı istek atmak yerine kullanılır: hem istek sayısı hem veri trafiği düşer.
+   */
+  entriesRange: (keys: string[], force = false): Promise<void> => {
+    const need = keys.filter((k) => force || !state.entries[k] || !fresh(`e:${k}`, TTL.entries));
+    if (need.length === 0) return Promise.resolve();
+    const span = monthSpan(need);
+    return once(`er:${span[0]}:${span[span.length - 1]}`, async () => {
+      const ep = epoch;
+      const from = `${span[0]}-01`;
+      const to = format(endOfMonth(new Date(`${span[span.length - 1]}-01T00:00:00`)), "yyyy-MM-dd");
+      const supabase = createClient();
+      const rows = await readConsistent(async () => {
+        const all = await fetchAll<Entry>((a, b) => supabase.from("entries").select("*").gte("work_date", from).lte("work_date", to)
+          .order("work_date").order("created_at").order("id").range(a, b));
+        return { data: all, error: all === null };
+      });
+      if (ep !== epoch || !rows) return;
+      const next = { ...state.entries };
+      span.forEach((k) => { next[k] = rows.filter((e) => e.work_date.startsWith(k)); touch(`e:${k}`); });
+      set({ entries: next });
     });
-    if (ep !== epoch || !rows) return;
-    const items = (rows as Record<string, unknown>[])
-      .map((d) => ({ spent_on: null, recurring: false, ends_month: null, ...d, amount: Number(d.amount) }) as FinanceItem)
-      .filter((i) => (i.recurring ? !i.ends_month || i.ends_month >= first : i.month === first));
-    touch(`f:${key}`);
-    set({ finance: { ...state.finance, [key]: items } });
-  })),
+  },
+  /** Bir ayın gelir/gider kalemleri; o ayda geçerli tekrarlayanlar da gelir. */
+  finance: (key: string, force = false) => load.financeRange([key], force),
+  /** Birden çok ayın gelir/gider kalemleri TEK istekle (tekrarlayanlar her ayda geçerli olduğu yerde kopyalanır). */
+  financeRange: (keys: string[], force = false): Promise<void> => {
+    const need = keys.filter((k) => force || !state.finance[k] || !fresh(`f:${k}`, TTL.finance));
+    if (need.length === 0) return Promise.resolve();
+    const span = monthSpan(need);
+    return once(`fr:${span[0]}:${span[span.length - 1]}`, async () => {
+      const ep = epoch;
+      const a = `${span[0]}-01`;
+      const b = `${span[span.length - 1]}-01`;
+      const supabase = createClient();
+      const rows = await readConsistent(async () => {
+        let legacy = false; // 0006 migration'ı uygulanmadıysa yalnızca aralıktaki kalemler
+        const all = await fetchAll<Record<string, unknown>>(async (x, y) => {
+          if (!legacy) {
+            const r = await supabase.from("finance_items").select("*").or(`and(month.gte.${a},month.lte.${b}),and(recurring.eq.true,month.lte.${b})`).order("id").range(x, y);
+            if (!r.error) return r;
+            legacy = true;
+          }
+          return await supabase.from("finance_items").select("*").gte("month", a).lte("month", b).order("id").range(x, y);
+        });
+        return { data: all, error: all === null };
+      });
+      if (ep !== epoch || !rows) return;
+      const all = rows.map((d) => ({ spent_on: null, recurring: false, ends_month: null, ...d, amount: Number(d.amount) }) as FinanceItem);
+      const next = { ...state.finance };
+      span.forEach((k) => {
+        const first = `${k}-01`;
+        next[k] = all.filter((i) => (i.recurring ? i.month <= first && (!i.ends_month || i.ends_month >= first) : i.month === first));
+        touch(`f:${k}`);
+      });
+      set({ finance: next });
+    });
+  },
   /** Bordro kayıtları (bordro kontrolü). */
   payslips: (force = false) => (!force && state.payslips && fresh("payslips", TTL.payslips) ? Promise.resolve() : once("payslips", async () => {
     const ep = epoch;
@@ -180,14 +215,29 @@ export const load = {
   })),
 };
 
+/* Ekranda şu an gösterilen dilimler (bileşen takılı oldukça): arka planda yalnızca bunlar yenilenir */
+const active = new Map<string, number>();
+const activeKeys = (prefix: string) => [...active.keys()].filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length));
+function useActive(ids: string[]) {
+  const joined = ids.join(",");
+  useEffect(() => {
+    const list = joined.split(",").filter(Boolean);
+    list.forEach((i) => active.set(i, (active.get(i) ?? 0) + 1));
+    return () => list.forEach((i) => { const n = (active.get(i) ?? 1) - 1; if (n <= 0) active.delete(i); else active.set(i, n); });
+  }, [joined]);
+}
+
 /** Uygulamaya dönülünce yüklü dilimlerden yalnızca süresi dolanlar arka planda yenilenir. */
 function revalidateStale() {
   if (state.profile) load.profile();
   if (state.settings) load.settings();
   if (state.shortcuts) load.shortcuts();
   if (state.totalHours !== null) load.totalHours();
-  Object.keys(state.entries).forEach((k) => load.entries(k));
-  Object.keys(state.finance).forEach((k) => load.finance(k));
+  // Yalnızca ekranda gösterilen aylar yenilenir (gezilmiş eski aylar sonraki görüntülemede yenilenir)
+  const ek = activeKeys("e:");
+  if (ek.length) load.entriesRange(ek);
+  const fk = activeKeys("f:");
+  if (fk.length) load.financeRange(fk);
   if (state.payslips) load.payslips();
   if (state.links) load.links();
 }
@@ -226,6 +276,7 @@ export function useLinks() {
 }
 export function useFinance(key: string) {
   const v = useSyncExternalStore(subscribe, () => state.finance[key] ?? null, () => null);
+  useActive([`f:${key}`]);
   useEffect(() => { load.finance(key); }, [key]);
   return v;
 }
@@ -238,17 +289,20 @@ export function usePayslips() {
 export function useEntriesMap(keys: string[]) {
   const v = useSyncExternalStore(subscribe, () => state.entries, () => EMPTY.entries);
   const joined = keys.join(",");
-  useEffect(() => { joined.split(",").filter(Boolean).forEach((k) => load.entries(k)); }, [joined]);
+  useActive(keys.map((k) => `e:${k}`));
+  useEffect(() => { void load.entriesRange(joined.split(",").filter(Boolean)); }, [joined]);
   return v;
 }
 export function useFinanceMap(keys: string[]) {
   const v = useSyncExternalStore(subscribe, () => state.finance, () => EMPTY.finance);
   const joined = keys.join(",");
-  useEffect(() => { joined.split(",").filter(Boolean).forEach((k) => load.finance(k)); }, [joined]);
+  useActive(keys.map((k) => `f:${k}`));
+  useEffect(() => { void load.financeRange(joined.split(",").filter(Boolean)); }, [joined]);
   return v;
 }
 export function useMonthEntries(key: string) {
   const v = useSyncExternalStore(subscribe, () => state.entries[key] ?? null, () => null);
+  useActive([`e:${key}`]);
   useEffect(() => { load.entries(key); }, [key]);
   return v;
 }
@@ -325,9 +379,11 @@ export const mutate = {
       await mutate.finance.refresh(viewKey);
     },
     async refresh(viewKey: string) {
-      // Görüntülenen ay ekranda kalsın (yanıp sönmesin), diğer aylar yeniden okunsun
-      set({ finance: state.finance[viewKey] ? { [viewKey]: state.finance[viewKey] } : {} });
-      await load.finance(viewKey, true);
+      // Tekrarlayan kalemler birçok ayı etkiler: ekranda gösterilen tüm aylar tek istekle yenilenir (veri ekranda
+      // kalır, yanıp sönmez); gösterilmeyen aylar önbellekten atılıp bir sonraki görüntülemede okunur.
+      const shown = [...new Set([...activeKeys("f:"), viewKey])];
+      set({ finance: Object.fromEntries(shown.filter((k) => state.finance[k]).map((k) => [k, state.finance[k]])) });
+      await load.financeRange(shown, true);
     },
   },
   payslip: {
@@ -355,7 +411,7 @@ export const mutate = {
     links: () => load.links(true),
     all: () => Promise.all([
       load.settings(true), load.shortcuts(true), load.totalHours(true),
-      ...Object.keys(state.entries).map((k) => load.entries(k, true)),
+      load.entriesRange(Object.keys(state.entries), true),
     ]),
   },
 };
