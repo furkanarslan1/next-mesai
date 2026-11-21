@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Pencil, Target } from "lucide-react";
 import { mutate } from "@/lib/store";
 import { goalProgress, hrs, money } from "@/lib/calc";
+import { projection } from "@/lib/reports";
 import { MonthSummary } from "@/components/mesai/month-summary";
 import type { Entry, Settings } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,10 @@ const SPARKS: [number, number, number][] = [
   [34, -30, 0], [52, 6, 0.2], [28, 26, 0.4], [60, -10, 0.6], [40, -42, 0.8], [46, 22, 1.0],
 ];
 
-export function GoalHero({ userId, settings, entries, monthLabel }: {
+export function GoalHero({ userId, settings, entries, monthLabel, today }: {
   userId: string; settings: Settings; entries: Entry[]; monthLabel: string;
+  /** Verilirse (içinde bulunulan ay) ay sonu tahmini ve günlük gereken mesai gösterilir */
+  today?: Date;
 }) {
   const [opt, patchOpt] = useOptimistic(settings, (s, patch: Partial<Settings>) => ({ ...s, ...patch }));
   const [, startTransition] = useTransition();
@@ -27,6 +30,7 @@ export function GoalHero({ userId, settings, entries, monthLabel }: {
   const [value, setValue] = useState("");
 
   const g = goalProgress(entries, opt);
+  const pr = today ? projection(entries, opt, today) : null;
   const cur = opt.currency;
 
   function openEditor() {
@@ -102,6 +106,29 @@ export function GoalHero({ userId, settings, entries, monthLabel }: {
               <span className="text-muted-foreground"> · maaş {money(opt.monthly_salary, cur)}{g.deduction > 0 && <> − kesinti {money(g.deduction, cur)}</>} + mesai {money(g.earned, cur)}</span></>
           )}
         </p>
+      )}
+
+      {g.set && pr && (
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="r-md bg-muted px-3 py-3 text-center">
+            <p className="text-[11px] text-muted-foreground">Bu tempoyla ay sonu</p>
+            <p className="text-lg font-bold tabular-nums leading-tight">{pr.mode === "hours" ? hrs(Math.round(pr.projectedHours * 10) / 10) : money(pr.projectedIncome, cur)}</p>
+            <p className={`mt-0.5 text-[11px] font-medium ${pr.onTrack ? "text-emerald-600" : "text-muted-foreground"}`}>{pr.onTrack ? "Hedefin üstünde" : "Hedefin altında"}</p>
+          </div>
+          <div className="r-md bg-muted px-3 py-3 text-center">
+            <p className="text-[11px] text-muted-foreground">Hedef için günlük</p>
+            {pr.reached ? (
+              <p className="text-lg font-bold leading-tight text-emerald-600">Tamamlandı</p>
+            ) : pr.remaining > 0 ? (
+              <>
+                <p className="text-lg font-bold tabular-nums leading-tight">{hrs(Math.round(pr.perDay * 10) / 10)}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">kalan {pr.remaining} gün</p>
+              </>
+            ) : (
+              <p className="text-lg font-bold leading-tight text-muted-foreground">Ay bitti</p>
+            )}
+          </div>
+        </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>

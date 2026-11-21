@@ -161,7 +161,7 @@ function HomeView({ today }: { today: Date }) {
       )}
 
       {settings && realEntries && userId ? (
-        <GoalHero userId={userId} settings={settings} entries={entries} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })} />
+        <GoalHero userId={userId} settings={settings} entries={entries} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} />
       ) : (
         <div className="glass min-h-[15.5rem] w-full animate-pulse" aria-busy />
       )}
