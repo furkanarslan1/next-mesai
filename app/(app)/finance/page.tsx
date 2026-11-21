@@ -52,8 +52,9 @@ function FinanceView({ today }: { today: Date }) {
   const limits = Object.entries(settings.budgets ?? {}).filter(([, v]) => v > 0) as [CategoryKey, number][];
   const trend = six.map((d) => {
     const k = keyOf(d);
+    const has = (finMap[k]?.length ?? 0) > 0 || (entMap[k]?.length ?? 0) > 0;
     const s = financeSummary(finMap[k] ?? [], entMap[k] ?? [], settings);
-    return { d, k, income: s.income, expense: s.expense };
+    return { d, k, income: has ? s.income : 0, expense: has ? s.expense : 0 };
   });
   const trendMax = Math.max(1, ...trend.flatMap((t) => [t.income, t.expense]));
 

@@ -52,7 +52,9 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
   const slipKeys = (payslips ?? []).map((p) => p.month.slice(0, 7));
   const keys = [...new Set([...six.map(keyOf), ...yearMonths.map(keyOf), ...slipKeys])];
   const byMonth = useEntriesMap(keys);
-  const statsOf = (k: string) => monthStats(byMonth[k] ?? [], settings);
+  // Kaydı olmayan ay "veri yok" sayılır (uygulama kullanılmadan önceki aylar tam maaş gibi görünmesin)
+  const ZERO = { hours: 0, earned: 0, deduction: 0, absentDays: 0, salaryNet: 0, income: 0, workDays: 0 };
+  const statsOf = (k: string) => ((byMonth[k]?.length ?? 0) > 0 ? monthStats(byMonth[k], settings) : ZERO);
 
   const series = six.map((d) => ({ d, key: keyOf(d), s: statsOf(keyOf(d)) }));
   const value = (s: ReturnType<typeof monthStats>) => (metric === "hours" ? s.hours : s.income);
@@ -63,6 +65,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
   const ytd = yearMonths.map((d) => ({ d, s: statsOf(keyOf(d)) }));
   const ytdHours = ytd.reduce((a, x) => a + x.s.hours, 0);
   const ytdIncome = ytd.reduce((a, x) => a + x.s.income, 0);
+  const activeMonths = ytd.filter((x) => (byMonth[keyOf(x.d)]?.length ?? 0) > 0).length;
   const best = ytd.reduce((b, x) => (x.s.hours > b.s.hours ? x : b), ytd[0]);
 
   const leave = annualLeave(byMonth, year, settings.annual_leave_days);
@@ -141,7 +144,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
           {[
             { label: "Toplam mesai", v: hrs(ytdHours) },
             { label: "Toplam gelir", v: money(ytdIncome, cur) },
-            { label: "Aylık ortalama", v: money(ytd.length ? ytdIncome / ytd.length : 0, cur) },
+            { label: "Aylık ortalama", v: money(activeMonths ? ytdIncome / activeMonths : 0, cur) },
           ].map((t) => (
             <div key={t.label} className="r-md bg-muted px-2 py-3">
               <p className="text-base font-bold tabular-nums leading-tight">{t.v}</p>
