@@ -38,7 +38,10 @@ function CalendarView({ today }: { today: Date }) {
   const offset = (getDay(startOfMonth(month)) + 6) % 7; // Pzt başlangıç
   const sum = monthSummary(entries, settings);
   const total = goalProgress(entries, settings); // income = maaş − kesinti + mesai kazancı
-  const maxH = Math.max(1, ...entries.map((e) => Number(e.hours)));
+  // Yoğunluk, günün toplam mesaisine göre (bir güne birden çok kayıt düşmüş olabilir)
+  const dayTotals = new Map<string, number>();
+  entries.filter((e) => e.type === "overtime" || e.type === "holiday").forEach((e) => dayTotals.set(e.work_date, (dayTotals.get(e.work_date) ?? 0) + Number(e.hours)));
+  const maxH = Math.max(1, ...dayTotals.values());
 
   return (
     <div className="space-y-5">
@@ -57,7 +60,7 @@ function CalendarView({ today }: { today: Date }) {
               const list = entries.filter((e) => e.work_date === key);
               const worked = list.filter((e) => e.type === "overtime" || e.type === "holiday").reduce((a, e) => a + Number(e.hours), 0);
               const status = list.find((e) => e.type !== "overtime" && e.type !== "holiday") ?? list.find((e) => e.type === "holiday" && Number(e.hours) === 0);
-              const alpha = worked > 0 ? 0.25 + 0.75 * (worked / maxH) : 0;
+              const alpha = worked > 0 ? Math.min(1, 0.25 + 0.75 * (worked / maxH)) : 0;
               const strong = alpha > 0.6;
               const isToday = key === format(today, "yyyy-MM-dd");
               const st = status ? STATUS_CELL[status.type] : null;

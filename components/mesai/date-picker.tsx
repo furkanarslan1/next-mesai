@@ -17,7 +17,7 @@ export function DatePicker({ open, value, today, onSelect, onClose }: {
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); else setMonth(parseISO(value)); }}>
-      <SheetContent side="bottom" className="mx-auto max-w-lg gap-5 rounded-t-[2rem] p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <SheetContent side="bottom" showCloseButton={false} className="mx-auto max-w-lg gap-5 rounded-t-[2rem] p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <SheetHeader className="sr-only p-0">
           <SheetTitle>Tarih seç</SheetTitle>
           <SheetDescription>Mesai girmek ya da düzeltmek istediğin günü seç.</SheetDescription>

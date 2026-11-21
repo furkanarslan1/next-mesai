@@ -107,7 +107,8 @@ export function FinanceSheet({ item, viewKey, userId, today, defaultDate, defaul
               <input
                 inputMode="decimal" autoFocus={!item} placeholder="0" aria-label="Tutar" value={amount}
                 onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
-                className="w-48 bg-transparent text-center text-5xl font-bold tabular-nums tracking-tight outline-none placeholder:text-muted-foreground/40"
+                style={{ width: `${Math.max(amount.length, 1) + 0.6}ch` }}
+                className="min-w-[2ch] max-w-full bg-transparent text-center text-5xl font-bold tabular-nums tracking-tight outline-none placeholder:text-muted-foreground/40"
               />
             </div>
 
