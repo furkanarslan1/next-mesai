@@ -73,6 +73,7 @@ function HomeView({ today }: { today: Date }) {
   const holiday = holidayName(date);
   const workEnd = settings?.work_end ? hhmm(settings.work_end) : "";
   const exitHours = overtimeAfter(workEnd, exitTime);
+  const customValid = byExit ? exitHours : parseFloat(customHours);
 
   // Seviye için toplam saat: gerçek toplam + henüz sunucuya yazılmamış anlık fark
   const pendingDelta = entries.filter(isWork).reduce((a, e) => a + Number(e.hours), 0)
@@ -263,9 +264,9 @@ function HomeView({ today }: { today: Date }) {
             <Input type="number" step="0.25" min="0" max="24" placeholder="Örn. 4" value={customHours} onChange={(e) => setCustomHours(e.target.value)} />
           )}
           <label className="flex items-center justify-between text-sm">Resmi tatilde çalıştım (tatil çarpanı)<Switch checked={onHoliday} onCheckedChange={setOnHoliday} /></label>
-          <Button onClick={() => {
-            const h = byExit ? exitHours : parseFloat(customHours);
-            if (!(h > 0)) return;
+          <Button disabled={!(customValid > 0 && customValid <= 24)} onClick={() => {
+            const h = customValid;
+            if (!(h > 0 && h <= 24)) return;
             if (byExit) add(onHoliday ? "holiday" : "overtime", h, workEnd, exitTime, true);
             else add(onHoliday ? "holiday" : "overtime", h, null, null, true);
             setCustom(false); setCustomHours(""); setExitTime("");

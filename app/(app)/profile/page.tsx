@@ -135,7 +135,7 @@ function ShortcutSettings({ userId }: { userId: string }) {
   const shortcuts = useShortcuts();
   async function add(hours: number) {
     const { error } = await createClient().from("shortcuts").insert({
-      user_id: userId, label: fmtHours(hours), hours, sort: (shortcuts?.length ?? 0) + 1,
+      user_id: userId, label: fmtHours(hours), hours, sort: Math.max(0, ...(shortcuts ?? []).map((s) => s.sort)) + 1,
     });
     if (error) { toast.error(error.message); return; }
     await mutate.refresh.shortcuts();

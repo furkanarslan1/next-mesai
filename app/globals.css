@@ -368,31 +368,31 @@ html { scrollbar-gutter: stable; }
 
 /* =====================================================================
    Düz modern tema: gradient yok, her köşe aynı büyük yuvarlaklıkta.
-   Marka rengini değiştirmek için sadece --h (ton açısı) yeter:
-   265 mor-indigo · 250 mavi · 175 turkuaz · 155 yeşil · 20 mercan
+   Marka rengi --brand (şu an #2F4A63 arduvaz mavisi); zemin/gölge tonları --h ile ona uyar.
    ===================================================================== */
 :root {
-  --h: 275;
+  --brand: #2f4a63;
+  --h: 248;
   --radius: 1.5rem;
   --r-card: 1.75rem;
-  --background: oklch(0.975 0.006 var(--h));
+  --background: oklch(0.975 0.004 var(--h));
   --foreground: oklch(0.2 0.03 var(--h));
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.2 0.03 var(--h));
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.2 0.03 var(--h));
-  --primary: oklch(0.52 0.22 var(--h));
+  --primary: var(--brand);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.02 var(--h));
-  --secondary-foreground: oklch(0.32 0.12 var(--h));
+  --secondary: oklch(0.945 0.012 var(--h));
+  --secondary-foreground: var(--brand);
   --muted: oklch(0.96 0.01 var(--h));
   --muted-foreground: oklch(0.5 0.03 var(--h));
-  --accent: oklch(0.94 0.03 var(--h));
-  --accent-foreground: oklch(0.32 0.12 var(--h));
+  --accent: oklch(0.94 0.015 var(--h));
+  --accent-foreground: var(--brand);
   --border: oklch(0.92 0.01 var(--h));
   --input: oklch(0.88 0.02 var(--h));
-  --ring: oklch(0.52 0.22 var(--h) / 40%);
-  --chart-1: oklch(0.52 0.22 var(--h));
+  --ring: color-mix(in oklch, var(--brand) 40%, transparent);
+  --chart-1: var(--brand);
   --shadow-soft: 0 1px 2px oklch(0.3 0.08 var(--h) / 6%), 0 12px 32px oklch(0.3 0.08 var(--h) / 8%);
 }
 body {
@@ -424,7 +424,7 @@ body {
   box-shadow: 0 8px 20px color-mix(in oklch, var(--primary) 35%, transparent);
 }
 .nav-shield {
-  background: linear-gradient(to top, oklch(0.975 0.006 var(--h) / 92%) 35%, oklch(0.975 0.006 var(--h) / 0%));
+  background: linear-gradient(to top, oklch(0.975 0.004 var(--h) / 92%) 35%, oklch(0.975 0.004 var(--h) / 0%));
 }
 .glass-navy {
   color: var(--primary-foreground);
