@@ -455,3 +455,22 @@ body {
 }
 .shortcut-float { text-shadow: 0 0 0.75rem oklch(0.6 0.2 262 / 60%); }
 .shortcut-ring { border-color: oklch(0.55 0.2 262); }
+
+/* Lacivert sıvı cam: tarih seçici gibi küçük vurgu alanları */
+.glass-navy {
+  color: oklch(0.99 0 0);
+  border-radius: 1.25rem 0.55rem 1.25rem 0.55rem;
+  background:
+    radial-gradient(120% 90% at 12% -20%, oklch(1 0 0 / 38%), transparent 55%),
+    linear-gradient(150deg, oklch(0.46 0.17 264 / 95%), oklch(0.3 0.11 264 / 96%));
+  backdrop-filter: blur(18px) saturate(1.8);
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  border: 1px solid oklch(1 0 0 / 30%);
+  box-shadow:
+    0 10px 26px oklch(0.3 0.12 264 / 32%),
+    inset 0 1px 0 oklch(1 0 0 / 40%),
+    inset 0 -1px 0 oklch(0 0 0 / 18%);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.glass-navy:active { transform: scale(0.97); }
+.glass-navy:focus-within { box-shadow: 0 0 0 3px oklch(0.5 0.2 262 / 35%), 0 10px 26px oklch(0.3 0.12 264 / 32%), inset 0 1px 0 oklch(1 0 0 / 40%); }

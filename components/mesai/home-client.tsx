@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
-import { Check, Plus } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Plus } from "lucide-react";
 import { monthKey, mutate, useMonthEntries, useProfile, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
 import { realTap } from "@/lib/tap";
 import { useToday } from "@/lib/now";
@@ -21,7 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const STATUS: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent", "holiday"];
 const STATUS_META: Record<string, { tint: string; hint: string }> = {
@@ -47,7 +47,16 @@ function HomeView({ today }: { today: Date }) {
   const name = profile?.full_name ?? "";
   const userId = profile?.id ?? "";
   useEffect(() => { if (profile?.role === "manager") router.replace("/manager"); }, [profile?.role, router]);
-  const [date, setDate] = useState(format(today, "yyyy-MM-dd"));
+  const todayStr = format(today, "yyyy-MM-dd");
+  const [date, setDate] = useState(todayStr);
+  // Gece yarısı geçince, "bugün"e bakıyorsan tarih de yeni güne geçsin
+  const [seenToday, setSeenToday] = useState(todayStr);
+  if (seenToday !== todayStr) {
+    if (date === seenToday) setDate(todayStr);
+    setSeenToday(todayStr);
+  }
+  // Yanlışlıkla dokunmaya karşı: kısayol eklemeden/geri almadan önce Evet/Hayır sorulur
+  const [confirm, setConfirm] = useState<{ title: string; desc: string; yes: string; run: () => void } | null>(null);
   const key = monthKey(parseISO(date));
   const realEntries = useMonthEntries(key);
   const settings = useSettings();
@@ -100,13 +109,23 @@ function HomeView({ today }: { today: Date }) {
     <div className="space-y-5">
       <header className="flex items-end justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">{format(new Date(date), "d MMMM EEEE", { locale: tr })}</p>
+          <p className="text-sm text-muted-foreground">{format(parseISO(date), "d MMMM EEEE", { locale: tr })}</p>
           <h1 className="text-2xl font-bold">Merhaba{name ? `, ${name.split(" ")[0]}` : " 👋"}</h1>
         </div>
-        <Input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="w-40" />
+        <label className="glass-navy relative flex h-11 cursor-pointer items-center gap-2 pr-3 pl-3.5 text-sm font-semibold">
+          <CalendarDays className="size-4.5 opacity-90" aria-hidden />
+          <span className="tabular-nums">{format(parseISO(date), date === todayStr ? "'Bugün' · d MMM" : "d MMM yyyy", { locale: tr })}</span>
+          <ChevronDown className="size-4 opacity-70" aria-hidden />
+          <input
+            type="date" aria-label="Tarih seç" value={date}
+            onChange={(e) => e.target.value && setDate(e.target.value)}
+            onClick={(e) => { try { e.currentTarget.showPicker?.(); } catch { /* desteklenmiyorsa yok say */ } }}
+            className="absolute inset-0 size-full cursor-pointer opacity-0"
+          />
+        </label>
       </header>
 
-      {holiday && (
+      {holiday && !todays.some((e) => e.type === "holiday") && (
         <div className="glass flex items-center justify-between px-4 py-3 text-sm">
           <span>🎉 {holiday}</span>
           <Button size="sm" variant="secondary" {...realTap(() => add("holiday", 0))}>Tatil olarak işaretle</Button>
@@ -144,7 +163,9 @@ function HomeView({ today }: { today: Date }) {
                 key={s.id} label={s.label} hoursText={hrs(Number(s.hours))}
                 hint={s.start_time ? `${hhmm(s.start_time)}–${hhmm(s.end_time)}` : "Dokun, ekle"}
                 active={!!existing} disabled={existing?.id.startsWith("tmp-")}
-                onPress={() => (existing ? remove(existing) : add("overtime", Number(s.hours), s.start_time, s.end_time))}
+                onPress={() => setConfirm(existing
+                  ? { title: "Mesai geri alınsın mı?", desc: `${hrs(Number(s.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(existing) }
+                  : { title: "Mesai eklensin mi?", desc: `${format(parseISO(date), "d MMMM", { locale: tr })} tarihine ${hrs(Number(s.hours))} mesai eklenecek.`, yes: "Evet, ekle", run: () => add("overtime", Number(s.hours), s.start_time, s.end_time) })}
               />
             );
           })}
@@ -209,6 +230,19 @@ function HomeView({ today }: { today: Date }) {
 
         </div>
       </div>
+
+      <Dialog open={!!confirm} onOpenChange={(o) => { if (!o) setConfirm(null); }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{confirm?.title}</DialogTitle>
+            <DialogDescription>{confirm?.desc}</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="secondary" autoFocus onClick={() => setConfirm(null)}>Hayır</Button>
+            <Button onClick={() => { const c = confirm; setConfirm(null); c?.run(); }}>{confirm?.yes ?? "Evet"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={custom} onOpenChange={setCustom}>
         <DialogContent>

@@ -48,3 +48,5 @@ export const SHIFTS: Record<ShiftType, { label: string; start: string; end: stri
   evening: { label: "Akşam", start: "16:00", end: "00:00" },
   night: { label: "Gece", start: "00:00", end: "08:00" },
 };
+
+export interface ManagerLink { id: string; status: string; manager_id: string; employee_id: string; name?: string }

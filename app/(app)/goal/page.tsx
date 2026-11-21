@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useToday } from "@/lib/now";
-import { createClient } from "@/lib/supabase/client";
-import { mutate, useSettings, useMonthEntries, monthKey, useTotalHours } from "@/lib/store";
+import { mutate, useProfile, useSettings, useMonthEntries, monthKey, useTotalHours } from "@/lib/store";
 import { goalProgress, hrs, levelFor, LEVELS, money } from "@/lib/calc";
 import type { Settings } from "@/lib/types";
 import { LevelIcon } from "@/components/mesai/level-icon";
@@ -33,6 +32,7 @@ export default function GoalPage() {
 }
 
 function GoalView({ settings, today }: { settings: Settings; today: Date }) {
+  const userId = useProfile()?.id ?? "";
   const entries = useMonthEntries(monthKey(today));
   const totalHours = useTotalHours() ?? 0;
   const [f, setF] = useState<Form>(() => toForm(settings));
@@ -54,9 +54,8 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
   async function save() {
     setBusy(true);
     try {
-      const { data: { user } } = await createClient().auth.getUser();
-      if (!user) throw new Error("Oturum bulunamadı");
-      await mutate.saveSettings(user.id, next);
+      if (!userId) throw new Error("Hesap bilgileri yükleniyor, birkaç saniye sonra tekrar dene");
+      await mutate.saveSettings(userId, next);
       toast.success("Kaydedildi");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Kaydedilemedi");
