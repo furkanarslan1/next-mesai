@@ -9,7 +9,7 @@ import { useProfile } from "@/lib/store";
 import { DaySheet } from "@/components/mesai/day-sheet";
 import { useToday } from "@/lib/now";
 import { holidayName } from "@/lib/holidays";
-import { hrs, money, monthSummary } from "@/lib/calc";
+import { goalProgress, hrs, money, monthSummary } from "@/lib/calc";
 import { TYPE_META } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +37,7 @@ function CalendarView({ today }: { today: Date }) {
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
   const offset = (getDay(startOfMonth(month)) + 6) % 7; // Pzt başlangıç
   const sum = monthSummary(entries, settings);
+  const total = goalProgress(entries, settings); // income = maaş − kesinti + mesai kazancı
   const maxH = Math.max(1, ...entries.map((e) => Number(e.hours)));
 
   return (
@@ -92,8 +93,15 @@ function CalendarView({ today }: { today: Date }) {
       )}
       <DaySheet date={selected} entries={entries} userId={userId} onClose={() => setSelected(null)} />
       <div className="grid grid-cols-2 gap-3">
-        <Card><CardContent><p className="text-xs text-muted-foreground">Toplam mesai</p><p className="text-xl font-bold">{hrs(sum.hours)}</p></CardContent></Card>
-        <Card><CardContent><p className="text-xs text-muted-foreground">Kazanç</p><p className="text-xl font-bold">{money(sum.earned, settings.currency)}</p></CardContent></Card>
+        <Card className="r-lg"><CardContent className="text-center"><p className="text-xs text-muted-foreground">Toplam mesai</p><p className="text-xl font-bold tabular-nums">{hrs(sum.hours)}</p></CardContent></Card>
+        <Card className="r-lg"><CardContent className="text-center"><p className="text-xs text-muted-foreground">Mesai kazancı</p><p className="text-xl font-bold tabular-nums">{money(sum.earned, settings.currency)}</p></CardContent></Card>
+        <Card className="r-lg col-span-2"><CardContent className="text-center">
+          <p className="text-xs text-muted-foreground">Toplam maaş</p>
+          <p className="text-2xl font-bold tabular-nums">{money(total.income, settings.currency)}</p>
+          <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+            Maaş {money(settings.monthly_salary, settings.currency)}{total.deduction > 0 && <> − kesinti {money(total.deduction, settings.currency)}</>} + mesai {money(sum.earned, settings.currency)}
+          </p>
+        </CardContent></Card>
       </div>
     </div>
   );
