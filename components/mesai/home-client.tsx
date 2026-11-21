@@ -13,6 +13,7 @@ import { holidayName } from "@/lib/holidays";
 import { hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
 import { ShortcutButton } from "@/components/mesai/shortcut-button";
+import { DatePicker } from "@/components/mesai/date-picker";
 import { StatusIcon } from "@/components/mesai/status-icon";
 import { LevelIcon } from "@/components/mesai/level-icon";
 import { GoalHero } from "@/components/mesai/goal-hero";
@@ -24,12 +25,12 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const STATUS: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent", "holiday"];
-const STATUS_META: Record<string, { tint: string; hint: string }> = {
-  paid_leave: { tint: "bg-sky-500/10 ring-sky-500/20", hint: "Maaş kesilmez" },
-  unpaid_leave: { tint: "bg-orange-500/10 ring-orange-500/20", hint: "Maaştan düşer" },
-  sick: { tint: "bg-pink-500/10 ring-pink-500/20", hint: "Doktor raporu" },
-  absent: { tint: "bg-rose-500/10 ring-rose-500/20", hint: "Habersiz" },
-  holiday: { tint: "bg-amber-500/10 ring-amber-500/20", hint: "Çalışılmadı" },
+const STATUS_META: Record<string, { hint: string }> = {
+  paid_leave: { hint: "Maaş kesilmez" },
+  unpaid_leave: { hint: "Maaştan düşer" },
+  sick: { hint: "Doktor raporu" },
+  absent: { hint: "Habersiz" },
+  holiday: { hint: "Çalışılmadı" },
 };
 
 type Opt = { add: Entry } | { remove: string };
@@ -50,6 +51,7 @@ function HomeView({ today }: { today: Date }) {
   const todayStr = format(today, "yyyy-MM-dd");
   const [date, setDate] = useState(todayStr);
   // Gece yarısı geçince, "bugün"e bakıyorsan tarih de yeni güne geçsin
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [seenToday, setSeenToday] = useState(todayStr);
   if (seenToday !== todayStr) {
     if (date === seenToday) setDate(todayStr);
@@ -82,6 +84,9 @@ function HomeView({ today }: { today: Date }) {
   const lvl = levelFor(totalHours);
 
   function add(type: EntryType, hours: number, start?: string | null, end?: string | null, undo = false, shortcutId?: string) {
+    if ((type === "overtime" || (type === "holiday" && hours > 0)) && entries.some((e) => e.work_date === date && (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0)) {
+      toast.info("Bu güne zaten mesai girdin. Önce onu geri al."); return;
+    }
     if (!userId) { toast.info("Hesap bilgileri yükleniyor, birkaç saniye sonra tekrar dene"); return; }
     const row = { user_id: userId, work_date: date, type, hours, note: null, start_time: start ?? null, end_time: end ?? null, ...(shortcutId ? { shortcut_id: shortcutId } : {}) };
     startTransition(async () => {
@@ -115,6 +120,11 @@ function HomeView({ today }: { today: Date }) {
       setConfirm({ title: `${TYPE_META[t].label} olarak işaretlensin mi?`, desc: `${dayLabel} günü "${TYPE_META[t].label}" olarak kaydedilecek. Bir gün için tek durum seçilebilir.`, yes: "Evet, işaretle", run: () => add(t, 0) });
     }
   }
+  // Günde tek mesai kaydı: mesai ya da çalışılan tatil (saatli). Varsa yenisi eklenemez, önce o geri alınmalı.
+  const workEntry = todays.find((e) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0);
+  function askRemoveWork(e: Entry) {
+    setConfirm({ title: "Mesai geri alınsın mı?", desc: `${dayLabel} gününün ${hrs(Number(e.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(e) });
+  }
   const todayHours = todays.filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
   const monthHours = entries.filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
 
@@ -125,18 +135,22 @@ function HomeView({ today }: { today: Date }) {
           <p className="text-sm text-muted-foreground">{format(parseISO(date), "d MMMM EEEE", { locale: tr })}</p>
           <h1 className="text-2xl font-bold">Merhaba{name ? `, ${name.split(" ")[0]}` : " 👋"}</h1>
         </div>
-        <label className="glass-navy relative flex h-11 cursor-pointer items-center gap-2 pr-3 pl-3.5 text-sm font-semibold">
+        <button type="button" onClick={() => setPickerOpen(true)} aria-label="Tarih seç"
+          className="glass-navy flex h-11 items-center gap-2 pr-3 pl-3.5 text-sm font-semibold">
           <CalendarDays className="size-4.5 opacity-90" aria-hidden />
           <span className="tabular-nums">{format(parseISO(date), date === todayStr ? "'Bugün' · d MMM" : "d MMM yyyy", { locale: tr })}</span>
           <ChevronDown className="size-4 opacity-70" aria-hidden />
-          <input
-            type="date" aria-label="Tarih seç" value={date}
-            onChange={(e) => e.target.value && setDate(e.target.value)}
-            onClick={(e) => { try { e.currentTarget.showPicker?.(); } catch { /* desteklenmiyorsa yok say */ } }}
-            className="absolute inset-0 size-full cursor-pointer opacity-0"
-          />
-        </label>
+        </button>
       </header>
+
+      <DatePicker open={pickerOpen} value={date} today={todayStr} onSelect={(d) => { setDate(d); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />
+
+      {date !== todayStr && (
+        <div className="glass r-lg flex items-center justify-between gap-3 px-4 py-3 text-sm">
+          <span>{date < todayStr ? "Geçmiş bir günü düzenliyorsun" : "Gelecek bir güne bakıyorsun"}: <b>{dayLabel}</b></span>
+          <Button size="sm" variant="secondary" onClick={() => setDate(todayStr)}>Bugüne dön</Button>
+        </div>
+      )}
 
       {holiday && !activeStatus && (
         <div className="glass r-lg flex items-center justify-between px-4 py-3 text-sm">
@@ -152,11 +166,11 @@ function HomeView({ today }: { today: Date }) {
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Card size="sm" className="r-lg"><CardContent>
-          <p className="text-xs text-muted-foreground">Bugünün mesaisi</p>
+        <Card size="sm" className="r-lg"><CardContent className="text-center">
+          <p className="text-xs text-muted-foreground">{date === todayStr ? "Bugünün mesaisi" : `${dayLabel} mesaisi`}</p>
           <p className="text-xl font-bold tabular-nums">{hrs(todayHours)}</p>
         </CardContent></Card>
-        <Card size="sm" className="r-lg"><CardContent>
+        <Card size="sm" className="r-lg"><CardContent className="text-center">
           <p className="text-xs text-muted-foreground">{format(parseISO(date), "LLLL", { locale: tr })} toplamı</p>
           <p className="text-xl font-bold tabular-nums">{hrs(monthHours)}</p>
         </CardContent></Card>
@@ -174,25 +188,36 @@ function HomeView({ today }: { today: Date }) {
             return (
               <ShortcutButton
                 key={s.id} label={s.label} hoursText={hrs(Number(s.hours))}
-                hint={s.start_time ? `${hhmm(s.start_time)}–${hhmm(s.end_time)}` : "Dokun, ekle"}
-                active={!!existing} disabled={existing?.id.startsWith("tmp-")}
+                hint={!existing && workEntry ? "Bugün mesai var" : s.start_time ? `${hhmm(s.start_time)}–${hhmm(s.end_time)}` : "Dokun, ekle"}
+                active={!!existing} disabled={existing?.id.startsWith("tmp-") || (!existing && !!workEntry)}
                 onPress={() => setConfirm(existing
                   ? { title: "Mesai geri alınsın mı?", desc: `${hrs(Number(s.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(existing) }
                   : { title: "Mesai eklensin mi?", desc: `${format(parseISO(date), "d MMMM", { locale: tr })} tarihine ${hrs(Number(s.hours))} mesai eklenecek.`, yes: "Evet, ekle", run: () => add("overtime", Number(s.hours), s.start_time, s.end_time, false, s.id) })}
               />
             );
           })}
+          {/* "Farklı mesai" ile girilen (ya da silinmiş kısayoldan gelen) kayıt da kısayol gibi görünür; dokununca geri alınır */}
+          {workEntry && !(shortcuts ?? []).some((x) => x.id === workEntry.shortcut_id) && (
+            <ShortcutButton
+              label={`${+Number(workEntry.hours).toFixed(2)} saat`} hoursText={hrs(Number(workEntry.hours))}
+              hint={workEntry.start_time ? `${hhmm(workEntry.start_time)}–${hhmm(workEntry.end_time)}` : workEntry.type === "holiday" ? "Resmi tatil" : "Farklı mesai"}
+              active disabled={workEntry.id.startsWith("tmp-")}
+              onPress={() => askRemoveWork(workEntry)}
+            />
+          )}
         </div>
-        <button type="button" {...realTap(() => { setOnHoliday(!!holiday); setCustom(true); })}
-          className="glass r-pill mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
-          <Plus className="size-4" />Farklı mesai ekle
-        </button>
+        {!workEntry && (
+          <button type="button" {...realTap(() => { setOnHoliday(!!holiday); setCustom(true); })}
+            className="glass r-pill mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
+            <Plus className="size-4" />Farklı mesai ekle
+          </button>
+        )}
       </section>
 
       <div className="grid items-start gap-5 md:grid-cols-2">
         <section className="space-y-3">
           <div>
-            <h2 className="font-semibold">Bugün işe gitmedin mi?</h2>
+            <h2 className="font-semibold">{date === todayStr ? "Bugün" : dayLabel} işe gitmedin mi?</h2>
             <p className="text-xs text-muted-foreground">Nedenini seç, takvimine işlensin. Tekrar dokunursan geri alınır.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -208,8 +233,8 @@ function HomeView({ today }: { today: Date }) {
                   {...realTap(() => askStatus(t))}
                   className={`glass r-lg relative flex flex-col items-center gap-2.5 p-4 text-center transition active:scale-[0.97] disabled:opacity-50 ${locked ? "grayscale" : ""} ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
                 >
-                  <span className={`grid size-12 place-items-center r-md ring-1 ${existing ? "bg-primary text-primary-foreground ring-primary" : m.tint}`}>
-                    {existing ? <Check className="size-6" /> : <StatusIcon type={t} className="size-8" />}
+                  <span className={`grid size-12 place-items-center ${existing ? "r-md bg-primary text-primary-foreground" : ""}`}>
+                    {existing ? <Check className="size-6" /> : <StatusIcon type={t} className="size-11" />}
                   </span>
                   <span>
                     <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
@@ -247,14 +272,14 @@ function HomeView({ today }: { today: Date }) {
       </div>
 
       <Dialog open={!!confirm} onOpenChange={(o) => { if (!o) setConfirm(null); }}>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>{confirm?.title}</DialogTitle>
-            <DialogDescription>{confirm?.desc}</DialogDescription>
+        <DialogContent showCloseButton={false} className="gap-7 p-7 sm:max-w-md">
+          <DialogHeader className="gap-2.5">
+            <DialogTitle className="text-xl leading-snug">{confirm?.title}</DialogTitle>
+            <DialogDescription className="text-base leading-relaxed">{confirm?.desc}</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" autoFocus onClick={() => setConfirm(null)}>Hayır</Button>
-            <Button onClick={() => { const c = confirm; setConfirm(null); c?.run(); }}>{confirm?.yes ?? "Evet"}</Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="secondary" autoFocus className="h-14 text-base font-semibold" onClick={() => setConfirm(null)}>Hayır</Button>
+            <Button className="h-14 text-base font-semibold" onClick={() => { const c = confirm; setConfirm(null); c?.run(); }}>{confirm?.yes ?? "Evet"}</Button>
           </div>
         </DialogContent>
       </Dialog>

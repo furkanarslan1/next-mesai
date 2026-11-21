@@ -31,6 +31,8 @@ export function DaySheet({ date, entries, userId, onClose }: {
 
   const day = date ? entries.filter((e) => e.work_date === date) : [];
   const status = day.find(isStatusRow);
+  // Günde tek mesai kaydı: varsa yeni eklenemez, saati kalemle değiştirilir ya da silinir
+  const hasWork = day.some((e) => isWork(e) && Number(e.hours) > 0);
   const label = date ? format(parseISO(date), "d MMMM EEEE", { locale: tr }) : "";
   const valid = (v: string) => { const h = parseFloat(v.replace(",", ".")); return h > 0 && h <= 24 ? h : 0; };
 
@@ -85,14 +87,14 @@ export function DaySheet({ date, entries, userId, onClose }: {
         </SheetHeader>
 
         {pending ? (
-          <div className="space-y-4 rounded-[1.5rem] bg-muted p-4">
-            <div>
-              <p className="font-semibold">{pending.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{pending.desc}</p>
+          <div className="space-y-6 rounded-[1.75rem] bg-muted p-6">
+            <div className="space-y-2">
+              <p className="text-xl font-semibold leading-snug">{pending.title}</p>
+              <p className="text-base leading-relaxed text-muted-foreground">{pending.desc}</p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" autoFocus disabled={busy} onClick={() => setPending(null)}>Hayır</Button>
-              <Button disabled={busy} onClick={confirmYes}>{pending.yes}</Button>
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="secondary" autoFocus disabled={busy} className="h-14 bg-background text-base font-semibold" onClick={() => setPending(null)}>Hayır</Button>
+              <Button disabled={busy} className="h-14 text-base font-semibold" onClick={confirmYes}>{pending.yes}</Button>
             </div>
           </div>
         ) : (
@@ -129,11 +131,15 @@ export function DaySheet({ date, entries, userId, onClose }: {
 
             <section className="space-y-2">
               <p className="text-sm font-semibold">Mesai ekle</p>
+              {hasWork ? (
+                <p className="text-xs text-muted-foreground">Günde tek mesai kaydı olur. Saati kalem ikonuyla değiştirebilir ya da kaydı silip yenisini ekleyebilirsin.</p>
+              ) : (
               <div className="flex gap-2">
                 <Input type="number" inputMode="decimal" step="0.25" min="0" max="24" placeholder="Örn. 2.5" value={newHours} onChange={(e) => setNewHours(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); askAddHours(); } }} aria-label="Mesai saati" />
                 <Button onClick={askAddHours} disabled={!valid(newHours)}><Plus className="size-4" />Ekle</Button>
               </div>
+              )}
             </section>
 
             <section className="space-y-2">

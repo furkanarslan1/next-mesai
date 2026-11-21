@@ -4,7 +4,7 @@ import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Pencil, Target } from "lucide-react";
 import { mutate } from "@/lib/store";
-import { goalProgress, hrs, money } from "@/lib/calc";
+import { goalProgress, hrs, money, monthSummary } from "@/lib/calc";
 import type { Entry, Settings } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ export function GoalHero({ userId, settings, entries, monthLabel }: {
   const [value, setValue] = useState("");
 
   const g = goalProgress(entries, opt);
+  const sum = monthSummary(entries, opt);
+  const workDays = new Set(entries.filter((e) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0).map((e) => e.work_date)).size;
   const cur = opt.currency;
 
   function openEditor() {
@@ -52,10 +54,10 @@ export function GoalHero({ userId, settings, entries, monthLabel }: {
     <section className="glass min-h-[15.5rem] w-full space-y-5 p-5 sm:p-6" aria-label="Aylık hedef">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">{monthLabel} hedefi</p>
-          <p className="mt-1 text-lg font-semibold">
-            {g.set ? (g.mode === "hours" ? `${hrs(g.goal)} mesai` : money(g.goal, cur)) : "Henüz hedef belirlemedin"}
-          </p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{monthLabel} {g.set ? "hedefi" : "özeti"}</p>
+          {g.set && (
+            <p className="mt-1 text-lg font-semibold">{g.mode === "hours" ? `${hrs(g.goal)} mesai` : money(g.goal, cur)}</p>
+          )}
         </div>
         <Button size="sm" variant="secondary" onClick={openEditor}>
           {g.set ? <Pencil className="size-4" /> : <Target className="size-4" />}
@@ -63,7 +65,32 @@ export function GoalHero({ userId, settings, entries, monthLabel }: {
         </Button>
       </div>
 
-      <div className="space-y-2.5">
+      {!g.set && (
+        <div className="space-y-5">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">Bu ay toplam kazanç</p>
+            <p className="mt-1 text-5xl font-bold tabular-nums tracking-tight">{money(g.income, cur)}</p>
+            <p className="mt-2 text-xs text-muted-foreground tabular-nums">
+              Maaş {money(opt.monthly_salary, cur)}{g.deduction > 0 && <> − kesinti {money(g.deduction, cur)}</>} + mesai {money(g.earned, cur)}
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2.5">
+            {[
+              { label: "Mesai saati", value: hrs(sum.hours) },
+              { label: "Mesai günü", value: `${workDays} gün` },
+              { label: "Mesai kazancı", value: money(sum.earned, cur) },
+            ].map((t) => (
+              <div key={t.label} className="r-md bg-muted px-2 py-3 text-center">
+                <p className="text-lg font-bold tabular-nums leading-tight">{t.value}</p>
+                <p className="mt-1 text-[11px] leading-tight text-muted-foreground">{t.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-xs text-muted-foreground">Hedef belirlersen burada ilerleme çubuğu görünür.</p>
+        </div>
+      )}
+
+      {g.set && <div className="space-y-2.5">
         <div className="flex items-baseline justify-between">
           <span className="text-4xl font-bold tabular-nums tracking-tight">%{g.percent.toFixed(0)}</span>
           <span className="text-sm text-muted-foreground tabular-nums">
@@ -82,10 +109,10 @@ export function GoalHero({ userId, settings, entries, monthLabel }: {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
       {g.set && (
-        <p className="rounded-xl bg-muted px-3.5 py-2.5 text-sm">
+        <p className="text-sm">
           {g.mode === "hours" ? (
             <>Toplam kazanç: <b className="tabular-nums">{money(g.income, cur)}</b>
               <span className="text-muted-foreground"> · maaş {money(opt.monthly_salary, cur)}{g.deduction > 0 && <> − kesinti {money(g.deduction, cur)}</>} + mesai {money(g.earned, cur)}</span></>
