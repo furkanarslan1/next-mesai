@@ -368,36 +368,40 @@ html { scrollbar-gutter: stable; }
 
 /* =====================================================================
    Düz modern tema: gradient yok, her köşe aynı büyük yuvarlaklıkta.
-   Marka rengi --brand (şu an #2F4A63 arduvaz mavisi); zemin/gölge tonları --h ile ona uyar.
+   Palet: 071B2B (mürekkep/metin) · 131B2B (ana renk: düğme, menü, tarih) ·
+   5B91A3 (vurgu: hedef barı, halkalar) · CFEAE0 (nane: zemin, yüzey tonları)
    ===================================================================== */
 :root {
-  --brand: #2f4a63;
-  --h: 248;
+  --ink: #071b2b;
+  --navy: #131b2b;
+  --teal: #5b91a3;
+  --mint: #cfeae0;
+  --h: 245;
   --radius: 1.5rem;
   /* Yuvarlaklık ölçeği: büyük kartlar xl, ikincil kartlar lg, iç öğeler md, düğme/çip hap */
   --r-xl: 2rem;
   --r-lg: 1.5rem;
   --r-md: 1.1rem;
   --r-card: var(--r-xl);
-  --background: oklch(0.975 0.004 var(--h));
-  --foreground: oklch(0.2 0.03 var(--h));
+  --background: color-mix(in oklch, var(--mint) 30%, white);
+  --foreground: var(--ink);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.03 var(--h));
+  --card-foreground: var(--ink);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.03 var(--h));
-  --primary: var(--brand);
+  --popover-foreground: var(--ink);
+  --primary: var(--navy);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.945 0.012 var(--h));
-  --secondary-foreground: var(--brand);
-  --muted: oklch(0.96 0.01 var(--h));
-  --muted-foreground: oklch(0.5 0.03 var(--h));
-  --accent: oklch(0.94 0.015 var(--h));
-  --accent-foreground: var(--brand);
-  --border: oklch(0.92 0.01 var(--h));
-  --input: oklch(0.88 0.02 var(--h));
-  --ring: color-mix(in oklch, var(--brand) 40%, transparent);
-  --chart-1: var(--brand);
-  --shadow-soft: 0 1px 2px oklch(0.3 0.08 var(--h) / 6%), 0 12px 32px oklch(0.3 0.08 var(--h) / 8%);
+  --secondary: color-mix(in oklch, var(--mint) 60%, white);
+  --secondary-foreground: var(--navy);
+  --muted: color-mix(in oklch, var(--mint) 38%, white);
+  --muted-foreground: color-mix(in oklch, var(--ink) 66%, white);
+  --accent: color-mix(in oklch, var(--mint) 70%, white);
+  --accent-foreground: var(--navy);
+  --border: color-mix(in oklch, var(--teal) 22%, white);
+  --input: color-mix(in oklch, var(--teal) 38%, white);
+  --ring: color-mix(in oklch, var(--teal) 55%, transparent);
+  --chart-1: var(--teal);
+  --shadow-soft: 0 1px 2px color-mix(in oklch, var(--ink) 7%, transparent), 0 12px 32px color-mix(in oklch, var(--ink) 9%, transparent);
 }
 body {
   background: var(--background);
@@ -424,7 +428,7 @@ body {
   -webkit-backdrop-filter: none;
   border: 0;
   border-radius: 2rem;
-  box-shadow: 0 2px 4px oklch(0.3 0.08 var(--h) / 6%), 0 18px 44px oklch(0.3 0.08 var(--h) / 16%);
+  box-shadow: 0 2px 4px color-mix(in oklch, var(--ink) 8%, transparent), 0 18px 44px color-mix(in oklch, var(--ink) 18%, transparent);
 }
 .nav-active {
   color: var(--primary-foreground);
@@ -432,7 +436,7 @@ body {
   box-shadow: 0 8px 20px color-mix(in oklch, var(--primary) 35%, transparent);
 }
 .nav-shield {
-  background: linear-gradient(to top, oklch(0.975 0.004 var(--h) / 92%) 35%, oklch(0.975 0.004 var(--h) / 0%));
+  background: linear-gradient(to top, color-mix(in oklch, var(--background) 92%, transparent) 35%, color-mix(in oklch, var(--background) 0%, transparent));
 }
 .glass-navy {
   color: var(--primary-foreground);
@@ -455,24 +459,24 @@ body {
 /* Hedef barı: düz renk dolgu, parlayan uç ve kıvılcımlar korunur */
 .goal-track {
   height: 1.1rem;
-  background: color-mix(in oklch, var(--primary) 12%, transparent);
+  background: color-mix(in oklch, var(--teal) 20%, transparent);
   box-shadow: none;
 }
 .goal-fill {
   background:
     linear-gradient(100deg, transparent 35%, oklch(1 0 0 / 40%) 50%, transparent 65%) 0 0 / 220% 100% no-repeat,
-    var(--primary);
+    var(--teal);
 }
 .goal-spark {
-  background: oklch(0.97 0.03 var(--h));
-  box-shadow: 0 0 0.6rem 0.2rem color-mix(in oklch, var(--primary) 85%, white);
+  background: color-mix(in oklch, var(--mint) 70%, white);
+  box-shadow: 0 0 0.6rem 0.2rem color-mix(in oklch, var(--teal) 85%, white);
 }
 .goal-fill::after {
-  background: oklch(0.97 0.03 var(--h));
+  background: color-mix(in oklch, var(--mint) 70%, white);
   box-shadow:
-    0 0 0.6rem 0.15rem color-mix(in oklch, var(--primary) 80%, white),
-    0 0 1.6rem 0.5rem color-mix(in oklch, var(--primary) 55%, transparent),
-    0 0 3rem 1rem color-mix(in oklch, var(--primary) 25%, transparent);
+    0 0 0.6rem 0.15rem color-mix(in oklch, var(--teal) 80%, white),
+    0 0 1.6rem 0.5rem color-mix(in oklch, var(--teal) 55%, transparent),
+    0 0 3rem 1rem color-mix(in oklch, var(--teal) 25%, transparent);
 }
 .shortcut-float { text-shadow: none; }
-.shortcut-ring { border-color: var(--primary); }
+.shortcut-ring { border-color: var(--teal); }
