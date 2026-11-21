@@ -1,7 +1,6 @@
-import { useId } from "react";
 import type { EntryType } from "@/lib/types";
 
-/** "Bugün işe gitmedin mi?" kartlarının ikonları: renk geçişli, çizim glifler. */
+/** "Bugün işe gitmedin mi?" kartlarının ikonları: düz renkli, çizim glifler. */
 const TONES: Record<string, { from: string; to: string }> = {
   paid_leave: { from: "#7dd3fc", to: "#0369a1" },
   unpaid_leave: { from: "#fdba74", to: "#c2410c" },
@@ -13,9 +12,8 @@ const TONES: Record<string, { from: string; to: string }> = {
 const SHINE = "rgba(255,255,255,0.6)";
 
 export function StatusIcon({ type, className = "size-9" }: { type: EntryType; className?: string }) {
-  const gid = useId().replace(/:/g, "");
   const tone = TONES[type] ?? TONES.paid_leave;
-  const fill = `url(#${gid})`;
+  const fill = tone.to;
 
   const glyph: Record<string, React.ReactNode> = {
     // Ücretli izin: plaj şemsiyesi
@@ -66,12 +64,6 @@ export function StatusIcon({ type, className = "size-9" }: { type: EntryType; cl
 
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <defs>
-        <linearGradient id={gid} x1="0.15" y1="0" x2="0.85" y2="1">
-          <stop offset="0" stopColor={tone.from} />
-          <stop offset="1" stopColor={tone.to} />
-        </linearGradient>
-      </defs>
       {glyph[type]}
     </svg>
   );

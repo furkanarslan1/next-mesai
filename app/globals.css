@@ -367,110 +367,104 @@ html { scrollbar-gutter: stable; }
 }
 
 /* =====================================================================
-   Finans teması: açık zemin + lacivert, sıvı cam ve efektler korunur.
-   (Önceki koyu/zümrüt kuralların üstüne yazar.)
+   Düz modern tema: gradient yok, her köşe aynı büyük yuvarlaklıkta.
+   Marka rengini değiştirmek için sadece --h (ton açısı) yeter:
+   265 mor-indigo · 250 mavi · 175 turkuaz · 155 yeşil · 20 mercan
    ===================================================================== */
 :root {
-  --navy: oklch(0.3 0.1 264);
-  --royal: oklch(0.5 0.2 262);
-  --sky: oklch(0.78 0.12 235);
-  --background: oklch(0.965 0.012 255);
-  --foreground: oklch(0.2 0.05 265);
-  --card: oklch(1 0 0 / 62%);
-  --card-foreground: oklch(0.2 0.05 265);
-  --popover: oklch(0.995 0.004 255 / 92%);
-  --popover-foreground: oklch(0.2 0.05 265);
-  --primary: oklch(0.32 0.11 264);
-  --primary-foreground: oklch(0.99 0.003 255);
-  --secondary: oklch(0.94 0.02 260 / 80%);
-  --secondary-foreground: oklch(0.28 0.08 264);
-  --muted: oklch(0.94 0.018 258 / 75%);
-  --muted-foreground: oklch(0.48 0.04 265);
-  --accent: oklch(0.92 0.04 258 / 80%);
-  --accent-foreground: oklch(0.28 0.08 264);
-  --border: oklch(0.88 0.025 260 / 70%);
-  --input: oklch(0.8 0.04 262 / 45%);
-  --ring: oklch(0.5 0.2 262 / 45%);
-  --chart-1: oklch(0.5 0.2 262);
+  --h: 275;
+  --radius: 1.5rem;
+  --r-card: 1.75rem;
+  --background: oklch(0.975 0.006 var(--h));
+  --foreground: oklch(0.2 0.03 var(--h));
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.03 var(--h));
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.03 var(--h));
+  --primary: oklch(0.52 0.22 var(--h));
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 0.02 var(--h));
+  --secondary-foreground: oklch(0.32 0.12 var(--h));
+  --muted: oklch(0.96 0.01 var(--h));
+  --muted-foreground: oklch(0.5 0.03 var(--h));
+  --accent: oklch(0.94 0.03 var(--h));
+  --accent-foreground: oklch(0.32 0.12 var(--h));
+  --border: oklch(0.92 0.01 var(--h));
+  --input: oklch(0.88 0.02 var(--h));
+  --ring: oklch(0.52 0.22 var(--h) / 40%);
+  --chart-1: oklch(0.52 0.22 var(--h));
+  --shadow-soft: 0 1px 2px oklch(0.3 0.08 var(--h) / 6%), 0 12px 32px oklch(0.3 0.08 var(--h) / 8%);
 }
 body {
-  background:
-    radial-gradient(46rem 34rem at 6% -8%, oklch(0.62 0.17 262 / 20%), transparent 62%),
-    radial-gradient(40rem 34rem at 104% 6%, oklch(0.75 0.12 225 / 22%), transparent 62%),
-    radial-gradient(38rem 30rem at 88% 102%, oklch(0.55 0.17 280 / 14%), transparent 62%),
-    radial-gradient(44rem 34rem at -4% 105%, oklch(0.7 0.1 240 / 16%), transparent 62%),
-    var(--background);
-  background-attachment: fixed;
+  background: var(--background);
+  background-attachment: scroll;
 }
 .glass,
-[data-slot="card"] {
-  background:
-    radial-gradient(120% 70% at 10% -10%, oklch(1 0 0 / 90%), transparent 58%),
-    linear-gradient(150deg, oklch(1 0 0 / 80%), oklch(0.97 0.015 255 / 55%));
-  backdrop-filter: blur(26px) saturate(1.7);
-  -webkit-backdrop-filter: blur(26px) saturate(1.7);
-  border: 1px solid oklch(1 0 0 / 85%);
-  box-shadow:
-    0 14px 38px oklch(0.3 0.12 264 / 14%),
-    0 2px 6px oklch(0.3 0.12 264 / 6%),
-    inset 0 1px 0 oklch(1 0 0 / 95%),
-    inset 0 -1px 0 oklch(0.5 0.1 262 / 8%);
+[data-slot="card"],
+.leaf {
+  background: var(--card);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0;
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-soft);
 }
+[data-slot="card"] { --tw-ring-shadow: 0 0 #0000; }
 .glass-nav {
-  background:
-    radial-gradient(120% 90% at 15% -20%, oklch(1 0 0 / 90%), transparent 55%),
-    linear-gradient(150deg, oklch(1 0 0 / 78%), oklch(0.96 0.02 255 / 60%));
-  border: 1px solid oklch(1 0 0 / 85%);
-  box-shadow: 0 18px 48px oklch(0.3 0.12 264 / 22%), inset 0 1px 0 oklch(1 0 0 / 95%), inset 0 -1px 0 oklch(0.5 0.1 262 / 10%);
+  background: var(--card);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0;
+  border-radius: 2rem;
+  box-shadow: 0 2px 4px oklch(0.3 0.08 var(--h) / 6%), 0 18px 44px oklch(0.3 0.08 var(--h) / 16%);
 }
 .nav-active {
-  color: oklch(0.99 0 0);
-  background: linear-gradient(150deg, oklch(0.4 0.14 264), oklch(0.3 0.11 264));
-  box-shadow: 0 8px 20px oklch(0.3 0.12 264 / 35%), inset 0 1px 0 oklch(1 0 0 / 22%);
+  color: var(--primary-foreground);
+  background: var(--primary);
+  box-shadow: 0 8px 20px color-mix(in oklch, var(--primary) 35%, transparent);
 }
 .nav-shield {
-  background: linear-gradient(to top, oklch(0.965 0.012 255 / 90%) 35%, oklch(0.965 0.012 255 / 0%));
+  background: linear-gradient(to top, oklch(0.975 0.006 var(--h) / 92%) 35%, oklch(0.975 0.006 var(--h) / 0%));
 }
-
-/* Hedef barı: lacivert → royal mavi → gök mavisi, parlayan uç */
-.goal-track {
-  background: oklch(0.3 0.1 264 / 9%);
-  box-shadow: inset 0 1px 3px oklch(0.3 0.1 264 / 22%);
-}
-.goal-fill {
-  background:
-    linear-gradient(100deg, transparent 35%, oklch(1 0 0 / 55%) 50%, transparent 65%) 0 0 / 220% 100% no-repeat,
-    linear-gradient(90deg, oklch(0.3 0.11 264), oklch(0.48 0.2 262) 55%, oklch(0.72 0.14 235));
-}
-.goal-spark {
-  background: oklch(0.97 0.04 235);
-  box-shadow: 0 0 0.6rem 0.2rem oklch(0.65 0.18 250 / 90%);
-}
-.goal-fill::after {
-  background: oklch(0.97 0.03 235);
-  box-shadow:
-    0 0 0.6rem 0.15rem oklch(0.7 0.16 245 / 90%),
-    0 0 1.6rem 0.5rem oklch(0.55 0.2 262 / 55%),
-    0 0 3rem 1rem oklch(0.5 0.18 262 / 25%);
-}
-.shortcut-float { text-shadow: 0 0 0.75rem oklch(0.6 0.2 262 / 60%); }
-.shortcut-ring { border-color: oklch(0.55 0.2 262); }
-
-/* Lacivert sıvı cam: tarih seçici gibi küçük vurgu alanları */
 .glass-navy {
-  color: oklch(0.99 0 0);
-  border-radius: 1.25rem 0.55rem 1.25rem 0.55rem;
-  background:
-    radial-gradient(120% 90% at 12% -20%, oklch(1 0 0 / 38%), transparent 55%),
-    linear-gradient(150deg, oklch(0.46 0.17 264 / 95%), oklch(0.3 0.11 264 / 96%));
-  backdrop-filter: blur(18px) saturate(1.8);
-  -webkit-backdrop-filter: blur(18px) saturate(1.8);
-  border: 1px solid oklch(1 0 0 / 30%);
-  box-shadow:
-    0 10px 26px oklch(0.3 0.12 264 / 32%),
-    inset 0 1px 0 oklch(1 0 0 / 40%),
-    inset 0 -1px 0 oklch(0 0 0 / 18%);
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border-radius: 9999px;
+  border: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 8px 20px color-mix(in oklch, var(--primary) 32%, transparent);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .glass-navy:active { transform: scale(0.97); }
-.glass-navy:focus-within { box-shadow: 0 0 0 3px oklch(0.5 0.2 262 / 35%), 0 10px 26px oklch(0.3 0.12 264 / 32%), inset 0 1px 0 oklch(1 0 0 / 40%); }
+.glass-navy:focus-within { box-shadow: 0 0 0 4px color-mix(in oklch, var(--primary) 25%, transparent); }
+
+/* Kontroller: düğmeler hap, alanlar geniş yuvarlak */
+[data-slot="button"] { border-radius: 9999px; }
+[data-slot="input"] { height: 2.75rem; padding-inline: 1rem; border-radius: 1.1rem; background: var(--muted); border-color: transparent; }
+[data-slot="dialog-content"], [role="dialog"] { border-radius: 2rem; }
+
+/* Hedef barı: düz renk dolgu, parlayan uç ve kıvılcımlar korunur */
+.goal-track {
+  height: 1.1rem;
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+  box-shadow: none;
+}
+.goal-fill {
+  background:
+    linear-gradient(100deg, transparent 35%, oklch(1 0 0 / 40%) 50%, transparent 65%) 0 0 / 220% 100% no-repeat,
+    var(--primary);
+}
+.goal-spark {
+  background: oklch(0.97 0.03 var(--h));
+  box-shadow: 0 0 0.6rem 0.2rem color-mix(in oklch, var(--primary) 85%, white);
+}
+.goal-fill::after {
+  background: oklch(0.97 0.03 var(--h));
+  box-shadow:
+    0 0 0.6rem 0.15rem color-mix(in oklch, var(--primary) 80%, white),
+    0 0 1.6rem 0.5rem color-mix(in oklch, var(--primary) 55%, transparent),
+    0 0 3rem 1rem color-mix(in oklch, var(--primary) 25%, transparent);
+}
+.shortcut-float { text-shadow: none; }
+.shortcut-ring { border-color: var(--primary); }

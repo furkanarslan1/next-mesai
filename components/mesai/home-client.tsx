@@ -193,7 +193,7 @@ function HomeView({ today }: { today: Date }) {
                   {...realTap(() => (existing ? remove(existing) : add(t, 0)))}
                   className={`glass relative flex flex-col items-center gap-2.5 p-4 text-center transition active:scale-[0.97] disabled:opacity-60 ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
                 >
-                  <span className={`grid size-12 place-items-center rounded-2xl ring-1 ${existing ? "bg-primary text-primary-foreground ring-primary" : m.tint}`}>
+                  <span className={`grid size-12 place-items-center rounded-[1.25rem] ring-1 ${existing ? "bg-primary text-primary-foreground ring-primary" : m.tint}`}>
                     {existing ? <Check className="size-6" /> : <StatusIcon type={t} className="size-8" />}
                   </span>
                   <span>

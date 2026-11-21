@@ -59,7 +59,7 @@ function CalendarView({ today }: { today: Date }) {
               return (
                 <div key={key} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
                   className={`relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm leading-none text-foreground ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-primary" : ""}`}
-                  style={{ background: worked > 0 ? `oklch(0.5 0.2 262 / ${alpha})` : st ? st.bg : "var(--muted)", color: strong ? "oklch(0.99 0 0)" : undefined }}>
+                  style={{ background: worked > 0 ? `color-mix(in oklch, var(--primary) ${Math.round(alpha * 100)}%, transparent)` : st ? st.bg : "var(--muted)", color: strong ? "oklch(0.99 0 0)" : undefined }}>
                   <span className={isToday ? "font-bold" : ""}>{format(d, "d")}</span>
                   {worked > 0 ? (
                     <span className="mt-1 text-[10px] font-semibold tabular-nums">{+worked.toFixed(2)} sa</span>
@@ -74,7 +74,7 @@ function CalendarView({ today }: { today: Date }) {
         </CardContent>
       </Card>
       <div className="flex flex-wrap gap-3 text-xs">
-        <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-[oklch(0.5_0.2_262)]" />Mesai (saat yazar)</span>
+        <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-primary" />Mesai (saat yazar)</span>
         {Object.values(TYPE_META).slice(1).map((m) => (
           <span key={m.label} className="flex items-center gap-1"><span className={`size-2 rounded-full ${m.color}`} />{m.label}</span>
         ))}
