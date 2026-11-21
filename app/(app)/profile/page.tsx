@@ -10,6 +10,7 @@ import { mutate, resetStore, useLinks, useProfile, useSettings, useShortcuts } f
 import type { Settings } from "@/lib/types";
 import { SHIFTS } from "@/lib/types";
 import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
+import { AppearanceCard } from "@/components/mesai/appearance-card";
 import { InstallCard } from "@/components/mesai/install-card";
 import { fmtHours, HoursChips } from "@/components/mesai/hours-chips";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ export default function ProfilePage() {
     <div className="grid items-start gap-5 md:grid-cols-2">
       <h1 className="text-2xl font-bold md:col-span-2">{profile.full_name}</h1>
       <InstallCard className="md:col-span-2" />
+      <AppearanceCard />
       {profile.role === "employee" && <WorkSettings userId={profile.id} />}
       {profile.role === "employee" && <ShortcutSettings userId={profile.id} />}
       {profile.role === "employee" && (

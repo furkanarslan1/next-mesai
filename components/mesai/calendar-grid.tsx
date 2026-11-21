@@ -30,7 +30,7 @@ export function CalendarGrid({ month, onMonthChange, value, today, marked, onSel
             <button key={key} type="button" aria-pressed={selected} aria-label={format(d, "d MMMM EEEE", { locale: tr })}
               onClick={() => onSelect(key)}
               className={`r-md relative flex aspect-square flex-col items-center justify-center text-sm font-medium leading-none transition active:scale-95 ${
-                selected ? "bg-[var(--teal)] text-[var(--ink)]" : isMarked ? "bg-[var(--navy)] text-white" : "bg-muted text-foreground"
+                selected ? "bg-[var(--teal)] text-[var(--ink)]" : isMarked ? "bg-[var(--fill)] text-white" : "bg-muted text-foreground"
               } ${key === today && !selected ? "ring-2 ring-[var(--teal)] ring-offset-2 ring-offset-popover" : ""} ${holidayName(key) && !selected ? "ring-2 ring-amber-400" : ""}`}>
               {format(d, "d")}
               {isMarked && selected && <span className="absolute bottom-1.5 size-1.5 rounded-full bg-[var(--ink)]" aria-hidden />}

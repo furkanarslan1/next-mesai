@@ -16,7 +16,7 @@ export const CATEGORY_META: Record<CategoryKey, { label: string; color: string }
   dogalgaz: { label: "Doğalgaz", color: "#e0603c" },
   internet: { label: "İnternet", color: "#7a6fd6" },
   telefon: { label: "Telefon", color: "#d86a9a" },
-  kredi: { label: "Kredi/Kart", color: "#131b2b" },
+  kredi: { label: "Kredi/Kart", color: "#4a5d78" },
   diger: { label: "Diğer", color: "#7f8f9c" },
   ekgelir: { label: "Ek gelir", color: "#2f9e6e" },
   prim: { label: "Prim", color: "#d9a514" },
