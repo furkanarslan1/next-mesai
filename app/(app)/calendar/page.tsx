@@ -63,8 +63,8 @@ function CalendarView({ today }: { today: Date }) {
               const st = status ? STATUS_CELL[status.type] : null;
               return (
                 <button key={key} type="button" onClick={() => setSelected(key)} aria-label={`${format(d, "d MMMM", { locale: tr })} kayıtlarını aç`} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
-                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none text-white transition active:scale-95 ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-[var(--teal)] ring-offset-2 ring-offset-card" : ""}`}
-                  style={{ background: worked > 0 ? `color-mix(in oklch, var(--teal) ${Math.round(alpha * 100)}%, var(--navy))` : st ? st.bg : "var(--navy)", color: strong ? "var(--ink)" : undefined }}>
+                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none transition active:scale-95 ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-[var(--teal)] ring-offset-2 ring-offset-card" : ""}`}
+                  style={{ background: worked > 0 ? `color-mix(in oklch, var(--teal) ${Math.round(alpha * 100)}%, var(--navy))` : st ? st.bg : "var(--muted)", color: worked > 0 || st ? (strong ? "var(--ink)" : "oklch(0.99 0 0)") : "var(--foreground)" }}>
                   <span className={isToday ? "font-bold" : ""}>{format(d, "d")}</span>
                   {worked > 0 ? (
                     <span className="mt-1 text-[10px] font-semibold tabular-nums">{+worked.toFixed(2)} sa</span>

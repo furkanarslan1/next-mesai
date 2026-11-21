@@ -42,10 +42,10 @@ export function DatePicker({ open, value, today, onSelect, onClose }: {
               <button key={key} type="button" aria-pressed={selected} aria-label={format(d, "d MMMM EEEE", { locale: tr })}
                 onClick={() => onSelect(key)}
                 className={`r-md relative flex aspect-square flex-col items-center justify-center text-sm font-medium leading-none transition active:scale-95 ${
-                  selected ? "bg-[var(--teal)] text-[var(--ink)]" : "bg-[var(--navy)] text-white"
+                  selected ? "bg-[var(--teal)] text-[var(--ink)]" : marked.has(key) ? "bg-[var(--navy)] text-white" : "bg-muted text-foreground"
                 } ${isToday && !selected ? "ring-2 ring-[var(--teal)] ring-offset-2 ring-offset-popover" : ""} ${holidayName(key) && !selected ? "ring-2 ring-amber-400" : ""}`}>
                 {format(d, "d")}
-                {marked.has(key) && <span className={`absolute bottom-1.5 size-1.5 rounded-full ${selected ? "bg-[var(--ink)]" : "bg-[var(--mint)]"}`} aria-hidden />}
+                {marked.has(key) && selected && <span className="absolute bottom-1.5 size-1.5 rounded-full bg-[var(--ink)]" aria-hidden />}
               </button>
             );
           })}
