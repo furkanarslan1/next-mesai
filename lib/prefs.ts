@@ -10,7 +10,7 @@ export type ThemePref = "light" | "dark" | "system";
 export interface Prefs { theme: ThemePref; reminderOn: boolean; reminderHour: number; reminderDismissed: string }
 
 const KEY = "mesai.prefs";
-const DEFAULTS: Prefs = { theme: "system", reminderOn: true, reminderHour: 20, reminderDismissed: "" };
+const DEFAULTS: Prefs = { theme: "system", reminderOn: false, reminderHour: 20, reminderDismissed: "" };
 const listeners = new Set<() => void>();
 let cache: Prefs | null = null;
 

@@ -36,6 +36,7 @@ export async function restoreBackup(text: string) {
     if (time(s.work_end)) patch.work_end = time(s.work_end);
     if (s.goal_mode === "amount" || s.goal_mode === "hours") patch.goal_mode = s.goal_mode;
     if (has("monthly_goal_hours")) patch.monthly_goal_hours = num(s.monthly_goal_hours);
+    if (has("included_overtime_hours")) patch.included_overtime_hours = Math.min(200, num(s.included_overtime_hours));
     const { error } = await supabase.from("user_settings").update(patch).eq("user_id", uid);
     if (error) throw error;
   }

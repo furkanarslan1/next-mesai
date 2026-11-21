@@ -31,7 +31,7 @@ export function AppearanceCard() {
             <Bell className="size-5 text-muted-foreground" />
             <span>
               Akşam hatırlatıcısı
-              <span className="block text-xs font-normal text-muted-foreground">Uygulamayı açtığında, o güne kayıt girmediysen hatırlatır</span>
+              <span className="block text-xs font-normal text-muted-foreground">Mesai yaptıysan eklemeyi hatırlatır; yapmadıysan kayıt girmen gerekmez</span>
             </span>
           </span>
           <Switch checked={p.reminderOn} onCheckedChange={(v) => setPrefs({ reminderOn: v })} />

@@ -45,15 +45,16 @@ export function projection(entries: Entry[], s: Settings, today: Date) {
   const ded = salaryDeduction(entries, s);
   const pace = elapsed > 0 ? total / elapsed : 1;
   const projectedHours = m.hours * pace;
-  const projectedEarned = m.earned * pace;
+  // Dahil saatler (maaşın içindeki) ücret getirmez: tahmini ücretli saat = tahmini toplam − dahil saat
+  const projectedEarned = Math.max(0, projectedHours - Math.max(0, s.included_overtime_hours ?? 0)) * m.paidRate;
   const projectedIncome = Math.max(0, s.monthly_salary - ded.amount) + projectedEarned;
   const g = goalProgress(entries, s);
   let neededHours = 0;
   if (g.set) {
     if (g.mode === "hours") neededHours = Math.max(0, g.goal - m.hours);
     else {
-      const avgRate = m.hours > 0 ? m.earned / m.hours : s.hourly_rate;
-      neededHours = avgRate > 0 ? Math.max(0, g.goal - g.income) / avgRate : 0;
+      const remaining = Math.max(0, g.goal - g.income);
+      neededHours = remaining > 0 && m.paidRate > 0 ? remaining / m.paidRate + m.quotaLeft : 0;
     }
   }
   const onTrack = g.set && (g.mode === "hours" ? projectedHours >= g.goal : projectedIncome >= g.goal);
@@ -80,8 +81,9 @@ export const leaveByTenure = (years: number) => (years >= 15 ? 26 : years >= 5 ?
  */
 export function payslipCheck(p: Payslip, entries: Entry[], s: Settings) {
   const m = monthSummary(entries, s);
-  const hoursDiff = Math.round((p.paid_hours - m.hours) * 100) / 100;
+  // Bordroda yalnızca maaşa dahil saati aşan (ücretli) mesai yazar
+  const hoursDiff = Math.round((p.paid_hours - m.paidHours) * 100) / 100;
   const amountDiff = Math.round(p.paid_amount - m.earned);
   const status: "ok" | "missing" | "extra" = Math.abs(hoursDiff) <= 0.25 ? "ok" : hoursDiff < 0 ? "missing" : "extra";
-  return { appHours: m.hours, appAmount: m.earned, hoursDiff, amountDiff, status };
+  return { appHours: m.paidHours, appAmount: m.earned, hoursDiff, amountDiff, status };
 }

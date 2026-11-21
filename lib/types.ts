@@ -33,6 +33,8 @@ export interface Settings {
   goal_mode: "amount" | "hours";
   monthly_goal_hours: number;
   /** Yıllık izin hakkı (gün) */
+  /** Maaşa dahil aylık mesai saati (bu kadarına ayrıca ücret ödenmez) */
+  included_overtime_hours: number;
   annual_leave_days: number;
   /** Gider kategorisi (CategoryKey) -> aylık limit */
   budgets: Record<string, number>;
