@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { addMonths, endOfMonth, format, startOfMonth } from "date-fns";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { download, toCSV } from "@/lib/backup";
 import { useToday } from "@/lib/now";
 import { hhmm, hrs } from "@/lib/calc";
@@ -33,11 +34,12 @@ function ManagerView({ today }: { today: Date }) {
     if (!ids.length) return setEmps([]);
     const from = format(startOfMonth(month), "yyyy-MM-dd");
     const to = format(endOfMonth(month), "yyyy-MM-dd");
-    const [{ data: ps }, { data: es }] = await Promise.all([
+    // Ekip büyüdükçe 1000 satır sınırı aşılır: tüm sayfalar okunur
+    const [{ data: ps }, es] = await Promise.all([
       supabase.from("profiles").select("id, full_name").in("id", ids),
-      supabase.from("entries").select("*").in("user_id", ids).gte("work_date", from).lte("work_date", to),
+      fetchAll<Entry>((a, b) => supabase.from("entries").select("*").in("user_id", ids).gte("work_date", from).lte("work_date", to).order("work_date").order("id").range(a, b)),
     ]);
-    setEmps((ps ?? []).map((p) => ({ ...p, entries: ((es ?? []) as Entry[]).filter((e) => e.user_id === p.id) })));
+    setEmps((ps ?? []).map((p) => ({ ...p, entries: (es ?? []).filter((e) => e.user_id === p.id) })));
   }, [month]);
   useEffect(() => { load(); }, [load]);
 

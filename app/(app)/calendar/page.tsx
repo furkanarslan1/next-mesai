@@ -46,9 +46,9 @@ function CalendarView({ today }: { today: Date }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <Button size="icon" variant="secondary" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft /></Button>
+        <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft /></Button>
         <h1 className="text-xl font-bold capitalize">{format(month, "MMMM yyyy", { locale: tr })}</h1>
-        <Button size="icon" variant="secondary" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight /></Button>
+        <Button size="icon" variant="secondary" aria-label="Sonraki ay" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight /></Button>
       </div>
       <Card>
         <CardContent>

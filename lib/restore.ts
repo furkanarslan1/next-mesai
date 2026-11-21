@@ -15,7 +15,7 @@ export async function restoreBackup(text: string) {
   if (!user) throw new Error("Oturum yok");
   const uid = user.id;
   const rows = (k: string) => (Array.isArray(data[k]) ? (data[k] as unknown[]).filter(isObj) : []);
-  const count = { entries: 0, shortcuts: 0, finance: 0 };
+  const count = { entries: 0, shortcuts: 0, finance: 0, payslips: 0 };
 
   const s = rows("user_settings")[0];
   if (s) {
@@ -36,6 +36,12 @@ export async function restoreBackup(text: string) {
     if (time(s.work_end)) patch.work_end = time(s.work_end);
     if (s.goal_mode === "amount" || s.goal_mode === "hours") patch.goal_mode = s.goal_mode;
     if (has("monthly_goal_hours")) patch.monthly_goal_hours = num(s.monthly_goal_hours);
+    if (has("annual_leave_days")) patch.annual_leave_days = Math.min(60, Math.round(num(s.annual_leave_days)));
+    if (isObj(s.budgets)) {
+      const b: Record<string, number> = {};
+      Object.entries(s.budgets).forEach(([k, v]) => { if (num(v) > 0) b[k] = num(v); });
+      patch.budgets = b;
+    }
     if (has("included_overtime_hours")) patch.included_overtime_hours = Math.min(200, num(s.included_overtime_hours));
     const { error } = await supabase.from("user_settings").update(patch).eq("user_id", uid);
     if (error) throw error;
@@ -64,6 +70,15 @@ export async function restoreBackup(text: string) {
     }
     if (noId.length) { const { error } = await supabase.from(table).insert(noId); if (error) throw error; }
     count[key] = list.length;
+  }
+  // Bordrolar ay başına tektir (user_id + ay): aynı aya yeniden yükleme üzerine yazar
+  const payslips = rows("payslips").filter((r) => date(r.month)).map((r) => ({
+    user_id: uid, month: date(r.month)!, paid_hours: Math.max(0, num(r.paid_hours)), paid_amount: Math.max(0, num(r.paid_amount)), note: str(r.note),
+  }));
+  if (payslips.length) {
+    const { error } = await supabase.from("payslips").upsert(payslips, { onConflict: "user_id,month" });
+    if (error) throw error;
+    count.payslips = payslips.length;
   }
   return count;
 }

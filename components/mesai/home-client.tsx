@@ -154,7 +154,7 @@ function HomeView({ today }: { today: Date }) {
         </div>
       )}
 
-      <ReminderCard todayStr={todayStr} now={today} hasRecords={todays.length > 0} isToday={date === todayStr} />
+      <ReminderCard todayStr={todayStr} hasRecords={todays.length > 0} isToday={date === todayStr} />
 
       {holiday && !activeStatus && (
         <div className="glass r-lg flex items-center justify-between px-4 py-3 text-sm">
