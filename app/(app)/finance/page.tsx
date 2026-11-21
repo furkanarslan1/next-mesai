@@ -6,11 +6,13 @@ import { tr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, Repeat } from "lucide-react";
 import { useMesai } from "@/lib/use-data";
 import { useToday } from "@/lib/now";
-import { monthKey, useFinance, useProfile } from "@/lib/store";
+import { monthKey, useEntriesMap, useFinance, useFinanceMap, useProfile } from "@/lib/store";
 import { money } from "@/lib/calc";
-import { categoryKey, CATEGORY_META, financeSummary } from "@/lib/finance";
+import { categoryKey, CATEGORY_META, financeSummary, type CategoryKey } from "@/lib/finance";
+import { keyOf, lastMonths } from "@/lib/reports";
 import type { FinanceItem } from "@/lib/types";
 import { CategoryIcon } from "@/components/mesai/category-icon";
+import { BudgetSheet } from "@/components/mesai/budget-sheet";
 import { FinanceSheet } from "@/components/mesai/finance-sheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,12 +28,18 @@ export default function FinancePage() {
 function FinanceView({ today }: { today: Date }) {
   const [month, setMonth] = useState(startOfMonth(today));
   const [sheet, setSheet] = useState<SheetState>(null);
+  const [budget, setBudget] = useState<{ cat: CategoryKey | null } | null>(null);
   const userId = useProfile()?.id ?? "";
   const key = monthKey(month);
   const items = useFinance(key);
   const { entries, settings } = useMesai(month);
   const cur = settings.currency;
   const todayStr = format(today, "yyyy-MM-dd");
+  // Son 6 ay gelir/gider grafiği için aylar (kayıtlar önbellekten gelir)
+  const six = lastMonths(today, 6);
+  const sixKeys = six.map(keyOf);
+  const finMap = useFinanceMap(sixKeys);
+  const entMap = useEntriesMap(sixKeys);
   const defaultDate = key === monthKey(today) ? todayStr : `${key}-01`;
 
   if (!items) return <div className="glass min-h-[28rem] w-full animate-pulse" aria-busy />;
@@ -39,6 +47,15 @@ function FinanceView({ today }: { today: Date }) {
   const f = financeSummary(items, entries, settings);
   const sorted = [...items].sort((a, b) => Number(b.recurring) - Number(a.recurring) || (b.spent_on ?? "").localeCompare(a.spent_on ?? "") || b.amount - a.amount);
   const maxExpense = f.breakdown[0]?.amount ?? 0;
+  const spentByKey = new Map<string, number>();
+  f.breakdown.forEach((b) => spentByKey.set(categoryKey(b.category), (spentByKey.get(categoryKey(b.category)) ?? 0) + b.amount));
+  const limits = Object.entries(settings.budgets ?? {}).filter(([, v]) => v > 0) as [CategoryKey, number][];
+  const trend = six.map((d) => {
+    const k = keyOf(d);
+    const s = financeSummary(finMap[k] ?? [], entMap[k] ?? [], settings);
+    return { d, k, income: s.income, expense: s.expense };
+  });
+  const trendMax = Math.max(1, ...trend.flatMap((t) => [t.income, t.expense]));
 
   return (
     <div className="space-y-5">
@@ -96,6 +113,57 @@ function FinanceView({ today }: { today: Date }) {
         </CardContent></Card>
       )}
 
+      <Card><CardContent className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">Bütçe limitleri</h2>
+            <p className="text-xs text-muted-foreground">Kategori başına aylık harcama limiti</p>
+          </div>
+          <Button size="sm" variant="secondary" disabled={!userId} onClick={() => setBudget({ cat: null })}><Plus className="size-4" />Limit</Button>
+        </div>
+        {limits.length === 0 && <p className="r-lg bg-muted px-4 py-4 text-center text-sm text-muted-foreground">Limit belirlemedin. Örn. market için aylık ₺5.000.</p>}
+        {limits.map(([k, limit]) => {
+          const spent = spentByKey.get(k) ?? 0;
+          const pct = (spent / limit) * 100;
+          const over = pct > 100;
+          return (
+            <button key={k} type="button" onClick={() => setBudget({ cat: k })} className="r-lg w-full space-y-2 bg-muted px-4 py-3 text-left transition active:scale-[0.98]">
+              <div className="flex items-center gap-3 text-sm">
+                <CategoryIcon category={k} className="size-7 shrink-0" />
+                <span className="flex-1 font-semibold">{CATEGORY_META[k].label}</span>
+                <span className={`tabular-nums ${over ? "font-semibold text-destructive" : "text-muted-foreground"}`}>{money(spent, cur)} / {money(limit, cur)}</span>
+              </div>
+              <div className="h-2 rounded-full bg-background" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, Math.round(pct))}>
+                <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(2, pct))}%`, background: over ? "var(--destructive)" : pct >= 80 ? "#e08a3c" : "var(--teal)" }} />
+              </div>
+              {over ? <p className="text-xs font-medium text-destructive">Limiti {money(spent - limit, cur)} aştın</p>
+                : pct >= 80 ? <p className="text-xs font-medium text-amber-600">Limitin %{Math.round(pct)}&apos;ine geldin, {money(limit - spent, cur)} kaldı</p> : null}
+            </button>
+          );
+        })}
+      </CardContent></Card>
+
+      <Card><CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Son 6 ay</h2>
+          <span className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="size-2 rounded-full" style={{ background: "var(--teal)" }} />Gelir</span>
+            <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-[#e0603c]" />Gider</span>
+          </span>
+        </div>
+        <div className="flex h-40 items-end gap-2" role="img" aria-label="Aylara göre gelir ve gider">
+          {trend.map((t) => (
+            <div key={t.k} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+              <div className="flex h-full w-full items-end justify-center gap-1">
+                <div className="w-1/2 max-w-4 rounded-t-lg" style={{ height: `${Math.max(t.income > 0 ? 4 : 1, (t.income / trendMax) * 100)}%`, background: "var(--teal)" }} />
+                <div className="w-1/2 max-w-4 rounded-t-lg bg-[#e0603c]" style={{ height: `${Math.max(t.expense > 0 ? 4 : 1, (t.expense / trendMax) * 100)}%` }} />
+              </div>
+              <span className="text-[11px] capitalize text-muted-foreground">{format(t.d, "LLL", { locale: tr })}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent></Card>
+
       <section className="space-y-2" aria-label="Kayıtlar">
         <h2 className="font-semibold">Kayıtlar</h2>
         {sorted.length === 0 && (
@@ -117,6 +185,7 @@ function FinanceView({ today }: { today: Date }) {
         ))}
       </section>
 
+      {budget && userId && <BudgetSheet userId={userId} settings={settings} initial={budget.cat} onClose={() => setBudget(null)} />}
       {sheet && (
         <FinanceSheet
           key={sheet.item?.id ?? `new-${sheet.kind}`} item={sheet.item} defaultKind={sheet.kind}
