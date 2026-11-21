@@ -13,6 +13,7 @@ import { holidayName } from "@/lib/holidays";
 import { hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
 import { ShortcutButton } from "@/components/mesai/shortcut-button";
+import { DatePicker } from "@/components/mesai/date-picker";
 import { StatusIcon } from "@/components/mesai/status-icon";
 import { LevelIcon } from "@/components/mesai/level-icon";
 import { GoalHero } from "@/components/mesai/goal-hero";
@@ -50,6 +51,7 @@ function HomeView({ today }: { today: Date }) {
   const todayStr = format(today, "yyyy-MM-dd");
   const [date, setDate] = useState(todayStr);
   // Gece yarısı geçince, "bugün"e bakıyorsan tarih de yeni güne geçsin
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [seenToday, setSeenToday] = useState(todayStr);
   if (seenToday !== todayStr) {
     if (date === seenToday) setDate(todayStr);
@@ -133,18 +135,22 @@ function HomeView({ today }: { today: Date }) {
           <p className="text-sm text-muted-foreground">{format(parseISO(date), "d MMMM EEEE", { locale: tr })}</p>
           <h1 className="text-2xl font-bold">Merhaba{name ? `, ${name.split(" ")[0]}` : " 👋"}</h1>
         </div>
-        <label className="glass-navy relative flex h-11 cursor-pointer items-center gap-2 pr-3 pl-3.5 text-sm font-semibold">
+        <button type="button" onClick={() => setPickerOpen(true)} aria-label="Tarih seç"
+          className="glass-navy flex h-11 items-center gap-2 pr-3 pl-3.5 text-sm font-semibold">
           <CalendarDays className="size-4.5 opacity-90" aria-hidden />
           <span className="tabular-nums">{format(parseISO(date), date === todayStr ? "'Bugün' · d MMM" : "d MMM yyyy", { locale: tr })}</span>
           <ChevronDown className="size-4 opacity-70" aria-hidden />
-          <input
-            type="date" aria-label="Tarih seç" value={date}
-            onChange={(e) => e.target.value && setDate(e.target.value)}
-            onClick={(e) => { try { e.currentTarget.showPicker?.(); } catch { /* desteklenmiyorsa yok say */ } }}
-            className="absolute inset-0 size-full cursor-pointer opacity-0"
-          />
-        </label>
+        </button>
       </header>
+
+      <DatePicker open={pickerOpen} value={date} today={todayStr} onSelect={(d) => { setDate(d); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />
+
+      {date !== todayStr && (
+        <div className="glass r-lg flex items-center justify-between gap-3 px-4 py-3 text-sm">
+          <span>{date < todayStr ? "Geçmiş bir günü düzenliyorsun" : "Gelecek bir güne bakıyorsun"}: <b>{dayLabel}</b></span>
+          <Button size="sm" variant="secondary" onClick={() => setDate(todayStr)}>Bugüne dön</Button>
+        </div>
+      )}
 
       {holiday && !activeStatus && (
         <div className="glass r-lg flex items-center justify-between px-4 py-3 text-sm">
@@ -161,7 +167,7 @@ function HomeView({ today }: { today: Date }) {
 
       <div className="grid grid-cols-2 gap-3">
         <Card size="sm" className="r-lg"><CardContent className="text-center">
-          <p className="text-xs text-muted-foreground">Bugünün mesaisi</p>
+          <p className="text-xs text-muted-foreground">{date === todayStr ? "Bugünün mesaisi" : `${dayLabel} mesaisi`}</p>
           <p className="text-xl font-bold tabular-nums">{hrs(todayHours)}</p>
         </CardContent></Card>
         <Card size="sm" className="r-lg"><CardContent className="text-center">
@@ -193,7 +199,7 @@ function HomeView({ today }: { today: Date }) {
           {/* "Farklı mesai" ile girilen (ya da silinmiş kısayoldan gelen) kayıt da kısayol gibi görünür; dokununca geri alınır */}
           {workEntry && !(shortcuts ?? []).some((x) => x.id === workEntry.shortcut_id) && (
             <ShortcutButton
-              label={hrs(Number(workEntry.hours))} hoursText={hrs(Number(workEntry.hours))}
+              label={`${+Number(workEntry.hours).toFixed(2)} saat`} hoursText={hrs(Number(workEntry.hours))}
               hint={workEntry.start_time ? `${hhmm(workEntry.start_time)}–${hhmm(workEntry.end_time)}` : workEntry.type === "holiday" ? "Resmi tatil" : "Farklı mesai"}
               active disabled={workEntry.id.startsWith("tmp-")}
               onPress={() => askRemoveWork(workEntry)}
@@ -211,7 +217,7 @@ function HomeView({ today }: { today: Date }) {
       <div className="grid items-start gap-5 md:grid-cols-2">
         <section className="space-y-3">
           <div>
-            <h2 className="font-semibold">Bugün işe gitmedin mi?</h2>
+            <h2 className="font-semibold">{date === todayStr ? "Bugün" : dayLabel} işe gitmedin mi?</h2>
             <p className="text-xs text-muted-foreground">Nedenini seç, takvimine işlensin. Tekrar dokunursan geri alınır.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
