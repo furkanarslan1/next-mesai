@@ -82,6 +82,9 @@ function HomeView({ today }: { today: Date }) {
   const lvl = levelFor(totalHours);
 
   function add(type: EntryType, hours: number, start?: string | null, end?: string | null, undo = false, shortcutId?: string) {
+    if ((type === "overtime" || (type === "holiday" && hours > 0)) && entries.some((e) => e.work_date === date && (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0)) {
+      toast.info("Bu güne zaten mesai girdin. Önce onu geri al."); return;
+    }
     if (!userId) { toast.info("Hesap bilgileri yükleniyor, birkaç saniye sonra tekrar dene"); return; }
     const row = { user_id: userId, work_date: date, type, hours, note: null, start_time: start ?? null, end_time: end ?? null, ...(shortcutId ? { shortcut_id: shortcutId } : {}) };
     startTransition(async () => {
@@ -114,6 +117,11 @@ function HomeView({ today }: { today: Date }) {
     } else if (!activeStatus) {
       setConfirm({ title: `${TYPE_META[t].label} olarak işaretlensin mi?`, desc: `${dayLabel} günü "${TYPE_META[t].label}" olarak kaydedilecek. Bir gün için tek durum seçilebilir.`, yes: "Evet, işaretle", run: () => add(t, 0) });
     }
+  }
+  // Günde tek mesai kaydı: mesai ya da çalışılan tatil (saatli). Varsa yenisi eklenemez, önce o geri alınmalı.
+  const workEntry = todays.find((e) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0);
+  function askRemoveWork(e: Entry) {
+    setConfirm({ title: "Mesai geri alınsın mı?", desc: `${dayLabel} gününün ${hrs(Number(e.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(e) });
   }
   const todayHours = todays.filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
   const monthHours = entries.filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
@@ -174,8 +182,8 @@ function HomeView({ today }: { today: Date }) {
             return (
               <ShortcutButton
                 key={s.id} label={s.label} hoursText={hrs(Number(s.hours))}
-                hint={s.start_time ? `${hhmm(s.start_time)}–${hhmm(s.end_time)}` : "Dokun, ekle"}
-                active={!!existing} disabled={existing?.id.startsWith("tmp-")}
+                hint={!existing && workEntry ? "Bugün mesai var" : s.start_time ? `${hhmm(s.start_time)}–${hhmm(s.end_time)}` : "Dokun, ekle"}
+                active={!!existing} disabled={existing?.id.startsWith("tmp-") || (!existing && !!workEntry)}
                 onPress={() => setConfirm(existing
                   ? { title: "Mesai geri alınsın mı?", desc: `${hrs(Number(s.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(existing) }
                   : { title: "Mesai eklensin mi?", desc: `${format(parseISO(date), "d MMMM", { locale: tr })} tarihine ${hrs(Number(s.hours))} mesai eklenecek.`, yes: "Evet, ekle", run: () => add("overtime", Number(s.hours), s.start_time, s.end_time, false, s.id) })}
@@ -183,10 +191,22 @@ function HomeView({ today }: { today: Date }) {
             );
           })}
         </div>
-        <button type="button" {...realTap(() => { setOnHoliday(!!holiday); setCustom(true); })}
-          className="glass r-pill mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
-          <Plus className="size-4" />Farklı mesai ekle
-        </button>
+        {workEntry ? (
+          <div className="glass r-lg mt-5 flex items-center justify-between gap-3 px-4 py-3 text-sm">
+            <div>
+              <p className="font-semibold">{dayLabel} mesaisi: {hrs(Number(workEntry.hours))}</p>
+              <p className="text-xs text-muted-foreground">
+                {workEntry.start_time ? `${hhmm(workEntry.start_time)}–${hhmm(workEntry.end_time)} · ` : ""}{workEntry.type === "holiday" ? "Resmi tatil" : workEntry.shortcut_id ? "Kısayoldan eklendi" : "Elle girildi"} · günde tek mesai
+              </p>
+            </div>
+            <Button size="sm" variant="secondary" disabled={workEntry.id.startsWith("tmp-")} {...realTap(() => askRemoveWork(workEntry))}>Geri al</Button>
+          </div>
+        ) : (
+          <button type="button" {...realTap(() => { setOnHoliday(!!holiday); setCustom(true); })}
+            className="glass r-pill mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
+            <Plus className="size-4" />Farklı mesai ekle
+          </button>
+        )}
       </section>
 
       <div className="grid items-start gap-5 md:grid-cols-2">
