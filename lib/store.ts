@@ -12,12 +12,12 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
-import type { Entry, FinanceItem, ManagerLink, Profile, Settings, Shortcut } from "./types";
+import type { Entry, FinanceItem, ManagerLink, Payslip, Profile, Settings, Shortcut } from "./types";
 
 export const DEFAULT_SETTINGS: Settings = {
   hourly_rate: 0, sunday_multiplier: 2, holiday_multiplier: 2, monthly_goal_amount: 0, currency: "TRY",
   monthly_salary: 0, daily_hours: 8, has_shift: false, shift_type: null, work_start: "08:00", work_end: "16:00",
-  sunday_rate: 0, holiday_rate: 0, goal_mode: "amount", monthly_goal_hours: 0,
+  sunday_rate: 0, holiday_rate: 0, goal_mode: "amount", monthly_goal_hours: 0, annual_leave_days: 14, budgets: {},
 };
 
 interface State {
@@ -28,13 +28,14 @@ interface State {
   entries: Record<string, Entry[]>; // "yyyy-MM" -> kayıtlar
   links: ManagerLink[] | null;
   finance: Record<string, FinanceItem[]>; // "yyyy-MM" -> o ayda geçerli kalemler (tekrarlayanlar dahil)
+  payslips: Payslip[] | null;
 }
 
-const EMPTY: State = { profile: null, settings: null, shortcuts: null, totalHours: null, entries: {}, links: null, finance: {} };
+const EMPTY: State = { profile: null, settings: null, shortcuts: null, totalHours: null, entries: {}, links: null, finance: {}, payslips: null };
 
 /** Dilim tazelik süreleri (ms). Kayıtlar en sık değişen veridir, ayarlar/profil nadiren. */
 const MIN = 60_000;
-const TTL = { profile: 30 * MIN, settings: 10 * MIN, shortcuts: 10 * MIN, total: 5 * MIN, entries: 3 * MIN, links: 2 * MIN, finance: 3 * MIN };
+const TTL = { profile: 30 * MIN, settings: 10 * MIN, shortcuts: 10 * MIN, total: 5 * MIN, entries: 3 * MIN, links: 2 * MIN, finance: 3 * MIN, payslips: 10 * MIN };
 let stamps: Record<string, number> = {};
 const touch = (k: string) => { stamps[k] = Date.now(); };
 const fresh = (k: string, ttl: number) => Date.now() - (stamps[k] ?? 0) < ttl;
@@ -66,7 +67,7 @@ export function resetStore() {
   epoch++;
   stamps = {};
   inflight.clear();
-  set({ ...EMPTY, entries: {}, finance: {} });
+  set({ ...EMPTY, entries: {}, finance: {}, payslips: null });
 }
 
 export const monthKey = (d: Date) => format(d, "yyyy-MM");
@@ -152,6 +153,15 @@ export const load = {
     touch(`f:${key}`);
     set({ finance: { ...state.finance, [key]: items } });
   })),
+  /** Bordro kayıtları (bordro kontrolü). */
+  payslips: (force = false) => (!force && state.payslips && fresh("payslips", TTL.payslips) ? Promise.resolve() : once("payslips", async () => {
+    const ep = epoch;
+    const { data, error } = await createClient().from("payslips").select("*").order("month", { ascending: false });
+    if (ep === epoch && !error) {
+      touch("payslips");
+      set({ payslips: ((data ?? []) as Payslip[]).map((p) => ({ ...p, paid_hours: Number(p.paid_hours), paid_amount: Number(p.paid_amount) })) });
+    }
+  })),
   /** Yönetici bağlantıları (profil sayfası): profil yüklendikten sonra çağrılır. */
   links: (force = false) => (!force && state.links && fresh("links", TTL.links) ? Promise.resolve() : once("links", async () => {
     const ep = epoch;
@@ -178,6 +188,7 @@ function revalidateStale() {
   if (state.totalHours !== null) load.totalHours();
   Object.keys(state.entries).forEach((k) => load.entries(k));
   Object.keys(state.finance).forEach((k) => load.finance(k));
+  if (state.payslips) load.payslips();
   if (state.links) load.links();
 }
 if (typeof window !== "undefined") {
@@ -216,6 +227,24 @@ export function useLinks() {
 export function useFinance(key: string) {
   const v = useSyncExternalStore(subscribe, () => state.finance[key] ?? null, () => null);
   useEffect(() => { load.finance(key); }, [key]);
+  return v;
+}
+export function usePayslips() {
+  const v = useSyncExternalStore(subscribe, () => state.payslips, () => null);
+  useEffect(() => { load.payslips(); }, []);
+  return v;
+}
+/** Birden çok ayın kayıtları (raporlar): eksik aylar yüklenir, tüm önbellek haritası döner. */
+export function useEntriesMap(keys: string[]) {
+  const v = useSyncExternalStore(subscribe, () => state.entries, () => EMPTY.entries);
+  const joined = keys.join(",");
+  useEffect(() => { joined.split(",").filter(Boolean).forEach((k) => load.entries(k)); }, [joined]);
+  return v;
+}
+export function useFinanceMap(keys: string[]) {
+  const v = useSyncExternalStore(subscribe, () => state.finance, () => EMPTY.finance);
+  const joined = keys.join(",");
+  useEffect(() => { joined.split(",").filter(Boolean).forEach((k) => load.finance(k)); }, [joined]);
   return v;
 }
 export function useMonthEntries(key: string) {
@@ -258,7 +287,7 @@ export const mutate = {
     if (state.totalHours !== null && counts(e)) set({ totalHours: Math.max(0, state.totalHours - Number(e.hours)) });
   },
   /** Bir kaydın saatini/saat aralığını değiştirir; toplam saat farkı kadar güncellenir. */
-  async updateEntry(e: Entry, patch: Partial<Pick<Entry, "hours" | "start_time" | "end_time">>) {
+  async updateEntry(e: Entry, patch: Partial<Pick<Entry, "hours" | "start_time" | "end_time" | "note">>) {
     writes++;
     const { data, error } = await createClient().from("entries").update(patch).eq("id", e.id).select().single();
     writes++;
@@ -299,6 +328,18 @@ export const mutate = {
       // Görüntülenen ay ekranda kalsın (yanıp sönmesin), diğer aylar yeniden okunsun
       set({ finance: state.finance[viewKey] ? { [viewKey]: state.finance[viewKey] } : {} });
       await load.finance(viewKey, true);
+    },
+  },
+  payslip: {
+    async save(row: Omit<Payslip, "id">) {
+      const { error } = await createClient().from("payslips").upsert(row, { onConflict: "user_id,month" });
+      if (error) throw error;
+      await load.payslips(true);
+    },
+    async remove(id: string) {
+      const { error } = await createClient().from("payslips").delete().eq("id", id);
+      if (error) throw error;
+      await load.payslips(true);
     },
   },
   async respondLink(id: string, status: "accepted" | "revoked") {

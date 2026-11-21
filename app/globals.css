@@ -480,3 +480,10 @@ body {
 }
 .shortcut-float { text-shadow: none; }
 .shortcut-ring { border-color: var(--teal); }
+
+/* Yazdırma / PDF: menü ve düğmeler gizlenir, zemin beyaz olur */
+@media print {
+  aside, nav, .nav-shield, .no-print, [data-slot="toaster"] { display: none !important; }
+  body { background: #fff !important; }
+  .glass, [data-slot="card"] { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+}
