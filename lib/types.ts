@@ -11,6 +11,8 @@ export interface Entry {
   note: string | null;
   start_time: string | null; // HH:MM:SS
   end_time: string | null;
+  /** Mesai bir kısayoldan eklendiyse onun id'si */
+  shortcut_id?: string | null;
 }
 export interface Settings {
   hourly_rate: number;
@@ -48,3 +50,5 @@ export const SHIFTS: Record<ShiftType, { label: string; start: string; end: stri
   evening: { label: "Akşam", start: "16:00", end: "00:00" },
   night: { label: "Gece", start: "00:00", end: "08:00" },
 };
+
+export interface ManagerLink { id: string; status: string; manager_id: string; employee_id: string; name?: string }

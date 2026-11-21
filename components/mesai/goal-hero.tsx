@@ -88,10 +88,10 @@ export function GoalHero({ userId, settings, entries, monthLabel }: {
         <p className="rounded-xl bg-muted px-3.5 py-2.5 text-sm">
           {g.mode === "hours" ? (
             <>Toplam kazanç: <b className="tabular-nums">{money(g.income, cur)}</b>
-              <span className="text-muted-foreground"> · maaş {money(opt.monthly_salary, cur)} + mesai {money(g.earned, cur)}</span></>
+              <span className="text-muted-foreground"> · maaş {money(opt.monthly_salary, cur)}{g.deduction > 0 && <> − kesinti {money(g.deduction, cur)}</>} + mesai {money(g.earned, cur)}</span></>
           ) : (
             <>Hedef için toplam mesai: <b className="tabular-nums">{hrs(Math.round(g.hoursNeeded * 10) / 10)}</b>
-              <span className="text-muted-foreground"> · maaş {money(opt.monthly_salary, cur)} + mesai {money(g.earned, cur)}</span></>
+              <span className="text-muted-foreground"> · maaş {money(opt.monthly_salary, cur)}{g.deduction > 0 && <> − kesinti {money(g.deduction, cur)}</>} + mesai {money(g.earned, cur)}</span></>
           )}
         </p>
       )}

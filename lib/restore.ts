@@ -19,10 +19,24 @@ export async function restoreBackup(text: string) {
 
   const s = rows("user_settings")[0];
   if (s) {
-    const { error } = await supabase.from("user_settings").update({
+    const time = (v: unknown) => (typeof v === "string" && /^\d{2}:\d{2}(:\d{2})?$/.test(v) ? v : null);
+    const shift = ["day", "evening", "night"].includes(String(s.shift_type)) ? String(s.shift_type) : null;
+    // Yedekteki tüm ayarlar geri yüklenir; yedekte olmayan (eski yedek) alanlara dokunulmaz
+    const has = (k: string) => k in s;
+    const patch: Record<string, unknown> = {
       hourly_rate: num(s.hourly_rate), sunday_multiplier: num(s.sunday_multiplier) || 2,
       holiday_multiplier: num(s.holiday_multiplier) || 2, monthly_goal_amount: num(s.monthly_goal_amount),
-    }).eq("user_id", uid);
+    };
+    if (has("monthly_salary")) patch.monthly_salary = num(s.monthly_salary);
+    if (has("sunday_rate")) patch.sunday_rate = num(s.sunday_rate);
+    if (has("holiday_rate")) patch.holiday_rate = num(s.holiday_rate);
+    if (has("daily_hours")) patch.daily_hours = Math.min(24, num(s.daily_hours)) || 8;
+    if (has("has_shift")) { patch.has_shift = s.has_shift === true; patch.shift_type = patch.has_shift ? shift : null; }
+    if (time(s.work_start)) patch.work_start = time(s.work_start);
+    if (time(s.work_end)) patch.work_end = time(s.work_end);
+    if (s.goal_mode === "amount" || s.goal_mode === "hours") patch.goal_mode = s.goal_mode;
+    if (has("monthly_goal_hours")) patch.monthly_goal_hours = num(s.monthly_goal_hours);
+    const { error } = await supabase.from("user_settings").update(patch).eq("user_id", uid);
     if (error) throw error;
   }
 

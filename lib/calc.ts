@@ -12,19 +12,32 @@ export function entryPay(e: Entry, s: Settings): number {
 }
 
 /**
+ * Maaş kesintisi: ücretsiz izin ve mazeretsiz devamsızlık günleri için aylık maaş / 30 (günlük ücret).
+ * Aylık ücretli çalışanda ay, kaç gün çektiğine bakılmaksızın 30 gün sayılır. Aynı güne düşen birden
+ * fazla kayıt tek gün sayılır, kesinti maaşı geçemez. Ücretli izin ve rapor kesinti yapmaz.
+ */
+export const DEDUCTED_TYPES = ["unpaid_leave", "absent"];
+export function salaryDeduction(entries: Entry[], s: Settings): { days: number; amount: number } {
+  const days = new Set(entries.filter((e) => DEDUCTED_TYPES.includes(e.type)).map((e) => e.work_date)).size;
+  const amount = Math.min(s.monthly_salary, (s.monthly_salary / 30) * days);
+  return { days, amount };
+}
+
+/**
  * Ana sayfadaki hedef barı.
- * amount modu: (maaş + mesai kazancı) / hedef maaş
+ * amount modu: (maaş - kesinti + mesai kazancı) / hedef maaş
  * hours modu: yapılan mesai saati / hedef mesai saati
  */
 export function goalProgress(entries: Entry[], s: Settings) {
   const m = monthSummary(entries, s);
-  const income = s.monthly_salary + m.earned;
+  const ded = salaryDeduction(entries, s);
+  const income = s.monthly_salary - ded.amount + m.earned;
   const avgRate = m.hours > 0 ? m.earned / m.hours : s.hourly_rate;
   if (s.goal_mode === "hours") {
     const goal = s.monthly_goal_hours;
     return {
       mode: "hours" as const, set: goal > 0, percent: goal > 0 ? Math.min(100, (m.hours / goal) * 100) : 0,
-      done: m.hours, goal, income, earned: m.earned, hoursNeeded: goal,
+      done: m.hours, goal, income, earned: m.earned, deduction: ded.amount, hoursNeeded: goal,
     };
   }
   const goal = s.monthly_goal_amount;
@@ -32,7 +45,7 @@ export function goalProgress(entries: Entry[], s: Settings) {
   const hoursLeft = avgRate > 0 ? remaining / avgRate : 0;
   return {
     mode: "amount" as const, set: goal > 0, percent: goal > 0 ? Math.min(100, (income / goal) * 100) : 0,
-    done: income, goal, income, earned: m.earned, hoursNeeded: m.hours + hoursLeft,
+    done: income, goal, income, earned: m.earned, deduction: ded.amount, hoursNeeded: m.hours + hoursLeft,
   };
 }
 

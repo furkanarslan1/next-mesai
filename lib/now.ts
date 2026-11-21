@@ -2,8 +2,15 @@
 
 import { useSyncExternalStore } from "react";
 
-const noop = () => () => {};
 let cached: Date | null = null;
+
+// Uygulama açık kalıp gece yarısı geçilirse yeniden çizim tetiklensin: dakikada bir ve uygulamaya dönüşte kontrol
+function subscribe(cb: () => void) {
+  const check = () => { if (!cached || cached.toDateString() !== new Date().toDateString()) cb(); };
+  const id = window.setInterval(check, 60_000);
+  document.addEventListener("visibilitychange", check);
+  return () => { window.clearInterval(id); document.removeEventListener("visibilitychange", check); };
+}
 
 /**
  * Bugünün tarihi. Sunucuda (ön render) null döner, tarayıcıda hemen gerçek tarih gelir.
@@ -12,7 +19,7 @@ let cached: Date | null = null;
  */
 export function useToday(): Date | null {
   return useSyncExternalStore(
-    noop,
+    subscribe,
     () => {
       const d = new Date();
       if (!cached || cached.toDateString() !== d.toDateString()) cached = d;

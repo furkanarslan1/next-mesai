@@ -14,11 +14,11 @@ import { Card, CardContent } from "@/components/ui/card";
 
 /** İzin/rapor gibi günlerin hücre rengi ve kısa etiketi (mesai olan günlerde saat yazar) */
 const STATUS_CELL: Record<string, { bg: string; text: string; short: string }> = {
-  paid_leave: { bg: "oklch(0.75 0.12 235 / 0.28)", text: "text-sky-300", short: "İzin" },
-  unpaid_leave: { bg: "oklch(0.7 0.16 50 / 0.28)", text: "text-orange-300", short: "Ücretsiz" },
-  sick: { bg: "oklch(0.8 0.02 250 / 0.22)", text: "text-slate-200", short: "Rapor" },
-  absent: { bg: "oklch(0.65 0.2 15 / 0.32)", text: "text-rose-300", short: "Gelmedi" },
-  holiday: { bg: "oklch(0.82 0.15 85 / 0.28)", text: "text-amber-300", short: "Tatil" },
+  paid_leave: { bg: "oklch(0.75 0.12 235 / 0.28)", text: "text-sky-700", short: "İzin" },
+  unpaid_leave: { bg: "oklch(0.7 0.16 50 / 0.28)", text: "text-orange-700", short: "Ücretsiz" },
+  sick: { bg: "oklch(0.8 0.02 250 / 0.22)", text: "text-slate-600", short: "Rapor" },
+  absent: { bg: "oklch(0.65 0.2 15 / 0.32)", text: "text-rose-700", short: "Gelmedi" },
+  holiday: { bg: "oklch(0.82 0.15 85 / 0.28)", text: "text-amber-700", short: "Tatil" },
 };
 
 export default function CalendarPage() {
@@ -58,8 +58,8 @@ function CalendarView({ today }: { today: Date }) {
               const st = status ? STATUS_CELL[status.type] : null;
               return (
                 <div key={key} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
-                  className={`relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm leading-none text-foreground ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-primary" : ""}`}
-                  style={{ background: worked > 0 ? `oklch(0.78 0.15 165 / ${alpha})` : st ? st.bg : "var(--muted)", color: strong ? "oklch(0.16 0.03 175)" : undefined }}>
+                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none text-foreground ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-primary" : ""}`}
+                  style={{ background: worked > 0 ? `color-mix(in oklch, var(--primary) ${Math.round(alpha * 100)}%, transparent)` : st ? st.bg : "var(--muted)", color: strong ? "oklch(0.99 0 0)" : undefined }}>
                   <span className={isToday ? "font-bold" : ""}>{format(d, "d")}</span>
                   {worked > 0 ? (
                     <span className="mt-1 text-[10px] font-semibold tabular-nums">{+worked.toFixed(2)} sa</span>
@@ -74,7 +74,7 @@ function CalendarView({ today }: { today: Date }) {
         </CardContent>
       </Card>
       <div className="flex flex-wrap gap-3 text-xs">
-        <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-emerald-400" />Mesai (saat yazar)</span>
+        <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-primary" />Mesai (saat yazar)</span>
         {Object.values(TYPE_META).slice(1).map((m) => (
           <span key={m.label} className="flex items-center gap-1"><span className={`size-2 rounded-full ${m.color}`} />{m.label}</span>
         ))}

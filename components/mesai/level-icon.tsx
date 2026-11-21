@@ -1,5 +1,3 @@
-import { useId } from "react";
-
 /** Seviye rozetleri: her seviyenin kendi renk geçişli, çizim bir ikonu var (emoji yerine). */
 const TIERS: { from: string; to: string }[] = [
   { from: "#6ee7b7", to: "#059669" }, // Çaylak - filiz
@@ -26,8 +24,7 @@ const GEAR = gearPath();
 export function LevelIcon({ level, className = "size-12" }: { level: number; className?: string }) {
   const idx = Math.min(Math.max(level, 1), TIERS.length) - 1;
   const { from, to } = TIERS[idx];
-  const gid = useId().replace(/:/g, "");
-  const fill = `url(#${gid})`;
+  const fill = to;
   const shine = "rgba(255,255,255,0.55)";
 
   const glyphs = [
@@ -72,20 +69,14 @@ export function LevelIcon({ level, className = "size-12" }: { level: number; cla
 
   return (
     <span
-      className={`relative inline-grid shrink-0 place-items-center rounded-2xl ${className}`}
+      className={`relative inline-grid shrink-0 place-items-center r-md ${className}`}
       style={{
-        background: `linear-gradient(145deg, ${from}26, ${to}14)`,
-        boxShadow: `inset 0 0 0 1px ${from}40, 0 6px 20px -8px ${to}`,
+        background: `${from}2e`,
+        boxShadow: `inset 0 0 0 1px ${from}55`,
       }}
       aria-hidden
     >
-      <svg viewBox="0 0 24 24" className="size-[62%]" style={{ filter: `drop-shadow(0 2px 6px ${to}99)` }}>
-        <defs>
-          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor={from} />
-            <stop offset="1" stopColor={to} />
-          </linearGradient>
-        </defs>
+      <svg viewBox="0 0 24 24" className="size-[62%]">
         {glyphs[idx]}
       </svg>
     </span>

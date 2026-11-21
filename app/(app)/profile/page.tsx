@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { download, toCSV } from "@/lib/backup";
 import { restoreBackup } from "@/lib/restore";
-import { mutate, resetStore, useProfile, useSettings, useShortcuts } from "@/lib/store";
+import { mutate, resetStore, useLinks, useProfile, useSettings, useShortcuts } from "@/lib/store";
 import type { Settings } from "@/lib/types";
 import { SHIFTS } from "@/lib/types";
 import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
@@ -15,27 +15,14 @@ import { fmtHours, HoursChips } from "@/components/mesai/hours-chips";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface Link { id: string; status: string; manager_id: string; employee_id: string; name?: string }
-
 export default function ProfilePage() {
   const router = useRouter();
   const profile = useProfile();
-  const [links, setLinks] = useState<Link[]>([]);
-
-  const load = useCallback(async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: p } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
-    const { data: l } = await supabase.from("manager_links").select("*").eq(p?.role === "manager" ? "manager_id" : "employee_id", user!.id);
-    const ids = (l ?? []).map((x) => (p?.role === "manager" ? x.employee_id : x.manager_id));
-    const { data: names } = ids.length ? await supabase.from("profiles").select("id, full_name").in("id", ids) : { data: [] };
-    setLinks((l ?? []).map((x) => ({ ...x, name: names?.find((n) => n.id === (p?.role === "manager" ? x.employee_id : x.manager_id))?.full_name })));
-  }, []);
-  useEffect(() => { load(); }, [load]);
+  const links = useLinks() ?? [];
 
   async function respond(id: string, status: "accepted" | "revoked") {
-    await createClient().from("manager_links").update({ status }).eq("id", id);
-    load();
+    try { await mutate.respondLink(id, status); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "İşlem başarısız"); }
   }
   async function backup(format: "json" | "csv") {
     const supabase = createClient();
@@ -148,7 +135,7 @@ function ShortcutSettings({ userId }: { userId: string }) {
   const shortcuts = useShortcuts();
   async function add(hours: number) {
     const { error } = await createClient().from("shortcuts").insert({
-      user_id: userId, label: fmtHours(hours), hours, sort: (shortcuts?.length ?? 0) + 1,
+      user_id: userId, label: fmtHours(hours), hours, sort: Math.max(0, ...(shortcuts ?? []).map((s) => s.sort)) + 1,
     });
     if (error) { toast.error(error.message); return; }
     await mutate.refresh.shortcuts();

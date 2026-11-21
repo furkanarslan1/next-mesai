@@ -18,8 +18,8 @@ export function ShortcutButton({ label, hint, hoursText, active, disabled, onPre
       {...realTap(() => { if (!active) setBurst((n) => n + 1); onPress(); })}
       className={`relative flex h-24 w-full flex-col items-center justify-center gap-0.5 leaf border text-lg font-semibold transition active:scale-[0.96] disabled:opacity-60 ${
         active
-          ? "border-primary/60 bg-primary/20 text-primary shadow-[0_0_28px_oklch(0.78_0.15_165/25%)]"
-          : "border-white/10 bg-primary text-primary-foreground"
+          ? "border-primary/50 bg-primary/10 text-primary shadow-[0_0_28px_color-mix(in_oklch,var(--primary)_28%,transparent)]"
+          : "border-transparent bg-primary text-primary-foreground shadow-[0_10px_24px_color-mix(in_oklch,var(--primary)_35%,transparent)]"
       } ${burst ? "shortcut-pressed" : ""}`}
     >
       {burst > 0 && active && (
