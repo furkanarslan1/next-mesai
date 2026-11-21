@@ -115,7 +115,7 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
               : <p className="text-sm">Hedef için toplam mesai: <b>{hrs(Math.round(g.hoursNeeded * 10) / 10)}</b></p>
           ) : <p className="text-sm text-muted-foreground">Hedef belirlediğinde ilerleme burada görünür.</p>}
           <p className="text-sm text-muted-foreground">
-            Maaş {money(live.monthly_salary, live.currency)} + mesai {money(g.earned, live.currency)} = <b className="text-foreground">{money(g.income, live.currency)}</b>
+            Maaş {money(live.monthly_salary, live.currency)}{g.deduction > 0 && <> − kesinti {money(g.deduction, live.currency)}</>} + mesai {money(g.earned, live.currency)} = <b className="text-foreground">{money(g.income, live.currency)}</b>
           </p>
         </CardContent>
       </Card>

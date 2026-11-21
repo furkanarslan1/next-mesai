@@ -85,7 +85,7 @@ async function readConsistent<T>(read: () => Promise<{ data: T | null; error: un
   for (let i = 0; i < 3; i++) {
     const w = writes;
     const { data, error } = await read();
-    if (error || !data) return null;
+    if (error || data === null || data === undefined) return null;
     if (w === writes) return data;
   }
   return null;
@@ -116,8 +116,14 @@ export const load = {
   })),
   totalHours: (force = false) => (!force && state.totalHours !== null && fresh("total", TTL.total) ? Promise.resolve() : once("total", async () => {
     const ep = epoch;
-    const rows = await readConsistent(async () => await createClient().from("entries").select("hours").in("type", ["overtime", "holiday"]));
-    if (ep === epoch && rows) { touch("total"); set({ totalHours: rows.reduce((a, r) => a + Number(r.hours), 0) }); }
+    const supabase = createClient();
+    // Toplam sunucuda hesaplanır (migration 0005). Henüz uygulanmadıysa eski yönteme düşer.
+    let total = await readConsistent(async () => await supabase.rpc("total_overtime_hours"));
+    if (total === null) {
+      const rows = await readConsistent(async () => await supabase.from("entries").select("hours").in("type", ["overtime", "holiday"]));
+      if (rows) total = rows.reduce((a, r) => a + Number(r.hours), 0);
+    }
+    if (ep === epoch && total !== null) { touch("total"); set({ totalHours: Number(total) }); }
   })),
   entries: (key: string, force = false) => (!force && state.entries[key] && fresh(`e:${key}`, TTL.entries) ? Promise.resolve() : once(`e:${key}`, async () => {
     const ep = epoch;

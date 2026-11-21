@@ -14,7 +14,7 @@ export function InstallCard({ className }: { className?: string }) {
     <Card className={className}>
       <CardContent className="space-y-3">
         <div className="flex items-center gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/30">
+          <span className="grid size-11 shrink-0 place-items-center r-md bg-primary/15 text-primary ring-1 ring-primary/30">
             <Download className="size-5" />
           </span>
           <div>

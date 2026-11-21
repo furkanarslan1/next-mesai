@@ -77,7 +77,7 @@ function FinanceView({ today }: { today: Date }) {
 
       <div className="space-y-2">
         {items.map((i) => (
-          <div key={i.id} className="glass flex items-center justify-between px-4 py-3 text-sm">
+          <div key={i.id} className="glass r-lg flex items-center justify-between px-4 py-3 text-sm">
             <span>{i.category}</span>
             <span className="flex items-center gap-3">
               <b className={i.kind === "income" ? "text-emerald-500" : ""}>{i.kind === "income" ? "+" : "−"}{money(i.amount, cur)}</b>

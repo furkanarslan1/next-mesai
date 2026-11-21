@@ -81,9 +81,9 @@ function HomeView({ today }: { today: Date }) {
   const totalHours = (realTotal ?? 0) + pendingDelta;
   const lvl = levelFor(totalHours);
 
-  function add(type: EntryType, hours: number, start?: string | null, end?: string | null, undo = false) {
+  function add(type: EntryType, hours: number, start?: string | null, end?: string | null, undo = false, shortcutId?: string) {
     if (!userId) { toast.info("Hesap bilgileri yükleniyor, birkaç saniye sonra tekrar dene"); return; }
-    const row = { user_id: userId, work_date: date, type, hours, note: null, start_time: start ?? null, end_time: end ?? null };
+    const row = { user_id: userId, work_date: date, type, hours, note: null, start_time: start ?? null, end_time: end ?? null, ...(shortcutId ? { shortcut_id: shortcutId } : {}) };
     startTransition(async () => {
       applyOpt({ add: { ...row, id: `tmp-${crypto.randomUUID()}` } });
       try {
@@ -127,7 +127,7 @@ function HomeView({ today }: { today: Date }) {
       </header>
 
       {holiday && !todays.some((e) => e.type === "holiday") && (
-        <div className="glass flex items-center justify-between px-4 py-3 text-sm">
+        <div className="glass r-lg flex items-center justify-between px-4 py-3 text-sm">
           <span>🎉 {holiday}</span>
           <Button size="sm" variant="secondary" {...realTap(() => add("holiday", 0))}>Tatil olarak işaretle</Button>
         </div>
@@ -140,11 +140,11 @@ function HomeView({ today }: { today: Date }) {
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Card size="sm"><CardContent>
+        <Card size="sm" className="r-lg"><CardContent>
           <p className="text-xs text-muted-foreground">Bugünün mesaisi</p>
           <p className="text-xl font-bold tabular-nums">{hrs(todayHours)}</p>
         </CardContent></Card>
-        <Card size="sm"><CardContent>
+        <Card size="sm" className="r-lg"><CardContent>
           <p className="text-xs text-muted-foreground">{format(parseISO(date), "LLLL", { locale: tr })} toplamı</p>
           <p className="text-xl font-bold tabular-nums">{hrs(monthHours)}</p>
         </CardContent></Card>
@@ -156,9 +156,9 @@ function HomeView({ today }: { today: Date }) {
           <span className="text-xs text-muted-foreground">Ekle · tekrar dokun, geri al</span>
         </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {shortcuts === null && [0, 1].map((i) => <div key={i} className="glass h-24 animate-pulse" aria-busy />)}
+          {shortcuts === null && [0, 1].map((i) => <div key={i} className="glass r-lg h-24 animate-pulse" aria-busy />)}
           {(shortcuts ?? []).map((s) => {
-            const existing = [...todays].reverse().find((e) => e.type === "overtime" && Number(e.hours) === Number(s.hours));
+            const existing = [...todays].reverse().find((e) => e.type === "overtime" && e.shortcut_id === s.id);
             return (
               <ShortcutButton
                 key={s.id} label={s.label} hoursText={hrs(Number(s.hours))}
@@ -166,13 +166,13 @@ function HomeView({ today }: { today: Date }) {
                 active={!!existing} disabled={existing?.id.startsWith("tmp-")}
                 onPress={() => setConfirm(existing
                   ? { title: "Mesai geri alınsın mı?", desc: `${hrs(Number(s.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(existing) }
-                  : { title: "Mesai eklensin mi?", desc: `${format(parseISO(date), "d MMMM", { locale: tr })} tarihine ${hrs(Number(s.hours))} mesai eklenecek.`, yes: "Evet, ekle", run: () => add("overtime", Number(s.hours), s.start_time, s.end_time) })}
+                  : { title: "Mesai eklensin mi?", desc: `${format(parseISO(date), "d MMMM", { locale: tr })} tarihine ${hrs(Number(s.hours))} mesai eklenecek.`, yes: "Evet, ekle", run: () => add("overtime", Number(s.hours), s.start_time, s.end_time, false, s.id) })}
               />
             );
           })}
         </div>
         <button type="button" {...realTap(() => { setOnHoliday(!!holiday); setCustom(true); })}
-          className="glass mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
+          className="glass r-pill mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
           <Plus className="size-4" />Farklı mesai ekle
         </button>
       </section>
@@ -192,9 +192,9 @@ function HomeView({ today }: { today: Date }) {
                 <button
                   key={t} type="button" disabled={pending} aria-pressed={!!existing}
                   {...realTap(() => (existing ? remove(existing) : add(t, 0)))}
-                  className={`glass relative flex flex-col items-center gap-2.5 p-4 text-center transition active:scale-[0.97] disabled:opacity-60 ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
+                  className={`glass r-lg relative flex flex-col items-center gap-2.5 p-4 text-center transition active:scale-[0.97] disabled:opacity-60 ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
                 >
-                  <span className={`grid size-12 place-items-center rounded-[1.25rem] ring-1 ${existing ? "bg-primary text-primary-foreground ring-primary" : m.tint}`}>
+                  <span className={`grid size-12 place-items-center r-md ring-1 ${existing ? "bg-primary text-primary-foreground ring-primary" : m.tint}`}>
                     {existing ? <Check className="size-6" /> : <StatusIcon type={t} className="size-8" />}
                   </span>
                   <span>

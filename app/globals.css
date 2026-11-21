@@ -374,7 +374,11 @@ html { scrollbar-gutter: stable; }
   --brand: #2f4a63;
   --h: 248;
   --radius: 1.5rem;
-  --r-card: 1.75rem;
+  /* Yuvarlaklık ölçeği: büyük kartlar xl, ikincil kartlar lg, iç öğeler md, düğme/çip hap */
+  --r-xl: 2rem;
+  --r-lg: 1.5rem;
+  --r-md: 1.1rem;
+  --r-card: var(--r-xl);
   --background: oklch(0.975 0.004 var(--h));
   --foreground: oklch(0.2 0.03 var(--h));
   --card: oklch(1 0 0);
@@ -410,6 +414,10 @@ body {
   box-shadow: var(--shadow-soft);
 }
 [data-slot="card"] { --tw-ring-shadow: 0 0 #0000; }
+.leaf { border-radius: var(--r-lg); }
+.r-lg { border-radius: var(--r-lg); }
+.r-md { border-radius: var(--r-md); }
+.r-pill { border-radius: 9999px; }
 .glass-nav {
   background: var(--card);
   backdrop-filter: none;
@@ -441,7 +449,7 @@ body {
 
 /* Kontroller: düğmeler hap, alanlar geniş yuvarlak */
 [data-slot="button"] { border-radius: 9999px; }
-[data-slot="input"] { height: 2.75rem; padding-inline: 1rem; border-radius: 1.1rem; background: var(--muted); border-color: transparent; }
+[data-slot="input"] { height: 2.75rem; padding-inline: 1rem; border-radius: var(--r-md); background: var(--muted); border-color: transparent; }
 [data-slot="dialog-content"], [role="dialog"] { border-radius: 2rem; }
 
 /* Hedef barı: düz renk dolgu, parlayan uç ve kıvılcımlar korunur */

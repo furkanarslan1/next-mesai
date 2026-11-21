@@ -11,6 +11,8 @@ export interface Entry {
   note: string | null;
   start_time: string | null; // HH:MM:SS
   end_time: string | null;
+  /** Mesai bir kısayoldan eklendiyse onun id'si */
+  shortcut_id?: string | null;
 }
 export interface Settings {
   hourly_rate: number;

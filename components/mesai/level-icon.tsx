@@ -69,7 +69,7 @@ export function LevelIcon({ level, className = "size-12" }: { level: number; cla
 
   return (
     <span
-      className={`relative inline-grid shrink-0 place-items-center rounded-[1.1rem] ${className}`}
+      className={`relative inline-grid shrink-0 place-items-center r-md ${className}`}
       style={{
         background: `${from}2e`,
         boxShadow: `inset 0 0 0 1px ${from}55`,

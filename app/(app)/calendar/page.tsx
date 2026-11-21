@@ -58,7 +58,7 @@ function CalendarView({ today }: { today: Date }) {
               const st = status ? STATUS_CELL[status.type] : null;
               return (
                 <div key={key} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
-                  className={`relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm leading-none text-foreground ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-primary" : ""}`}
+                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none text-foreground ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-primary" : ""}`}
                   style={{ background: worked > 0 ? `color-mix(in oklch, var(--primary) ${Math.round(alpha * 100)}%, transparent)` : st ? st.bg : "var(--muted)", color: strong ? "oklch(0.99 0 0)" : undefined }}>
                   <span className={isToday ? "font-bold" : ""}>{format(d, "d")}</span>
                   {worked > 0 ? (
