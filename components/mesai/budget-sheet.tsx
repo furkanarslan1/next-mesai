@@ -1,5 +1,6 @@
 "use client";
 
+import { parseNum } from "@/lib/num";
 import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -17,7 +18,7 @@ export function BudgetSheet({ userId, settings, initial, onClose }: {
   const [cat, setCat] = useState<CategoryKey | null>(initial);
   const [amount, setAmount] = useState(initial && settings.budgets[initial] ? String(settings.budgets[initial]) : "");
   const [busy, setBusy] = useState(false);
-  const value = parseFloat(amount.replace(",", "."));
+  const value = parseNum(amount);
   const valid = cat !== null && value > 0;
 
   async function write(next: Record<string, number>, ok: string) {

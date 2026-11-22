@@ -80,6 +80,13 @@ export function buildTimesheet(month: Date, entries: Entry[], s: Settings, opts:
         const exit = ot.find((e) => e.end_time);
         if (exit?.end_time) end = hhmm(exit.end_time);
         else if (workday && workEnd) end = addHours(workEnd, overtime);
+        // Hafta sonu / tatil: normal mesai yok, gün yalnızca mesaiden oluşur. Giriş kayıttan ya da normal girişten,
+        // çıkış kayıttan ya da giriş + mesai süresinden yazılır (boş kalmasın).
+        if (!workday) {
+          const entryStart = ot.find((e) => e.start_time)?.start_time;
+          start = entryStart ? hhmm(entryStart) : workStart;
+          if (!exit?.end_time && start) end = addHours(start, overtime);
+        }
       }
     }
 

@@ -37,7 +37,8 @@ describe("çalışma çizelgesi", () => {
   });
   it("pazar mesaisi: normal saat 0, mesai ve %oran var", () => {
     const r = buildTimesheet(day("2026-11-10"), [E("2026-11-01", "overtime", 5)], { ...S, sunday_percent: 100 }).rows.find((x) => x.date === "2026-11-01")!;
-    expect([r.normalHours, r.overtimeHours, r.percent, r.start]).toEqual([0, 5, 100, ""]);
+    // Giriş normal girişten, çıkış giriş + mesai süresinden yazılır (çizelgede boş kalmaz)
+    expect([r.normalHours, r.overtimeHours, r.percent, r.start, r.end]).toEqual([0, 5, 100, "07:30", "12:30"]);
   });
   it("izin, rapor ve gelmedi günlerinde saatler boş, ilgili sütun 1", () => {
     const ts = buildTimesheet(day("2026-11-10"), [E("2026-11-02", "paid_leave"), E("2026-11-03", "sick"), E("2026-11-04", "absent"), E("2026-11-05", "unpaid_leave")], S);

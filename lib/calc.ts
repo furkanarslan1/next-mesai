@@ -111,20 +111,8 @@ export function monthSummary(entries: Entry[], s: Settings) {
   const includedHours = hours - paidHours;
   // Ücretli saat başına ortalama ücret (pazar/tatil çarpanları dahil)
   const paidRate = paidHours > 0 ? earned / paidHours : weekdayRate(s);
-  const goal = s.monthly_goal_amount;
-  const avgRate = paidRate;
-  return {
-    hours,
-    earned,
-    paidHours,
-    includedHours,
-    quotaLeft,
-    paidRate,
-    goal,
-    percent: goal > 0 ? Math.min(100, (earned / goal) * 100) : 0,
-    remainingMoney: Math.max(0, goal - earned),
-    remainingHours: avgRate > 0 ? Math.max(0, (goal - earned) / avgRate) : 0,
-  };
+  // Hedefe göre ilerleme (maaş dahil) goalProgress'tedir; burada yalnızca mesai özeti döner
+  return { hours, earned, paidHours, includedHours, quotaLeft, paidRate };
 }
 
 export const LEVELS = [

@@ -1,6 +1,7 @@
 "use client";
 
 import { errorText } from "@/lib/errors";
+import { parsePositive } from "@/lib/num";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
@@ -87,9 +88,9 @@ export default function LoginPage() {
                   shift_type: sched.has_shift ? sched.shift_type : "",
                   work_start: sched.work_start, work_end: sched.work_end,
                   shortcut_hours: shortcutHours.join(","),
-                  monthly_salary: Number(pay.monthly_salary.replace(",", ".")) || 0, hourly_rate: Number(pay.hourly_rate.replace(",", ".")) || 0,
+                  monthly_salary: parsePositive(pay.monthly_salary), hourly_rate: parsePositive(pay.hourly_rate),
                   weekday_percent: pay.weekday_percent, sunday_percent: pay.sunday_percent, holiday_percent: pay.holiday_percent,
-                  included_overtime_hours: Number(pay.included_overtime_hours.replace(",", ".")) || 0, sick_leave_unpaid: pay.sick_leave_unpaid,
+                  included_overtime_hours: Math.min(200, parsePositive(pay.included_overtime_hours)), sick_leave_unpaid: pay.sick_leave_unpaid,
                 }),
               },
             },

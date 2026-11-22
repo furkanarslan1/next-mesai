@@ -1,5 +1,6 @@
 "use client";
 
+import { parseNum } from "@/lib/num";
 import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
@@ -9,6 +10,8 @@ import { toast } from "sonner";
 import { mutate } from "@/lib/store";
 import { hhmm, hrs } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
+import { dayRules } from "@/lib/day";
+import { addHours } from "@/lib/timesheet";
 import { StatusIcon } from "@/components/mesai/status-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,8 +62,9 @@ export function DaySheet({ date, entries, userId, onClose }: {
   // Günde tek mesai kaydı: varsa yeni eklenemez, saati kalemle değiştirilir ya da silinir
   const hasWork = day.some((e) => isWork(e) && Number(e.hours) > 0);
   const primary = day.find((e) => isWork(e) && Number(e.hours) > 0) ?? day[0];
+  const rules = date ? dayRules(day, date) : null;
   const label = date ? format(parseISO(date), "d MMMM EEEE", { locale: tr }) : "";
-  const valid = (v: string) => { const h = parseFloat(v.replace(",", ".")); return h > 0 && h <= 24 ? h : 0; };
+  const valid = (v: string) => { const h = parseNum(v); return h > 0 && h <= 24 ? h : 0; };
 
   async function confirmYes() {
     if (!pending) return;
@@ -75,8 +79,8 @@ export function DaySheet({ date, entries, userId, onClose }: {
     const h = valid(newHours);
     if (!h) return;
     setPending({
-      title: "Mesai eklensin mi?", desc: `${label} gününe ${hrs(h)} mesai eklenecek.`, yes: "Evet, ekle",
-      run: async () => { await mutate.addEntry(row("overtime", h)); setNewHours(""); toast.success("Mesai eklendi"); },
+      title: "Mesai eklensin mi?", desc: `${label} gününe ${hrs(h)} ${rules?.isHoliday ? "resmi tatil mesaisi (tatil oranıyla)" : "mesai"} eklenecek.`, yes: "Evet, ekle",
+      run: async () => { await mutate.addEntry(row(rules?.workType ?? "overtime", h)); setNewHours(""); toast.success("Mesai eklendi"); },
     });
   }
   function askEdit(e: Entry) {
@@ -84,7 +88,8 @@ export function DaySheet({ date, entries, userId, onClose }: {
     if (!h || h === Number(e.hours)) { setEditId(null); return; }
     setPending({
       title: "Saat değişsin mi?", desc: `${hrs(Number(e.hours))} yerine ${hrs(h)} olarak kaydedilecek.`, yes: "Evet, değiştir",
-      run: async () => { await mutate.updateEntry(e, { hours: h }); setEditId(null); toast.success("Güncellendi"); },
+      // Başlangıç saati olan kayıtta çıkış saati de yeni süreye göre kayar (çizelgede eski çıkış kalmasın)
+      run: async () => { await mutate.updateEntry(e, e.start_time ? { hours: h, end_time: addHours(hhmm(e.start_time), h) } : { hours: h }); setEditId(null); toast.success("Güncellendi"); },
     });
   }
   function askRemove(e: Entry) {
@@ -141,7 +146,7 @@ export function DaySheet({ date, entries, userId, onClose }: {
                   </div>
                   {editId === e.id ? (
                     <>
-                      <Input type="number" inputMode="decimal" step="0.25" min="0" max="24" value={editHours} onChange={(ev) => setEditHours(ev.target.value)} className="w-20" aria-label="Saat" />
+                      <Input inputMode="decimal" value={editHours} onChange={(ev) => setEditHours(ev.target.value.replace(/[^0-9.,]/g, ""))} className="w-20 text-center" aria-label="Saat" />
                       <Button size="sm" onClick={() => askEdit(e)} disabled={!valid(editHours)}>Kaydet</Button>
                     </>
                   ) : (
@@ -160,9 +165,11 @@ export function DaySheet({ date, entries, userId, onClose }: {
               <p className="text-sm font-semibold">Mesai ekle</p>
               {hasWork ? (
                 <p className="text-xs text-muted-foreground">Günde tek mesai kaydı olur. Saati kalem ikonuyla değiştirebilir ya da kaydı silip yenisini ekleyebilirsin.</p>
+              ) : rules?.off ? (
+                <p className="text-xs text-muted-foreground">Bu gün &quot;{TYPE_META[rules.off.type].label}&quot; olarak işaretli. Mesai eklemek için önce onu geri al.</p>
               ) : (
               <div className="flex gap-2">
-                <Input type="number" inputMode="decimal" step="0.25" min="0" max="24" placeholder="Örn. 2.5" value={newHours} onChange={(e) => setNewHours(e.target.value)}
+                <Input inputMode="decimal" placeholder="Örn. 2,5" value={newHours} onChange={(e) => setNewHours(e.target.value.replace(/[^0-9.,]/g, ""))}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); askAddHours(); } }} aria-label="Mesai saati" />
                 <Button onClick={askAddHours} disabled={!valid(newHours)}><Plus className="size-4" />Ekle</Button>
               </div>
@@ -176,7 +183,7 @@ export function DaySheet({ date, entries, userId, onClose }: {
               <div className="grid grid-cols-2 gap-2">
                 {STATUS.map((t) => {
                   const on = day.some((e) => e.type === t && isStatusRow(e));
-                  const locked = !on && !!status;
+                  const locked = !on && (!!status || (t !== "holiday" && hasWork));
                   return (
                     <button key={t} type="button" disabled={locked} aria-pressed={on} onClick={() => askStatus(t)}
                       className={`r-lg flex items-center gap-2.5 px-3 py-2.5 text-left text-sm font-medium transition active:scale-[0.97] disabled:opacity-45 ${on ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
@@ -185,7 +192,8 @@ export function DaySheet({ date, entries, userId, onClose }: {
                   );
                 })}
               </div>
-              {status && <p className="text-xs text-muted-foreground">Bir gün için tek durum seçilebilir; değiştirmek için önce seçili olanı geri al.</p>}
+              {status ? <p className="text-xs text-muted-foreground">Bir gün için tek durum seçilebilir; değiştirmek için önce seçili olanı geri al.</p>
+                : hasWork ? <p className="text-xs text-muted-foreground">Bu gün mesai var; izin/rapor işaretlemek için önce mesaiyi sil.</p> : null}
             </section>
           </>
         )}

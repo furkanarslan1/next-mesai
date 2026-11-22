@@ -1,5 +1,6 @@
 "use client";
 
+import { parseNum } from "@/lib/num";
 import { errorText } from "@/lib/errors";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -42,7 +43,7 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
   }
 
   function save() {
-    const n = Math.max(0, parseFloat(value) || 0);
+    const n = Math.max(0, parseNum(value) || 0);
     const patch: Partial<Settings> = mode === "hours"
       ? { goal_mode: mode, monthly_goal_hours: n }
       : { goal_mode: mode, monthly_goal_amount: n };
@@ -141,7 +142,7 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="goal-v">{mode === "hours" ? "Bu ay kaç saat mesai yapmak istiyorsun?" : "Bu ay toplam ne kadar kazanmak istiyorsun? (maaş + mesai)"}</Label>
-            <Input id="goal-v" type="number" inputMode="decimal" min="0" step={mode === "hours" ? "0.5" : "100"} value={value} onChange={(e) => setValue(e.target.value)} placeholder={mode === "hours" ? "Örn. 40" : "Örn. 40000"} />
+            <Input id="goal-v" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value.replace(/[^0-9.,]/g, ""))} placeholder={mode === "hours" ? "Örn. 40" : "Örn. 40000"} />
           </div>
           <Button onClick={save}>Kaydet</Button>
         </DialogContent>

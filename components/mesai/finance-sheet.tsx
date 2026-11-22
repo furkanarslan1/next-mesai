@@ -1,5 +1,6 @@
 "use client";
 
+import { parseNum } from "@/lib/num";
 import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { format, parseISO, subMonths } from "date-fns";
@@ -35,7 +36,7 @@ export function FinanceSheet({ item, viewKey, userId, today, defaultDate, defaul
   const [calMonth, setCalMonth] = useState(() => parseISO(date));
   const [busy, setBusy] = useState(false);
 
-  const value = parseFloat(amount.replace(",", "."));
+  const value = parseNum(amount);
   const valid = value > 0 && cat !== null;
   const cats = kind === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
   const categoryName = cat === null ? "" : cat === "diger" ? custom.trim() || "Diğer" : CATEGORY_META[cat].label;

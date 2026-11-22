@@ -1,5 +1,6 @@
 "use client";
 
+import { parseNum } from "@/lib/num";
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -7,12 +8,13 @@ import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { errorText } from "@/lib/errors";
 import { mutate } from "@/lib/store";
+import { hrs, money } from "@/lib/calc";
 import type { Payslip, Settings } from "@/lib/types";
 import { FormRow, FormSection, NumberRow } from "@/components/mesai/ios-form";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-const toNum = (v: string) => { const n = parseFloat(v.replace(",", ".")); return Number.isFinite(n) && n >= 0 ? n : NaN; };
+const toNum = (v: string) => { const n = parseNum(v); return Number.isFinite(n) && n >= 0 ? n : NaN; };
 const optional = (v: string): number | null => { if (v.trim() === "") return null; const n = toNum(v); return Number.isNaN(n) ? null : n; };
 const show = (n: number | null | undefined) => (n == null ? "" : String(n));
 
@@ -86,7 +88,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
           <div className="mx-5 mb-5 space-y-6 rounded-[1.75rem] bg-muted p-6">
             <div className="space-y-2">
               <p className="text-xl font-semibold leading-snug">Bordro silinsin mi?</p>
-              <p className="text-base leading-relaxed text-muted-foreground">{format(parseISO(item.month), "LLLL yyyy", { locale: tr })} bordrosu ({item.paid_hours} sa · ₺{item.paid_amount}) silinecek.</p>
+              <p className="text-base leading-relaxed text-muted-foreground">{format(parseISO(item.month), "LLLL yyyy", { locale: tr })} bordrosu ({hrs(item.paid_hours)} · {money(item.paid_amount, settings.currency)}) silinecek.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Button variant="secondary" autoFocus disabled={busy} className="h-14 bg-background text-base font-semibold" onClick={() => (startInDelete ? onClose() : setView("form"))}>Hayır</Button>
@@ -126,7 +128,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
               </FormSection>
 
               <FormSection tone="muted" title="Ek mesai tutarı">
-                <NumberRow label="Net toplam" suffix="₺" placeholder="Örn. 9494.73" hint="Ek mesai bölümünün net toplamı" value={amount} onChange={setAmount} />
+                <NumberRow label="Net toplam" suffix="₺" placeholder="Örn. 9.494,73" hint="Ek mesai bölümünün net toplamı" value={amount} onChange={setAmount} />
               </FormSection>
 
               <FormSection tone="muted" title="Günler (isteğe bağlı)" footer="Bordrodaki satırın gün sayısı. Boş bırakılan satır karşılaştırılmaz.">
@@ -138,7 +140,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
 
               <FormSection tone="muted" title="Ödeme (isteğe bağlı)">
                 <NumberRow label="Özel kesintiler" suffix="₺" hint="BES, avans vb." value={special} onChange={setSpecial} />
-                <NumberRow label="Net ödenen" suffix="₺" placeholder="Örn. 48833.16" value={net} onChange={setNet} />
+                <NumberRow label="Net ödenen" suffix="₺" placeholder="Örn. 48.833,16" value={net} onChange={setNet} />
               </FormSection>
             </div>
 
