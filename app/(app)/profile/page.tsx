@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { fetchAll } from "@/lib/fetch-all";
-import { download, toCSV } from "@/lib/backup";
+import { download, nextDownload, toCSV } from "@/lib/backup";
 import { restoreBackup } from "@/lib/restore";
-import { mutate, resetStore, useLinks, useProfile, useSettings, useShortcuts } from "@/lib/store";
+import { load, mutate, resetStore, useLinks, useProfile, useSettings, useShortcuts } from "@/lib/store";
 import type { Settings } from "@/lib/types";
 import { SHIFTS } from "@/lib/types";
 import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
@@ -17,6 +17,8 @@ import { InstallCard } from "@/components/mesai/install-card";
 import { fmtHours, HoursChips } from "@/components/mesai/hours-chips";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -39,7 +41,7 @@ export default function ProfilePage() {
     }
     const stamp = new Date().toISOString().slice(0, 10);
     if (format === "json") download(`mesai-yedek-${stamp}.json`, JSON.stringify(data, null, 2), "application/json");
-    else for (const t of tables) if (data[t].length) download(`mesai-${t}-${stamp}.csv`, toCSV(data[t] as Record<string, unknown>[]), "text/csv");
+    else for (const t of tables) if (data[t].length) { download(`mesai-${t}-${stamp}.csv`, toCSV(data[t] as Record<string, unknown>[]), "text/csv"); await nextDownload(); }
     toast.success("Yedek indirildi");
   }
 
@@ -92,8 +94,73 @@ export default function ProfilePage() {
           )}
         </CardContent>
       </Card>
-      <Button variant="outline" className="w-full md:col-span-2" onClick={async () => { await createClient().auth.signOut(); resetStore(); router.replace("/login"); router.refresh(); }}>Çıkış yap</Button>
+      <AccountCard id={profile.id} name={profile.full_name} onSignedOut={() => { resetStore(); router.replace("/login"); router.refresh(); }} />
     </div>
+  );
+}
+
+/** Ad düzenleme, çıkış ve hesabı kalıcı silme. */
+function AccountCard({ id, name, onSignedOut }: { id: string; name: string; onSignedOut: () => void }) {
+  const [value, setValue] = useState(name);
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const [typed, setTyped] = useState("");
+  const trimmed = value.trim();
+
+  async function saveName() {
+    if (!trimmed || trimmed === name) return;
+    setBusy(true);
+    const { error } = await createClient().from("profiles").update({ full_name: trimmed }).eq("id", id);
+    setBusy(false);
+    if (error) { toast.error(errorText(error, "Ad kaydedilemedi")); return; }
+    await load.profile(true);
+    toast.success("Adın güncellendi");
+  }
+  async function signOut() {
+    await createClient().auth.signOut();
+    onSignedOut();
+  }
+  async function deleteAccount() {
+    setBusy(true);
+    const supabase = createClient();
+    const { error } = await supabase.rpc("delete_my_account");
+    if (error) {
+      setBusy(false);
+      toast.error(/delete_my_account|function|schema cache/i.test(error.message) ? "Hesap silme henüz etkin değil (sunucu güncellemesi gerekli)." : errorText(error, "Hesap silinemedi"));
+      return;
+    }
+    await supabase.auth.signOut().catch(() => {});
+    toast.success("Hesabın ve tüm verilerin silindi");
+    onSignedOut();
+  }
+
+  return (
+    <Card className="md:col-span-2">
+      <CardHeader><CardTitle>Hesap</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void saveName(); }}>
+          <Input value={value} onChange={(e) => setValue(e.target.value)} maxLength={60} aria-label="Ad Soyad" placeholder="Ad Soyad" />
+          <Button type="submit" variant="secondary" disabled={busy || !trimmed || trimmed === name}>Kaydet</Button>
+        </form>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Button variant="outline" className="h-11" onClick={signOut}>Çıkış yap</Button>
+          <Button variant="ghost" className="h-11 text-destructive" onClick={() => { setTyped(""); setConfirm(true); }}>Hesabımı sil</Button>
+        </div>
+      </CardContent>
+      <Dialog open={confirm} onOpenChange={setConfirm}>
+        <DialogContent showCloseButton={false} className="gap-5 p-6 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hesabın kalıcı olarak silinsin mi?</DialogTitle>
+            <DialogDescription>Mesai kayıtların, ayarların, gelir-gider ve bordroların geri getirilemez şekilde silinir. İstersen önce JSON yedeği indir. Onaylamak için <b>SİL</b> yaz.</DialogDescription>
+          </DialogHeader>
+          <Input value={typed} onChange={(e) => setTyped(e.target.value)} aria-label="Onay metni" placeholder="SİL" autoComplete="off" />
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="secondary" className="h-12" autoFocus onClick={() => setConfirm(false)}>Vazgeç</Button>
+            <Button className="h-12 bg-destructive text-white hover:bg-destructive/90" disabled={busy || typed.trim().toLocaleUpperCase("tr") !== "SİL"} onClick={deleteAccount}>Kalıcı olarak sil</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
 

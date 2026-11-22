@@ -1,5 +1,6 @@
 "use client";
 
+import { parseNum } from "@/lib/num";
 import { errorText } from "@/lib/errors";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -11,6 +12,7 @@ import { monthKey, mutate, useMonthEntries, useProfile, useSettings, useShortcut
 import { realTap } from "@/lib/tap";
 import { useToday } from "@/lib/now";
 import { holidayName } from "@/lib/holidays";
+import { dayRules } from "@/lib/day";
 import { goalProgress, hhmm, levelFor, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type EntryType } from "@/lib/types";
 import { ShortcutButton } from "@/components/mesai/shortcut-button";
@@ -77,7 +79,7 @@ function HomeView({ today }: { today: Date }) {
   const holiday = holidayName(date);
   const workEnd = settings?.work_end ? hhmm(settings.work_end) : "";
   const exitHours = overtimeAfter(workEnd, exitTime);
-  const customValid = byExit ? exitHours : parseFloat(customHours);
+  const customValid = byExit ? exitHours : parseNum(customHours);
 
   // Seviye için toplam saat: gerçek toplam + henüz sunucuya yazılmamış anlık fark
   const pendingDelta = entries.filter(isWork).reduce((a, e) => a + Number(e.hours), 0)
@@ -86,9 +88,10 @@ function HomeView({ today }: { today: Date }) {
   const lvl = levelFor(totalHours);
 
   function add(type: EntryType, hours: number, start?: string | null, end?: string | null, undo = false, shortcutId?: string) {
-    if ((type === "overtime" || (type === "holiday" && hours > 0)) && entries.some((e) => e.work_date === date && (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0)) {
-      toast.info("Bu güne zaten mesai girdin. Önce onu geri al."); return;
-    }
+    const isWorkRow = type === "overtime" || (type === "holiday" && hours > 0);
+    if (isWorkRow && rules.work) { toast.info("Bu güne zaten mesai girdin. Önce onu geri al."); return; }
+    if (isWorkRow && rules.off) { toast.info(`Bu gün "${TYPE_META[rules.off.type].label}" olarak işaretli. Mesai eklemek için önce onu geri al.`); return; }
+    if (!isWorkRow && type !== "holiday" && rules.work) { toast.info("Bu güne mesai girilmiş. İzin/rapor işaretlemek için önce mesaiyi geri al."); return; }
     if (!userId) { toast.info("Hesap bilgileri yükleniyor, birkaç saniye sonra tekrar dene"); return; }
     const row = { user_id: userId, work_date: date, type, hours, note: null, start_time: start ?? null, end_time: end ?? null, ...(shortcutId ? { shortcut_id: shortcutId } : {}) };
     startTransition(async () => {
@@ -110,6 +113,7 @@ function HomeView({ today }: { today: Date }) {
   }
 
   const todays = entries.filter((e) => e.work_date === date);
+  const rules = dayRules(todays, date);
   // Günün durumu (izin/rapor/gelmedim/tatil) tek olabilir; çalışılan tatil (saatli) durum sayılmaz
   const isStatusRow = (e: Entry) => STATUS.includes(e.type) && !(e.type === "holiday" && Number(e.hours) > 0);
   const activeStatus = todays.find(isStatusRow);
@@ -188,15 +192,15 @@ function HomeView({ today }: { today: Date }) {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {shortcuts === null && [0, 1].map((i) => <div key={i} className="glass r-lg h-24 animate-pulse" aria-busy />)}
           {(shortcuts ?? []).map((s) => {
-            const existing = [...todays].reverse().find((e) => e.type === "overtime" && e.shortcut_id === s.id);
+            const existing = [...todays].reverse().find((e) => isWork(e) && Number(e.hours) > 0 && e.shortcut_id === s.id);
             return (
               <ShortcutButton
                 key={s.id} label={s.label} hoursText={hrs(Number(s.hours))}
-                hint={!existing && workEntry ? "Bugün mesai var" : s.start_time ? `${hhmm(s.start_time)}–${hhmm(s.end_time)}` : "Dokun, ekle"}
-                active={!!existing} disabled={existing?.id.startsWith("tmp-") || (!existing && !!workEntry)}
+                hint={!existing && workEntry ? "Bugün mesai var" : !existing && rules.off ? TYPE_META[rules.off.type].label : s.start_time ? `${hhmm(s.start_time)}–${hhmm(s.end_time)}` : "Dokun, ekle"}
+                active={!!existing} disabled={existing?.id.startsWith("tmp-") || (!existing && (!!workEntry || !!rules.off))}
                 onPress={() => setConfirm(existing
                   ? { title: "Mesai geri alınsın mı?", desc: `${hrs(Number(s.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(existing) }
-                  : { title: "Mesai eklensin mi?", desc: `${format(parseISO(date), "d MMMM", { locale: tr })} tarihine ${hrs(Number(s.hours))} mesai eklenecek.`, yes: "Evet, ekle", run: () => add("overtime", Number(s.hours), s.start_time, s.end_time, false, s.id) })}
+                  : { title: "Mesai eklensin mi?", desc: `${format(parseISO(date), "d MMMM", { locale: tr })} tarihine ${hrs(Number(s.hours))} ${rules.isHoliday ? "resmi tatil mesaisi (tatil oranıyla)" : "mesai"} eklenecek.`, yes: "Evet, ekle", run: () => add(rules.workType, Number(s.hours), s.start_time, s.end_time, false, s.id) })}
               />
             );
           })}
@@ -210,8 +214,8 @@ function HomeView({ today }: { today: Date }) {
             />
           )}
         </div>
-        {!workEntry && (
-          <button type="button" {...realTap(() => { setOnHoliday(!!holiday); setCustom(true); })}
+        {!workEntry && !rules.off && (
+          <button type="button" {...realTap(() => { setOnHoliday(rules.isHoliday); setCustom(true); })}
             className="glass r-pill mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
             <Plus className="size-4" />Farklı mesai ekle
           </button>
@@ -230,7 +234,8 @@ function HomeView({ today }: { today: Date }) {
               const existing = todays.find((e) => e.type === t && isStatusRow(e));
               const pending = existing?.id.startsWith("tmp-");
               // Başka bir durum seçiliyse bu kart kilitlenir; önce seçili olan geri alınmalı
-              const locked = !existing && !!activeStatus;
+              const blockedByWork = !existing && t !== "holiday" && !!workEntry;
+              const locked = (!existing && !!activeStatus) || blockedByWork;
               return (
                 <button
                   key={t} type="button" disabled={pending || locked} aria-pressed={!!existing}
@@ -242,7 +247,7 @@ function HomeView({ today }: { today: Date }) {
                   </span>
                   <span>
                     <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
-                    <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri almak için dokun" : locked ? "Önce seçileni geri al" : t === "sick" && settings?.sick_leave_unpaid ? "Maaştan düşer" : m.hint}</span>
+                    <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri almak için dokun" : blockedByWork ? "Bu gün mesai var" : locked ? "Önce seçileni geri al" : t === "sick" && settings?.sick_leave_unpaid ? "Maaştan düşer" : m.hint}</span>
                   </span>
                 </button>
               );

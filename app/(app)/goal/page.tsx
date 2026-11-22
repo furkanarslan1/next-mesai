@@ -1,5 +1,6 @@
 "use client";
 
+import { parseNum } from "@/lib/num";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useToday } from "@/lib/now";
@@ -40,7 +41,7 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
   const userId = useProfile()?.id ?? "";
   const [f, setF] = useState<Form>(() => toForm(settings));
   const [busy, setBusy] = useState(false);
-  const n = (v: string) => Math.max(0, parseFloat(v.replace(",", ".")) || 0);
+  const n = (v: string) => Math.max(0, parseNum(v) || 0);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((cur) => ({ ...cur, [k]: v }));
 
   const base = round2(n(f.base_hourly_rate));

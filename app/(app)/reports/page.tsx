@@ -52,7 +52,9 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
   const year = today.getFullYear();
   const yearMonths = Array.from({ length: today.getMonth() + 1 }, (_, i) => new Date(year, i, 1));
   const slipKeys = (payslips ?? []).map((p) => p.month.slice(0, 7));
-  const keys = [...new Set([...six.map(keyOf), ...yearMonths.map(keyOf), ...slipKeys])];
+  // Yıllık izin için yılın tüm ayları okunur: ileriye planlanmış ücretli izinler de haktan düşsün
+  const fullYear = Array.from({ length: 12 }, (_, i) => new Date(year, i, 1));
+  const keys = [...new Set([...six.map(keyOf), ...fullYear.map(keyOf), ...slipKeys])];
   const byMonth = useEntriesMap(keys);
   // Kaydı olmayan ay "veri yok" sayılır (uygulama kullanılmadan önceki aylar tam maaş gibi görünmesin)
   const ZERO = { hours: 0, earned: 0, deduction: 0, absentDays: 0, salaryNet: 0, income: 0, workDays: 0 };
@@ -166,10 +168,10 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
         </div>
         <Progress value={settings.annual_leave_days > 0 ? Math.min(100, (leave.used / settings.annual_leave_days) * 100) : 0} />
         {leave.over > 0 && <p className="text-xs text-destructive">Hakkını {leave.over} gün aştın.</p>}
-        <p className="text-xs text-muted-foreground">Takvimde &quot;Ücretli izin&quot; olarak işaretlediğin günler sayılır.</p>
+        <p className="text-xs text-muted-foreground">Takvimde &quot;Ücretli izin&quot; olarak işaretlediğin günler (ileriye planladıkların dahil) sayılır.</p>
         <div className="no-print flex gap-2">
-          <Input type="number" inputMode="numeric" min="0" max="60" value={leaveInput} onChange={(e) => setLeaveInput(e.target.value)} aria-label="Yıllık izin hakkı (gün)" />
-          <Button variant="secondary" onClick={saveLeave} disabled={Number(leaveInput) === settings.annual_leave_days}>Hakkı kaydet</Button>
+          <Input inputMode="numeric" value={leaveInput} onChange={(e) => setLeaveInput(e.target.value.replace(/\D/g, "").slice(0, 2))} aria-label="Yıllık izin hakkı (gün)" />
+          <Button variant="secondary" onClick={saveLeave} disabled={leaveInput === "" || Number(leaveInput) > 60 || Number(leaveInput) === settings.annual_leave_days}>Hakkı kaydet</Button>
         </div>
         <p className="text-xs text-muted-foreground">Yasal asgari hak: 1–5 yıl {leaveByTenure(1)} gün, 5–15 yıl {leaveByTenure(5)} gün, 15 yıl ve üzeri {leaveByTenure(15)} gün.</p>
       </CardContent></Card>

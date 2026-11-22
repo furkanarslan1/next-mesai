@@ -1,5 +1,6 @@
 "use client";
 
+import { parseNum } from "@/lib/num";
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ export function HoursChips({ items, onAdd, onRemove, max = 8, loading = false }:
   loading?: boolean;
 }) {
   const [v, setV] = useState("");
-  const h = parseFloat(v.replace(",", "."));
+  const h = parseNum(v);
   const valid = h > 0 && h <= 24 && !items.some((i) => i.hours === h) && items.length < max;
 
   function add() {
@@ -42,8 +43,8 @@ export function HoursChips({ items, onAdd, onRemove, max = 8, loading = false }:
       </div>
       <div className="flex gap-2">
         <Input
-          type="number" inputMode="decimal" min="0.25" max="24" step="0.25" placeholder="Örn. 2.5"
-          value={v} onChange={(e) => setV(e.target.value)}
+          inputMode="decimal" placeholder="Örn. 2,5" aria-label="Mesai saati"
+          value={v} onChange={(e) => setV(e.target.value.replace(/[^0-9.,]/g, ""))}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
         />
         <Button type="button" variant="secondary" onClick={add} disabled={!valid} aria-label="Kısayol ekle">

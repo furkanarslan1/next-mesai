@@ -409,9 +409,16 @@ export const mutate = {
     shortcuts: () => load.shortcuts(true),
     entries: (key: string) => Promise.all([load.entries(key, true), load.totalHours(true)]),
     links: () => load.links(true),
-    all: () => Promise.all([
-      load.settings(true), load.shortcuts(true), load.totalHours(true),
-      load.entriesRange(Object.keys(state.entries), true),
-    ]),
+    // Geri yükleme gibi toplu değişikliklerden sonra: yüklü tüm dilimler (gelir-gider ve bordro dahil) yenilenir
+    all: () => {
+      const ek = Object.keys(state.entries);
+      const fk = Object.keys(state.finance);
+      return Promise.all([
+        load.settings(true), load.shortcuts(true), load.totalHours(true),
+        ek.length ? load.entriesRange(ek, true) : Promise.resolve(),
+        fk.length ? load.financeRange(fk, true) : Promise.resolve(),
+        state.payslips ? load.payslips(true) : Promise.resolve(),
+      ]);
+    },
   },
 };

@@ -12,11 +12,17 @@ export function DatePicker({ open, value, today, onSelect, onClose }: {
   open: boolean; value: string; today: string; onSelect: (d: string) => void; onClose: () => void;
 }) {
   const [month, setMonth] = useState(() => parseISO(value));
+  // Açılış dışarıdan (open prop) yönetildiği için onOpenChange(true) gelmez: her açılışta seçili günün ayına dön
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setMonth(parseISO(value));
+  }
   const entries = useMonthEntries(monthKey(month)) ?? [];
   const marked = new Set(entries.map((e) => e.work_date));
 
   return (
-    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); else setMonth(parseISO(value)); }}>
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent side="bottom" showCloseButton={false} className="mx-auto max-w-lg gap-5 rounded-t-[2rem] p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <SheetHeader className="sr-only p-0">
           <SheetTitle>Tarih seç</SheetTitle>

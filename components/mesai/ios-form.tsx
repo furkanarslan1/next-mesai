@@ -1,5 +1,6 @@
 "use client";
 
+import { parseNum } from "@/lib/num";
 import { useId, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 
@@ -99,7 +100,7 @@ export function PercentRow({ label, hint, value, onChange }: { label: string; hi
         <div className="flex items-center gap-2 rounded-full bg-muted px-4">
           <span className="text-muted-foreground">%</span>
           <input inputMode="decimal" aria-label={`${label} özel oran`} value={String(value || "")} placeholder="Örn. 175"
-            onChange={(e) => { const n = parseFloat(e.target.value.replace(",", ".")); onChange(Number.isFinite(n) ? Math.min(500, Math.max(0, n)) : 0); }}
+            onChange={(e) => { const n = parseNum(e.target.value); onChange(Number.isFinite(n) ? Math.min(500, Math.max(0, n)) : 0); }}
             className="h-11 w-full bg-transparent text-[17px] font-semibold tabular-nums outline-none" />
         </div>
       )}
