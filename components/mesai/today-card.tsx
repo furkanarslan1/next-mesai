@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { Briefcase, CheckCircle2, Coffee, Moon, Plus, Sparkles, Sunrise } from "lucide-react";
 import { hhmm, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type Settings } from "@/lib/types";
+import { isRestDay } from "@/lib/day";
 
 // Dakikada bir yenilenen "şimdi" (dakika numarası: aynı dakikada aynı değer, gereksiz çizim yok)
 const subscribe = (cb: () => void) => {
@@ -36,8 +37,8 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
   const start = hhmm(settings.work_start), end = hhmm(settings.work_end);
   const work = entries.find((e) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0);
   const off = entries.find((e) => ["paid_leave", "unpaid_leave", "sick", "absent"].includes(e.type));
-  // Yalnızca pazar dinlenme günü sayılır (birçok iş yerinde cumartesi çalışılır)
-  const weekend = now.getDay() === 0;
+  // Pazar her zaman; cumartesi Ayarlar → Çalışma saati'ndeki "Cumartesi tatil" seçimine göre
+  const weekend = isRestDay(now, settings);
 
   let icon = Briefcase, title = "", sub = "", progress: number | null = null, action: React.ReactNode = null, tone = "var(--teal)";
 
@@ -46,7 +47,7 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
   } else if (off) {
     icon = Coffee; title = `Bugün ${TYPE_META[off.type].label.toLocaleLowerCase("tr")}`; sub = "İyi dinlenmeler."; tone = "#7f8f9c";
   } else if (holiday || weekend) {
-    icon = Sparkles; title = holiday ?? "Bugün pazar"; sub = "Çalıştıysan mesaini aşağıdan ekle."; tone = "#d9a514";
+    icon = Sparkles; title = holiday ?? (now.getDay() === 6 ? "Bugün cumartesi, tatil" : "Bugün pazar, tatil"); sub = "Çalıştıysan mesaini aşağıdan ekle."; tone = "#d9a514";
   } else {
     const s = toMin(start);
     let e = toMin(end);

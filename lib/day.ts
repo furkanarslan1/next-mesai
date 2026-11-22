@@ -1,5 +1,8 @@
 import { holidayName } from "./holidays";
-import type { Entry, EntryType } from "./types";
+import type { Entry, EntryType, Settings } from "./types";
+
+/** Hafta tatili mi: pazar her zaman; cumartesi yalnızca "Cumartesi tatil" açıksa (eski kayıtlarda varsayılan açık). */
+export const isRestDay = (d: Date, s: Pick<Settings, "saturday_off">) => d.getDay() === 0 || (d.getDay() === 6 && (s.saturday_off ?? true));
 
 /** İşe gelinmeyen gün durumları: bu günlere mesai girilmez, mesai olan güne de bunlar işaretlenmez. */
 export const OFF_TYPES: EntryType[] = ["paid_leave", "unpaid_leave", "sick", "absent"];

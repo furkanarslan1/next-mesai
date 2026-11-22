@@ -44,6 +44,8 @@ export interface Settings {
   /** Maaşa dahil aylık mesai saati (bu kadarına ayrıca ücret ödenmez) */
   included_overtime_hours: number;
   annual_leave_days: number;
+  /** Cumartesi hafta tatili mi (false: cumartesi iş günü) */
+  saturday_off: boolean;
   /** Gider kategorisi (CategoryKey) -> aylık limit */
   budgets: Record<string, number>;
 }

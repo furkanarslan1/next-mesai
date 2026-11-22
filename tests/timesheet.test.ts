@@ -21,7 +21,7 @@ describe("çalışma çizelgesi", () => {
   it("hafta sonu boş, kayıtsız günler 'normal sayma' kapalıyken de boş", () => {
     const rows = buildTimesheet(day("2026-11-10"), [], S).rows;
     const sat = rows.find((x) => x.date === "2026-11-07")!;
-    expect([sat.start, sat.normalHours, sat.status]).toEqual(["", 0, "Hafta sonu"]);
+    expect([sat.start, sat.normalHours, sat.status]).toEqual(["", 0, "Hafta tatili"]);
     const off = buildTimesheet(day("2026-11-10"), [], S, { assumeWorkdays: false }).rows.find((x) => x.date === "2026-11-03")!;
     expect([off.start, off.normalHours]).toEqual(["", 0]);
   });
@@ -90,5 +90,21 @@ describe("Excel sayfa verisi", () => {
   it("dosya adı ve sayfa ayarı", () => {
     expect(sheet.fileName).toBe("calisma-cizelgesi-2026-11.xlsx");
     expect(sheet.options.orientation).toBe("landscape");
+  });
+});
+
+describe("cumartesi ayarı", () => {
+  const S6 = { ...SETTINGS, daily_hours: 8, work_start: "08:00:00", work_end: "16:00:00" };
+  it("cumartesi tatilse (varsayılan) boş kalır", () => {
+    const r = buildTimesheet(day("2026-11-10"), [], { ...S6, saturday_off: true }).rows.find((x) => x.date === "2026-11-07")!;
+    expect([r.weekend, r.normalHours, r.status]).toEqual([true, 0, "Hafta tatili"]);
+  });
+  it("cumartesi iş günüyse normal çalışma sayılır", () => {
+    const r = buildTimesheet(day("2026-11-10"), [], { ...S6, saturday_off: false }).rows.find((x) => x.date === "2026-11-07")!;
+    expect([r.weekend, r.normalHours, r.start, r.end]).toEqual([false, 8, "08:00", "16:00"]);
+  });
+  it("pazar her zaman tatil", () => {
+    const r = buildTimesheet(day("2026-11-10"), [], { ...S6, saturday_off: false }).rows.find((x) => x.date === "2026-11-08")!;
+    expect(r.weekend).toBe(true);
   });
 });
