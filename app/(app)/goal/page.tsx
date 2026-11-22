@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useToday } from "@/lib/now";
@@ -58,7 +59,7 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
       await mutate.saveSettings(userId, next);
       toast.success("Kaydedildi");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Kaydedilemedi");
+      toast.error(errorText(e, "Kaydedilemedi"));
     } finally { setBusy(false); }
   }
 

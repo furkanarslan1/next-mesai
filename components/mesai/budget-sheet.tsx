@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { toast } from "sonner";
 import { mutate } from "@/lib/store";
@@ -22,7 +23,7 @@ export function BudgetSheet({ userId, settings, initial, onClose }: {
   async function write(next: Record<string, number>, ok: string) {
     setBusy(true);
     try { await mutate.saveSettings(userId, { budgets: next }); toast.success(ok); onClose(); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Kaydedilemedi"); setBusy(false); }
+    catch (e) { toast.error(errorText(e, "Kaydedilemedi")); setBusy(false); }
   }
   const save = () => cat && valid && write({ ...settings.budgets, [cat]: value }, "Limit kaydedildi");
   const remove = () => { if (!cat) return; const { [cat]: _drop, ...rest } = settings.budgets; void _drop; return write(rest, "Limit kaldırıldı"); };

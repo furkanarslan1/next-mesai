@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -24,7 +25,7 @@ export default function ProfilePage() {
 
   async function respond(id: string, status: "accepted" | "revoked") {
     try { await mutate.respondLink(id, status); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "İşlem başarısız"); }
+    catch (e) { toast.error(errorText(e, "İşlem başarısız")); }
   }
   async function backup(format: "json" | "csv") {
     const supabase = createClient();
@@ -48,7 +49,7 @@ export default function ProfilePage() {
       const c = await restoreBackup(await file.text()); await mutate.refresh.all();
       toast.success(`Geri yüklendi: ${c.entries} kayıt, ${c.shortcuts} kısayol, ${c.finance} gelir/gider, ${c.payslips} bordro`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Geri yükleme başarısız");
+      toast.error(errorText(e, "Geri yükleme başarısız"));
     }
   }
 
@@ -124,7 +125,7 @@ function WorkSettingsForm({ userId, settings }: { userId: string; settings: Sett
       });
       toast.success(w.has_shift ? `${SHIFTS[w.shift_type].label} vardiyası kaydedildi` : "Çalışma saati kaydedildi");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Kaydedilemedi");
+      toast.error(errorText(e, "Kaydedilemedi"));
     } finally { setBusy(false); }
   }
 
@@ -145,12 +146,12 @@ function ShortcutSettings({ userId }: { userId: string }) {
     const { error } = await createClient().from("shortcuts").insert({
       user_id: userId, label: fmtHours(hours), hours, sort: Math.max(0, ...(shortcuts ?? []).map((s) => s.sort)) + 1,
     });
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(errorText(error, "İşlem başarısız, tekrar dene")); return; }
     await mutate.refresh.shortcuts();
   }
   async function remove(id: string) {
     const { error } = await createClient().from("shortcuts").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(errorText(error, "İşlem başarısız, tekrar dene")); return; }
     await mutate.refresh.shortcuts();
   }
   return (

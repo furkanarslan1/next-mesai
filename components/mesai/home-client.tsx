@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
@@ -98,14 +99,14 @@ function HomeView({ today }: { today: Date }) {
         // Kısayol/durum kartları ikinci dokunuşla geri alır; "Farklı mesai"nin geri alma yolu bu bildirimdeki düğme
         toast.success(`${TYPE_META[type].label} eklendi`, undo ? { duration: 4500, action: { label: "Geri al", onClick: () => remove(saved) } } : undefined);
       }
-      catch (e) { toast.error(e instanceof Error ? e.message : "Eklenemedi"); }
+      catch (e) { toast.error(errorText(e, "Eklenemedi")); }
     });
   }
   function remove(e: Entry) {
     startTransition(async () => {
       applyOpt({ remove: e.id });
       try { await mutate.removeEntry(e); }
-      catch (err) { toast.error(err instanceof Error ? err.message : "Silinemedi"); }
+      catch (err) { toast.error(errorText(err, "Silinemedi")); }
     });
   }
 

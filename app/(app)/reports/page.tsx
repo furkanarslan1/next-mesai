@@ -1,9 +1,10 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { addMonths, format, parseISO, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
-import { ArrowDownRight, ArrowUpRight, FileText, Minus, Plus } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, FileText, Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useToday } from "@/lib/now";
 import { mutate, useEntriesMap, usePayslips, useProfile, useSettings, useTotalHours } from "@/lib/store";
@@ -43,7 +44,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
   const totalHours = useTotalHours() ?? 0;
   const cur = settings.currency;
   const [metric, setMetric] = useState<"hours" | "income">("hours");
-  const [sheet, setSheet] = useState<{ item: Payslip | null } | null>(null);
+  const [sheet, setSheet] = useState<{ item: Payslip | null; del?: boolean } | null>(null);
 
   // Grafik için son 6 ay, yıllık özet/izin için yılın tüm ayları, bordrolu aylar
   const six = lastMonths(today, 6);
@@ -77,7 +78,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
     const n = Math.round(Number(leaveInput));
     if (!(n >= 0 && n <= 60) || !userId) return;
     try { await mutate.saveSettings(userId, { annual_leave_days: n }); toast.success("Yıllık izin hakkı kaydedildi"); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Kaydedilemedi"); }
+    catch (e) { toast.error(errorText(e, "Kaydedilemedi")); }
   }
   function exportCsv() {
     const rows = ytd.map(({ d, s }) => ({ ay: format(d, "yyyy-MM"), mesai_saat: s.hours, mesai_kazanc: Math.round(s.earned), maas_kesinti: Math.round(s.deduction), toplam_gelir: Math.round(s.income), mesai_gunu: s.workDays }));
@@ -185,8 +186,9 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
           const c = payslipCheck(p, byMonth[p.month.slice(0, 7)] ?? [], settings);
           const tone = c.status === "ok" ? "text-emerald-600" : "text-destructive";
           return (
-            <button key={p.id} type="button" onClick={() => setSheet({ item: p })} className="r-lg w-full space-y-1.5 bg-muted px-4 py-3 text-left transition active:scale-[0.98]">
-              <div className="flex items-center justify-between">
+            <div key={p.id} className="r-lg flex items-stretch gap-1 bg-muted pr-2">
+            <button type="button" onClick={() => setSheet({ item: p })} className="min-w-0 flex-1 space-y-1.5 py-3 pl-4 text-left transition active:scale-[0.98]">
+              <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold capitalize">{format(parseISO(p.month), "LLLL yyyy", { locale: tr })}</span>
                 <span className={`text-sm font-semibold ${tone}`}>
                   {c.status === "ok" ? "Uyumlu" : c.status === "missing" ? `${hrs(Math.abs(c.hoursDiff))} eksik ödenmiş olabilir` : `${hrs(c.hoursDiff)} fazla yazılmış`}
@@ -197,6 +199,8 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
                 {c.status !== "ok" && <> &nbsp;|&nbsp; Tutar farkı {c.amountDiff > 0 ? "+" : ""}{money(c.amountDiff, cur)}</>}
               </p>
             </button>
+            <button type="button" aria-label="Bordroyu sil" onClick={() => setSheet({ item: p, del: true })} className="no-print my-2 grid w-10 shrink-0 place-items-center rounded-full bg-destructive text-white transition hover:bg-destructive/90 active:scale-90"><Trash2 className="size-4" /></button>
+            </div>
           );
         })}
         <p className="text-xs text-muted-foreground">Tutar karşılaştırması, saatlik ücretini bordrodakiyle aynı varsayar; brüt/net farkı yüzünden küçük sapmalar olabilir. Saat farkı daha güvenilir göstergedir.</p>
@@ -219,7 +223,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
       </CardContent></Card>
 
       {sheet && userId && (
-        <PayslipSheet key={sheet.item?.id ?? "new"} userId={userId} months={slipMonths} item={sheet.item} defaultMonth={keyOf(addMonths(startOfMonth(today), -1))} onClose={() => setSheet(null)} />
+        <PayslipSheet key={`${sheet.item?.id ?? "new"}${sheet.del ? "-del" : ""}`} userId={userId} months={slipMonths} item={sheet.item} startInDelete={sheet.del} existingMonths={slipKeys} defaultMonth={keyOf(addMonths(startOfMonth(today), -1))} onClose={() => setSheet(null)} />
       )}
     </div>
   );

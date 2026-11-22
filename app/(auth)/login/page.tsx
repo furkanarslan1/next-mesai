@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
@@ -22,7 +23,7 @@ function trError(message: string) {
   if (m.includes("rate limit") || m.includes("too many")) return "Çok fazla deneme yapıldı, biraz bekleyip tekrar dene.";
   if (m.includes("invalid email") || m.includes("unable to validate email")) return "Geçerli bir e-posta gir.";
   if (m.includes("failed to fetch") || m.includes("network")) return "Bağlantı kurulamadı. İnternetini kontrol et.";
-  return message;
+  return errorText({ message }, "İşlem başarısız, tekrar dene");
 }
 
 export default function LoginPage() {

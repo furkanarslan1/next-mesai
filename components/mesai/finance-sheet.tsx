@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { format, parseISO, subMonths } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -42,7 +43,7 @@ export function FinanceSheet({ item, viewKey, userId, today, defaultDate, defaul
   async function run(fn: () => Promise<void>, ok: string) {
     setBusy(true);
     try { await fn(); toast.success(ok); onClose(); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "İşlem başarısız"); setBusy(false); }
+    catch (e) { toast.error(errorText(e, "İşlem başarısız")); setBusy(false); }
   }
 
   const save = () => {

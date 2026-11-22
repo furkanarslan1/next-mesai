@@ -1,8 +1,10 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { mutate } from "@/lib/store";
 import type { Payslip } from "@/lib/types";
@@ -12,9 +14,12 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 /** Bordroda yazan mesai saati ve tutarını girme/düzenleme paneli. */
-export function PayslipSheet({ userId, months, item, defaultMonth, onClose }: {
-  userId: string; months: Date[]; item: Payslip | null; defaultMonth: string; onClose: () => void;
+export function PayslipSheet({ userId, months, item, defaultMonth, existingMonths = [], startInDelete = false, onClose }: {
+  userId: string; months: Date[]; item: Payslip | null; defaultMonth: string;
+  /** Bordrosu zaten girilmiş aylar ("yyyy-MM"): yeni kayıtta aynı ay seçilirse üzerine yazılacağı uyarılır */
+  existingMonths?: string[]; startInDelete?: boolean; onClose: () => void;
 }) {
+  const [view, setView] = useState<"form" | "delete">(item && startInDelete ? "delete" : "form");
   const [month, setMonth] = useState(item ? item.month.slice(0, 7) : defaultMonth);
   const [hours, setHours] = useState(item ? String(item.paid_hours) : "");
   const [amount, setAmount] = useState(item ? String(item.paid_amount) : "");
@@ -29,13 +34,13 @@ export function PayslipSheet({ userId, months, item, defaultMonth, onClose }: {
       await mutate.payslip.save({ user_id: userId, month: `${month}-01`, paid_hours: num(hours), paid_amount: num(amount || "0") || 0, note: null });
       toast.success("Bordro kaydedildi");
       onClose();
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Kaydedilemedi"); setBusy(false); }
+    } catch (e) { toast.error(errorText(e, "Kaydedilemedi")); setBusy(false); }
   }
   async function remove() {
     if (!item) return;
     setBusy(true);
     try { await mutate.payslip.remove(item.id); toast.success("Silindi"); onClose(); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Silinemedi"); setBusy(false); }
+    catch (e) { toast.error(errorText(e, "Silinemedi")); setBusy(false); }
   }
 
   return (
@@ -45,6 +50,20 @@ export function PayslipSheet({ userId, months, item, defaultMonth, onClose }: {
           <SheetTitle className="text-lg">{item ? "Bordroyu düzenle" : "Bordro ekle"}</SheetTitle>
           <SheetDescription>Bordroda mesai olarak yazan saat ve tutarı gir; uygulamanın hesabıyla karşılaştıralım.</SheetDescription>
         </SheetHeader>
+        {view === "delete" && item ? (
+          <div className="space-y-6 rounded-[1.75rem] bg-muted p-6">
+            <div className="space-y-2">
+              <p className="text-xl font-semibold leading-snug">Bordro silinsin mi?</p>
+              <p className="text-base leading-relaxed text-muted-foreground">
+                {format(parseISO(item.month), "LLLL yyyy", { locale: tr })} bordrosu ({item.paid_hours} sa · ₺{item.paid_amount}) silinecek.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="secondary" autoFocus disabled={busy} className="h-14 bg-background text-base font-semibold" onClick={() => (startInDelete ? onClose() : setView("form"))}>Hayır</Button>
+              <Button disabled={busy} className="h-14 bg-destructive text-base font-semibold text-white hover:bg-destructive/90" onClick={remove}>Evet, sil</Button>
+            </div>
+          </div>
+        ) : (<>
         <div className="space-y-1.5">
           <Label htmlFor="ps-month">Ay</Label>
           <select id="ps-month" value={month} onChange={(e) => setMonth(e.target.value)} disabled={!!item}
@@ -63,8 +82,13 @@ export function PayslipSheet({ userId, months, item, defaultMonth, onClose }: {
             <Input id="ps-amount" inputMode="decimal" placeholder="Örn. 14300" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))} />
           </div>
         </div>
+        {!item && existingMonths.includes(month) && (
+          <p className="r-md bg-muted px-4 py-3 text-sm text-muted-foreground">Bu ay için zaten bir bordro var. Kaydedersen üzerine yazılır.</p>
+        )}
         <Button className="h-14 text-base font-semibold" disabled={!valid || busy} onClick={save}>Kaydet</Button>
-        {item && <Button variant="ghost" className="h-12 text-destructive" disabled={busy} onClick={remove}>Bordroyu sil</Button>}
+        {!valid && (hours !== "" || amount !== "") && <p className="-mt-2 text-xs text-muted-foreground">Saat alanı boş bırakılamaz. Kaydı kaldırmak için aşağıdaki &quot;Bordroyu sil&quot; düğmesini kullan.</p>}
+        {item && <Button className="h-12 bg-destructive text-base font-semibold text-white hover:bg-destructive/90" disabled={busy} onClick={() => setView("delete")}><Trash2 className="size-4" />Bordroyu sil</Button>}
+        </>)}
       </SheetContent>
     </Sheet>
   );

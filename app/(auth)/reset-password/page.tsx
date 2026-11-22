@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KeyRound } from "lucide-react";
@@ -38,7 +39,7 @@ export default function ResetPasswordPage() {
     setBusy(true); setMsg("");
     const { error } = await createClient().auth.updateUser({ password: pw });
     setBusy(false);
-    if (error) return setMsg(error.message.toLowerCase().includes("different") ? "Yeni şifre eskisinden farklı olmalı." : error.message);
+    if (error) return setMsg(error.message.toLowerCase().includes("different") ? "Yeni şifre eskisinden farklı olmalı." : errorText(error, "Şifre güncellenemedi, tekrar dene"));
     router.replace("/");
     router.refresh();
   }
