@@ -16,6 +16,12 @@ import { BudgetSheet } from "@/components/mesai/budget-sheet";
 import { FinanceSheet } from "@/components/mesai/finance-sheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Page } from "@/components/mesai/page";
+import { SwipeRow } from "@/components/mesai/swipe-row";
+import { AnimatedNumber } from "@/components/mesai/animated-number";
+import { mutate } from "@/lib/store";
+import { toast } from "sonner";
+import { errorText } from "@/lib/errors";
 
 type SheetState = { item: FinanceItem | null; kind: FinanceItem["kind"] } | null;
 
@@ -44,6 +50,11 @@ function FinanceView({ today }: { today: Date }) {
 
   if (!items) return <div className="glass min-h-[28rem] w-full animate-pulse" aria-busy />;
 
+  async function removeItem(i: FinanceItem) {
+    try { await mutate.finance.remove(key, i.id); toast.success(`${i.category} silindi`); }
+    catch (e) { toast.error(errorText(e, "Silinemedi")); }
+  }
+
   const f = financeSummary(items, entries, settings);
   const sorted = [...items].sort((a, b) => Number(b.recurring) - Number(a.recurring) || (b.spent_on ?? "").localeCompare(a.spent_on ?? "") || b.amount - a.amount);
   const maxExpense = f.breakdown[0]?.amount ?? 0;
@@ -59,17 +70,17 @@ function FinanceView({ today }: { today: Date }) {
   const trendMax = Math.max(1, ...trend.flatMap((t) => [t.income, t.expense]));
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft /></Button>
-        <h1 className="text-xl font-bold capitalize">{format(month, "MMMM yyyy", { locale: tr })}</h1>
-        <Button size="icon" variant="secondary" aria-label="Sonraki ay" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight /></Button>
-      </div>
+    <Page eyebrow="Gelir ve gider" title={<span className="capitalize">{format(month, "MMMM yyyy", { locale: tr })}</span>} actions={
+        <div className="flex gap-2">
+          <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft /></Button>
+          <Button size="icon" variant="secondary" aria-label="Sonraki ay" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight /></Button>
+        </div>
+      }>
 
       <section className="glass space-y-5 p-5 sm:p-6" aria-label="Aylık özet">
         <div className="text-center">
           <p className="text-sm text-muted-foreground">Ay sonu kalan</p>
-          <p className={`mt-1 text-5xl font-bold tabular-nums tracking-tight ${f.left < 0 ? "text-destructive" : ""}`}>{money(f.left, cur)}</p>
+          <AnimatedNumber value={f.left} format={(n) => money(n, cur)} className={`mt-1 block text-5xl font-bold tracking-tight ${f.left < 0 ? "text-destructive" : ""}`} />
           <p className="mt-2 text-xs text-muted-foreground tabular-nums">
             Maaş {money(f.salary, cur)}{f.deduction > 0 && <> (kesinti {money(f.deduction, cur)} düşüldü)</>} + mesai {money(f.overtime, cur)}{f.extra > 0 && <> + ek gelir {money(f.extra, cur)}</>} − gider {money(f.expense, cur)}
           </p>
@@ -171,8 +182,10 @@ function FinanceView({ today }: { today: Date }) {
           <p className="glass r-lg px-4 py-6 text-center text-sm text-muted-foreground">Bu ay için kayıt yok. Maaşın ve mesain otomatik hesaplanır; gider ve ek gelirlerini yukarıdan ekle.</p>
         )}
         {sorted.map((i) => (
-          <button key={i.id} type="button" onClick={() => setSheet({ item: i, kind: i.kind })}
-            className="glass r-lg flex w-full items-center gap-3.5 px-4 py-3 text-left transition active:scale-[0.98]">
+          <SwipeRow key={i.id} className="r-lg shadow-[var(--shadow-soft),0_0_0_0.5px_var(--hairline)]" label={i.recurring ? "Bitir" : "Sil"}
+            onDelete={() => (i.recurring ? setSheet({ item: i, kind: i.kind }) : removeItem(i))}>
+          <button type="button" onClick={() => setSheet({ item: i, kind: i.kind })}
+            className="flex w-full items-center gap-3.5 bg-card px-4 py-3 text-left transition active:bg-muted">
             <CategoryIcon category={i.category} className="size-9 shrink-0" />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold">{i.category}</span>
@@ -181,9 +194,11 @@ function FinanceView({ today }: { today: Date }) {
                 {categoryKey(i.category) === "ekgelir" && /^ma[aâ]ş/i.test(i.category) && " · maaş zaten otomatik sayılıyor"}
               </span>
             </span>
-            <b className={`tabular-nums ${i.kind === "income" ? "text-emerald-600" : ""}`}>{i.kind === "income" ? "+" : "−"}{money(i.amount, cur)}</b>
+            <b className={`tabular-nums ${i.kind === "income" ? "text-emerald-600 dark:text-emerald-400" : ""}`}>{i.kind === "income" ? "+" : "−"}{money(i.amount, cur)}</b>
           </button>
+          </SwipeRow>
         ))}
+        {sorted.length > 0 && <p className="px-1 text-center text-[12px] text-muted-foreground">Silmek için kaydı sola kaydır.</p>}
       </section>
 
       {budget && userId && <BudgetSheet userId={userId} settings={settings} initial={budget.cat} onClose={() => setBudget(null)} />}
@@ -193,6 +208,6 @@ function FinanceView({ today }: { today: Date }) {
           viewKey={key} userId={userId} today={todayStr} defaultDate={defaultDate} onClose={() => setSheet(null)}
         />
       )}
-    </div>
+    </Page>
   );
 }

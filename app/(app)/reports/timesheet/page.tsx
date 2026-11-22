@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { addMonths, format, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, FileSpreadsheet, FileText } from "lucide-react";
@@ -14,6 +13,7 @@ import { buildTimesheet } from "@/lib/timesheet";
 import { downloadTimesheetXlsx } from "@/lib/timesheet-xlsx";
 import { SwitchRow, FormSection } from "@/components/mesai/ios-form";
 import { Button } from "@/components/ui/button";
+import { Page } from "@/components/mesai/page";
 
 export default function TimesheetPage() {
   const today = useToday();
@@ -45,11 +45,7 @@ function TimesheetView({ today }: { today: Date }) {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="no-print flex items-center gap-2">
-        <Link href="/reports" aria-label="Raporlara dön" className="grid size-11 place-items-center rounded-full bg-secondary text-secondary-foreground active:scale-95"><ChevronLeft className="size-5" /></Link>
-        <h1 className="flex-1 text-xl font-bold">Çalışma çizelgesi</h1>
-      </div>
+    <Page title="Çalışma çizelgesi" back={{ href: "/reports", label: "Raporlar" }}>
 
       <div className="no-print flex items-center justify-between">
         <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft /></Button>
@@ -127,6 +123,6 @@ function TimesheetView({ today }: { today: Date }) {
           <div className="border-t border-foreground/40 pt-1 text-center text-xs text-muted-foreground">Onay (İK / Yönetici)</div>
         </div>
       </section>
-    </div>
+    </Page>
   );
 }

@@ -58,6 +58,7 @@ function SheetContent({
         )}
         {...props}
       >
+        {side === "bottom" && <BottomSheetBehavior />}
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close
@@ -77,6 +78,85 @@ function SheetContent({
         )}
       </SheetPrimitive.Popup>
     </SheetPortal>
+  )
+}
+
+/**
+ * Alttan açılan panelin iOS davranışları:
+ * - Üstte tutamak; panel en üstteyken aşağı sürüklenir, yeterince çekilince (ya da hızlı fırlatılınca) kapanır.
+ * - Panel açıkken arkadaki sayfa hafifçe küçülüp geri çekilir (iOS kart yığını), yalnızca telefonda.
+ */
+let openSheets = 0
+function BottomSheetBehavior() {
+  const anchor = React.useRef<HTMLSpanElement>(null)
+  const closeRef = React.useRef<HTMLButtonElement>(null)
+
+  React.useEffect(() => {
+    const popup = anchor.current?.closest<HTMLElement>('[data-slot="sheet-content"]')
+    if (!popup) return
+
+    // Arkadaki sayfa: görünen alanın ortasından küçülsün
+    const main = document.querySelector<HTMLElement>(".app-main")
+    openSheets++
+    if (main && window.matchMedia("(max-width: 767px)").matches) {
+      const top = main.getBoundingClientRect().top + window.scrollY
+      main.style.transformOrigin = `50% ${window.scrollY + window.innerHeight / 2 - top}px`
+      document.documentElement.dataset.sheetOpen = ""
+    }
+
+    let y0 = 0, t0 = 0, dy = 0, dragging = false, tracking = false
+    const set = (y: number, anim: boolean) => {
+      popup.style.transition = anim ? "transform 320ms cubic-bezier(0.2, 0.9, 0.3, 1)" : "none"
+      popup.style.transform = y ? `translateY(${y}px)` : ""
+    }
+    const start = (e: TouchEvent) => {
+      const t = e.target as HTMLElement
+      if (e.touches.length !== 1 || t.closest("input, textarea, select, [data-no-drag]")) return
+      tracking = true; dragging = false; dy = 0
+      y0 = e.touches[0].clientY; t0 = performance.now()
+    }
+    const move = (e: TouchEvent) => {
+      if (!tracking) return
+      const d = e.touches[0].clientY - y0
+      if (!dragging) {
+        if (d > 4 && popup.scrollTop <= 0) dragging = true
+        else if (Math.abs(d) > 4) { tracking = false; return }
+        else return
+      }
+      e.preventDefault()
+      dy = Math.max(0, d)
+      set(dy, false)
+    }
+    const end = () => {
+      if (!tracking) return
+      tracking = false
+      if (!dragging) return
+      const v = dy / Math.max(1, performance.now() - t0)
+      if (dy > Math.min(140, popup.offsetHeight * 0.3) || v > 0.7) {
+        popup.style.transition = "transform 220ms ease-in"
+        popup.style.transform = "translateY(100%)"
+        window.setTimeout(() => closeRef.current?.click(), 160)
+      } else set(0, true)
+    }
+    popup.addEventListener("touchstart", start, { passive: true })
+    popup.addEventListener("touchmove", move, { passive: false })
+    popup.addEventListener("touchend", end)
+    popup.addEventListener("touchcancel", end)
+    return () => {
+      popup.removeEventListener("touchstart", start)
+      popup.removeEventListener("touchmove", move)
+      popup.removeEventListener("touchend", end)
+      popup.removeEventListener("touchcancel", end)
+      openSheets = Math.max(0, openSheets - 1)
+      if (openSheets === 0) delete document.documentElement.dataset.sheetOpen
+    }
+  }, [])
+
+  return (
+    <>
+      <span ref={anchor} aria-hidden className="sheet-grabber" />
+      <SheetPrimitive.Close ref={closeRef} className="hidden" tabIndex={-1} aria-hidden />
+    </>
   )
 }
 

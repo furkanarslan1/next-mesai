@@ -7,7 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* iPhone/Mac'te SF Pro (sistem fontu), diğerlerinde Geist */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-geist-sans), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -199,77 +200,11 @@ body {
   ring: none;
 }
 
-/* ---------- Hedef barı: dolu kısmın ucu parlar ---------- */
-.goal-track {
-  position: relative;
-  height: 1rem;
-  border-radius: 9999px;
-  background: oklch(1 0 0 / 8%);
-  box-shadow: inset 0 1px 3px oklch(0 0 0 / 40%);
-}
-.goal-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: 9999px;
-  /* üstte süzülen ışık şeridi (sürekli akar), altta zümrüt geçiş */
-  background:
-    linear-gradient(100deg, transparent 35%, oklch(1 0 0 / 38%) 50%, transparent 65%) 0 0 / 220% 100% no-repeat,
-    linear-gradient(90deg, oklch(0.5 0.11 175), oklch(0.72 0.15 165) 55%, oklch(0.88 0.12 170));
-  animation: goal-shimmer 2.4s linear infinite;
-  transition: width 700ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-@keyframes goal-shimmer {
-  from { background-position: 160% 0, 0 0; }
-  to { background-position: -60% 0, 0 0; }
-}
-/* Barın ucundan saçılan kıvılcımlar */
-.goal-spark {
-  position: absolute;
-  right: 0.1rem;
-  top: 50%;
-  width: 0.42rem;
-  height: 0.42rem;
-  margin-top: -0.21rem;
-  border-radius: 9999px;
-  background: oklch(0.97 0.08 170);
-  box-shadow: 0 0 0.6rem 0.2rem oklch(0.85 0.15 168 / 95%);
-  opacity: 0;
-  pointer-events: none;
-  animation: goal-spark 1.2s ease-out infinite;
-  animation-delay: var(--d);
-}
-@keyframes goal-spark {
-  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
-  12% { opacity: 1; }
-  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.1); }
-}
-.goal-fill::after {
-  content: "";
-  position: absolute;
-  right: -0.35rem;
-  top: 50%;
-  width: 1.1rem;
-  height: 1.1rem;
-  translate: 0 -50%;
-  border-radius: 9999px;
-  background: oklch(0.96 0.06 170);
-  box-shadow:
-    0 0 0.6rem 0.15rem oklch(0.82 0.15 168 / 90%),
-    0 0 1.6rem 0.5rem oklch(0.72 0.15 165 / 65%),
-    0 0 3rem 1rem oklch(0.65 0.13 170 / 30%);
-  animation: goal-glow 2.2s ease-in-out infinite;
-}
+/* Hedef halkasının ucundaki parıltı */
 @keyframes goal-glow {
   0%, 100% { opacity: 0.85; scale: 1; }
   50% { opacity: 1; scale: 1.2; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .goal-fill { transition: none; }
-  .goal-fill::after { animation: none; }
-  .goal-fill { animation: none; }
-  .goal-spark { display: none; }
-}
-
 /* Mesai kısayolu: dokununca yukarı uçan "+X sa" ve yayılan halka */
 @keyframes shortcut-press {
   0% { scale: 1; }
@@ -456,28 +391,7 @@ body {
 [data-slot="input"] { height: 2.75rem; padding-inline: 1rem; border-radius: var(--r-md); background: var(--muted); border-color: transparent; }
 [data-slot="dialog-content"], [role="dialog"] { border-radius: 2rem; }
 
-/* Hedef barı: düz renk dolgu, parlayan uç ve kıvılcımlar korunur */
-.goal-track {
-  height: 1.1rem;
-  background: color-mix(in oklch, var(--teal) 20%, transparent);
-  box-shadow: none;
-}
-.goal-fill {
-  background:
-    linear-gradient(100deg, transparent 35%, oklch(1 0 0 / 40%) 50%, transparent 65%) 0 0 / 220% 100% no-repeat,
-    var(--teal);
-}
-.goal-spark {
-  background: color-mix(in oklch, var(--mint) 70%, white);
-  box-shadow: 0 0 0.6rem 0.2rem color-mix(in oklch, var(--teal) 85%, white);
-}
-.goal-fill::after {
-  background: color-mix(in oklch, var(--mint) 70%, white);
-  box-shadow:
-    0 0 0.6rem 0.15rem color-mix(in oklch, var(--teal) 80%, white),
-    0 0 1.6rem 0.5rem color-mix(in oklch, var(--teal) 55%, transparent),
-    0 0 3rem 1rem color-mix(in oklch, var(--teal) 25%, transparent);
-}
+/* Kısayol animasyonu renkleri */
 .shortcut-float { text-shadow: none; }
 .shortcut-ring { border-color: var(--teal); }
 
@@ -536,7 +450,6 @@ body {
 .dark .glass-nav { box-shadow: 0 2px 4px oklch(0 0 0 / 45%), 0 18px 44px oklch(0 0 0 / 55%); }
 .dark .glass-navy { box-shadow: 0 8px 20px oklch(0 0 0 / 40%); }
 .dark .nav-active { box-shadow: 0 8px 20px oklch(0 0 0 / 40%); }
-.dark .goal-track { background: color-mix(in oklch, var(--teal) 22%, transparent); }
 .dark [data-slot="input"] { background: var(--muted); }
 .dark [role="dialog"] { border: 1px solid color-mix(in oklch, var(--teal) 24%, transparent); }
 
@@ -551,3 +464,149 @@ select { font-size: 1rem; }
   [data-slot="button"] { min-height: 2.75rem; }
   select { min-height: 2.75rem; }
 }
+
+/* =====================================================================
+   iOS premium katmanı
+   ===================================================================== */
+:root {
+  /* Bağlantı / vurgu rengi (iOS "tint"): açıkta koyu teal (okunaklı), koyuda nane */
+  --tint: color-mix(in oklch, var(--teal) 78%, var(--ink));
+  --hairline: color-mix(in oklch, var(--ink) 9%, transparent);
+  --bar-bg: color-mix(in oklch, var(--background) 74%, transparent);
+  --ease-ios: cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.dark {
+  --tint: var(--mint);
+  --hairline: color-mix(in oklch, var(--mint) 12%, transparent);
+  --bar-bg: color-mix(in oklch, var(--ink) 72%, transparent);
+}
+
+/* Büyük başlık (iOS Large Title) */
+.large-title { font-size: 2.125rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.022em; }
+
+/* Kaydırınca beliren küçük başlık şeridi */
+.compact-bar {
+  padding-top: env(safe-area-inset-top);
+  background: var(--bar-bg);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-bottom: 0.5px solid var(--hairline);
+  transition: opacity 180ms ease;
+}
+
+/* ---------- Malzeme: cam yalnızca yüzen öğelerde, kartlar düz ve ince çizgili ---------- */
+.glass, [data-slot="card"] { box-shadow: var(--shadow-soft), 0 0 0 0.5px var(--hairline); }
+.glass-nav {
+  background: color-mix(in oklch, var(--card) 70%, transparent);
+  backdrop-filter: blur(28px) saturate(1.9);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9);
+  box-shadow: 0 0 0 0.5px var(--hairline), 0 2px 6px color-mix(in oklch, var(--ink) 6%, transparent), 0 18px 44px color-mix(in oklch, var(--ink) 16%, transparent);
+}
+.dark .glass-nav {
+  background: color-mix(in oklch, var(--navy) 72%, transparent);
+  backdrop-filter: blur(28px) saturate(1.9);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9);
+}
+.nav-shield { backdrop-filter: none; -webkit-backdrop-filter: none; }
+[data-slot="sheet-content"] {
+  background: color-mix(in oklch, var(--popover) 92%, transparent);
+  backdrop-filter: blur(30px) saturate(1.8);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
+}
+
+/* ---------- Sayfa geçişleri (React ViewTransition) ---------- */
+@keyframes vt-fade-in { from { opacity: 0; } }
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-slide-in { from { translate: var(--vt-from) 0; } }
+@keyframes vt-slide-out { to { translate: var(--vt-to) 0; } }
+@keyframes vt-rise { from { translate: 0 10px; opacity: 0; } }
+::view-transition-old(.nav-forward) { --vt-to: -30%; animation: 380ms var(--ease-ios) both vt-slide-out, 220ms ease-in both vt-fade-out; }
+::view-transition-new(.nav-forward) { --vt-from: 100%; animation: 380ms var(--ease-ios) both vt-slide-in; }
+::view-transition-old(.nav-back) { --vt-to: 100%; animation: 380ms var(--ease-ios) both vt-slide-out; }
+::view-transition-new(.nav-back) { --vt-from: -30%; animation: 380ms var(--ease-ios) both vt-slide-in, 260ms ease-out both vt-fade-in; }
+::view-transition-old(.nav-tab) { animation: 140ms ease-in both vt-fade-out; }
+::view-transition-new(.nav-tab) { animation: 260ms var(--ease-ios) 60ms both vt-rise; }
+/* Menüler geçiş sırasında yerinde kalır */
+::view-transition-group(tab-bar), ::view-transition-group(side-bar) { animation: none; z-index: 100; }
+::view-transition-old(tab-bar), ::view-transition-old(side-bar) { display: none; }
+::view-transition-new(tab-bar), ::view-transition-new(side-bar) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* ---------- Alttan panel: tutamak ve arkadaki sayfanın geri çekilmesi ---------- */
+.sheet-grabber {
+  position: absolute; top: 0.5rem; left: 50%; translate: -50% 0; z-index: 1;
+  width: 2.25rem; height: 0.3125rem; border-radius: 9999px;
+  background: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
+}
+.app-main { transition: transform 420ms var(--ease-ios), filter 420ms ease, border-radius 420ms ease; }
+html { transition: background-color 300ms ease; }
+@media (max-width: 767px) {
+  html[data-sheet-open] { background-color: #000; }
+  html[data-sheet-open] body { background: transparent; }
+  html[data-sheet-open] .app-main { transform: scale(0.93); border-radius: 1.4rem; filter: brightness(0.82); overflow: hidden; }
+}
+@media (prefers-reduced-motion: reduce) { .app-main { transition: none; } }
+
+/* ---------- Yükleme iskeleti: yanıp sönme yerine soldan sağa ışıltı ---------- */
+@keyframes skeleton-shine { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+.animate-pulse[aria-busy] {
+  animation: none;
+  background:
+    linear-gradient(100deg, transparent 30%, color-mix(in oklch, var(--background) 70%, transparent) 50%, transparent 70%) 0 0 / 200% 100% no-repeat,
+    var(--card);
+  animation: skeleton-shine 1.4s linear infinite;
+}
+.dark .animate-pulse[aria-busy] {
+  background:
+    linear-gradient(100deg, transparent 30%, color-mix(in oklch, var(--mint) 7%, transparent) 50%, transparent 70%) 0 0 / 200% 100% no-repeat,
+    var(--card);
+  animation: skeleton-shine 1.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .animate-pulse[aria-busy] { animation: none; } }
+
+/* ---------- Bildirimler: iOS bildirim balonu gibi üstten ---------- */
+[data-sonner-toast][data-styled="true"] {
+  border-radius: 1.4rem !important;
+  border: 0 !important;
+  padding: 0.8rem 1.1rem !important;
+  font-weight: 600;
+  background: color-mix(in oklch, var(--popover) 82%, transparent) !important;
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow: 0 0 0 0.5px var(--hairline), 0 12px 40px color-mix(in oklch, #000 18%, transparent) !important;
+}
+
+/* ---------- Hedef halkası ---------- */
+.goal-ring-arc { transition: stroke-dashoffset 1100ms var(--ease-ios); }
+.goal-ring-glow { filter: blur(6px); opacity: 0.55; }
+.goal-ring-tip { animation: goal-glow 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { .goal-ring-arc { transition: none; } .goal-ring-tip { animation: none; } }
+
+/* ---------- Ayarlar listesi ---------- */
+.settings-icon { display: grid; place-items: center; width: 1.875rem; height: 1.875rem; border-radius: 0.5rem; color: #fff; flex-shrink: 0; }
+.settings-row:active { background: color-mix(in oklch, var(--muted) 80%, var(--hairline)); }
+
+/* ---------- Kaydırarak silme ---------- */
+.swipe-row { position: relative; overflow: hidden; touch-action: pan-y; }
+.swipe-row > .swipe-content { position: relative; z-index: 1; transition: transform 300ms var(--ease-ios); will-change: transform; }
+.swipe-row[data-dragging] > .swipe-content { transition: none; }
+:root { --ring-a: color-mix(in oklch, var(--teal) 55%, var(--mint)); --ring-b: var(--teal); --ring-track: color-mix(in oklch, var(--teal) 16%, transparent); --ring-tip: #fff; }
+.dark { --ring-a: var(--mint); --ring-b: var(--teal); --ring-track: color-mix(in oklch, var(--teal) 22%, transparent); --ring-tip: #fff; }
+@keyframes ring-fill { from { stroke-dashoffset: var(--ring-full); } }
+@keyframes ring-rot { from { transform: rotate(0deg); } }
+.goal-ring-arc { animation: ring-fill 1200ms var(--ease-ios) backwards; }
+.goal-ring-rot { transform-origin: 60px 60px; transition: transform 1100ms var(--ease-ios); animation: ring-rot 1200ms var(--ease-ios) backwards; }
+.goal-ring-tip { filter: drop-shadow(0 0 3px color-mix(in oklch, var(--mint) 90%, transparent)); }
+@media (prefers-reduced-motion: reduce) { .goal-ring-arc, .goal-ring-rot { animation: none; transition: none; } }
+
+/* ---------- Tanıtım ekranı animasyonları ---------- */
+@keyframes ob-draw { from { stroke-dasharray: 0 999; } }
+@keyframes ob-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+@keyframes ob-bar { from { scale: 1 0; } }
+.ob-draw { animation: ob-draw 1.2s var(--ease-ios) both; }
+.ob-float { animation: ob-float 3s ease-in-out infinite; }
+.ob-bar { transform-box: fill-box; transform-origin: bottom; animation: ob-bar 700ms var(--ease-ios) both; }
+@media (prefers-reduced-motion: reduce) { .ob-draw, .ob-float, .ob-bar { animation: none; } }
+@media print { .compact-bar, .sheet-grabber { display: none !important; } .large-title { font-size: 1.5rem; } }

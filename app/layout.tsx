@@ -13,10 +13,22 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// iOS açılış ekranları (scripts/generate-assets.mjs üretir): [genişlik, yükseklik (pt), piksel oranı]
+const SPLASH: [number, number, number][] = [
+  [440, 956, 3], [402, 874, 3], [430, 932, 3], [393, 852, 3], [428, 926, 3],
+  [390, 844, 3], [375, 812, 3], [414, 896, 3], [414, 896, 2], [375, 667, 2], [320, 568, 2],
+];
+
 export const metadata: Metadata = {
   title: "Mesai",
   description: "Mesai, gelir ve hedef takip uygulaması",
-  appleWebApp: { capable: true, title: "Mesai", statusBarStyle: "black-translucent" },
+  appleWebApp: {
+    capable: true, title: "Mesai", statusBarStyle: "black-translucent",
+    startupImage: SPLASH.map(([w, h, d]) => ({
+      url: `/splash/${w * d}x${h * d}.png`,
+      media: `(device-width: ${w}px) and (device-height: ${h}px) and (-webkit-device-pixel-ratio: ${d}) and (orientation: portrait)`,
+    })),
+  },
   formatDetection: { telephone: false },
 };
 
