@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import Link from "next/link";
 import { Briefcase, CheckCircle2, Coffee, Moon, Plus, Sparkles, Sunrise } from "lucide-react";
 import { hhmm, hrs, overtimeAfter } from "@/lib/calc";
 import { TYPE_META, type Entry, type Settings } from "@/lib/types";
@@ -30,11 +31,11 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
   onAddUntil: (exit: string, hours: number) => void;
 }) {
   const minute = useSyncExternalStore(subscribe, minuteNow, () => 0);
-  if (!minute || !settings.work_start || !settings.work_end) return null;
+  if (!minute) return null;
 
   const now = new Date(minute * 60_000);
   const clock = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  const start = hhmm(settings.work_start), end = hhmm(settings.work_end);
+  const start = settings.work_start ? hhmm(settings.work_start) : "", end = settings.work_end ? hhmm(settings.work_end) : "";
   const work = entries.find((e) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0);
   const off = entries.find((e) => ["paid_leave", "unpaid_leave", "sick", "absent"].includes(e.type));
   // Pazar her zaman; cumartesi Ayarlar → Çalışma saati'ndeki "Cumartesi tatil" seçimine göre
@@ -48,6 +49,12 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
     icon = Coffee; title = `Bugün ${TYPE_META[off.type].label.toLocaleLowerCase("tr")}`; sub = "İyi dinlenmeler."; tone = "#7f8f9c";
   } else if (holiday || weekend) {
     icon = Sparkles; title = holiday ?? (now.getDay() === 6 ? "Bugün cumartesi, tatil" : "Bugün pazar, tatil"); sub = "Çalıştıysan mesaini aşağıdan ekle."; tone = "#d9a514";
+  } else if (!start || !end) {
+    // Çalışma saati girilmemiş: geri sayım yapılamaz, ayara yönlendir
+    icon = Briefcase; title = "Bugün iş günü"; sub = "Giriş/çıkış saatini girersen çıkışa geri sayım burada görünür.";
+    action = (
+      <Link href="/profile/work" transitionTypes={["nav-forward"]} className="flex h-10 shrink-0 items-center rounded-full bg-muted px-3.5 text-sm font-semibold text-[var(--tint)]">Ekle</Link>
+    );
   } else {
     const s = toMin(start);
     let e = toMin(end);

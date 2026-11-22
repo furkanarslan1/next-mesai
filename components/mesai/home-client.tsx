@@ -23,6 +23,7 @@ import { FormRow, FormSection, NumberRow, Segmented, SwitchRow } from "@/compone
 import { ReminderCard } from "@/components/mesai/reminder-card";
 import { MonthSummary } from "@/components/mesai/month-summary";
 import { GoalHero } from "@/components/mesai/goal-hero";
+import { fmtHours } from "@/components/mesai/hours-chips";
 import { Page } from "@/components/mesai/page";
 import { TodayCard } from "@/components/mesai/today-card";
 import { Onboarding } from "@/components/mesai/onboarding";
@@ -144,9 +145,9 @@ function HomeView({ today }: { today: Date }) {
     <Page
       eyebrow={format(parseISO(todayStr), "d MMMM EEEE", { locale: tr })}
       title={name ? `Merhaba, ${name.split(" ")[0]}` : "Merhaba"}
-      actions={
+      accessory={
         <button type="button" onClick={() => { haptic(); setPickerOpen(true); }} aria-label="Tarih seç"
-          className="glass-navy flex h-10 items-center gap-1.5 rounded-full pr-2.5 pl-3 text-sm font-semibold">
+          className="glass-navy flex h-9 items-center gap-1.5 rounded-full pr-2.5 pl-3 text-sm font-semibold">
           <CalendarDays className="size-4.5 opacity-90" aria-hidden />
           <span className="tabular-nums">{format(parseISO(date), date === todayStr ? "'Bugün'" : "d MMM", { locale: tr })}</span>
           <ChevronDown className="size-4 opacity-70" aria-hidden />
@@ -208,7 +209,7 @@ function HomeView({ today }: { today: Date }) {
             const existing = [...todays].reverse().find((e) => isWork(e) && Number(e.hours) > 0 && e.shortcut_id === s.id);
             return (
               <ShortcutButton
-                key={s.id} label={s.label} hoursText={hrs(Number(s.hours))}
+                key={s.id} label={fmtHours(Number(s.hours))} hoursText={hrs(Number(s.hours))}
                 hint={!existing && workEntry ? "Bugün mesai var" : !existing && rules.off ? TYPE_META[rules.off.type].label : s.start_time ? `${hhmm(s.start_time)}–${hhmm(s.end_time)}` : "Dokun, ekle"}
                 active={!!existing} disabled={existing?.id.startsWith("tmp-") || (!existing && (!!workEntry || !!rules.off))}
                 onPress={() => setConfirm(existing
@@ -220,7 +221,7 @@ function HomeView({ today }: { today: Date }) {
           {/* "Farklı mesai" ile girilen (ya da silinmiş kısayoldan gelen) kayıt da kısayol gibi görünür; dokununca geri alınır */}
           {workEntry && !(shortcuts ?? []).some((x) => x.id === workEntry.shortcut_id) && (
             <ShortcutButton
-              label={`${+Number(workEntry.hours).toFixed(2)} saat`} hoursText={hrs(Number(workEntry.hours))}
+              label={fmtHours(Number(workEntry.hours))} hoursText={hrs(Number(workEntry.hours))}
               hint={workEntry.start_time ? `${hhmm(workEntry.start_time)}–${hhmm(workEntry.end_time)}` : workEntry.type === "holiday" ? "Resmi tatil" : "Farklı mesai"}
               active disabled={workEntry.id.startsWith("tmp-")}
               onPress={() => askRemoveWork(workEntry)}

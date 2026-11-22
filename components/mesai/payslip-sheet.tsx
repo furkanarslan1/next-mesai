@@ -110,7 +110,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
                 <p className="rounded-[var(--r-md)] bg-muted px-4 py-3 text-sm text-muted-foreground">Bu ay için zaten bir bordro var. Kaydedersen üzerine yazılır.</p>
               )}
 
-              <FormSection tone="muted" title="Ek mesai (saat)" footer={`Toplam: ${+totalHours.toFixed(2)} saat. Bordrodaki “Ek. Mes. %…” satırlarının saatlerini gir.`}>
+              <FormSection tone="muted" title="Ek mesai (saat)" footer={`Toplam: ${hrs(totalHours)}. Bordrodaki “Ek. Mes. %…” satırlarının saatlerini gir.`}>
                 {ot.map((r, i) => (
                   <div key={i} className="flex min-h-[3.25rem] items-center gap-2 px-4">
                     <span className="text-muted-foreground">%</span>

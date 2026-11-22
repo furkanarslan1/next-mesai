@@ -89,7 +89,7 @@ export function PercentRow({ label, hint, value, onChange }: { label: string; hi
     <div className="space-y-2.5 px-4 py-3" role="group" aria-labelledby={id}>
       <div className="flex items-baseline justify-between gap-3">
         <span id={id} className="text-[15px] font-medium">{label}</span>
-        <span className="text-[15px] font-semibold tabular-nums">%{+value.toFixed(2)}</span>
+        <span className="text-[15px] font-semibold tabular-nums">%{(+value.toFixed(2)).toLocaleString("tr-TR")}</span>
       </div>
       <div className="grid grid-cols-5 gap-1.5">
         {PRESETS.map((p) => (
