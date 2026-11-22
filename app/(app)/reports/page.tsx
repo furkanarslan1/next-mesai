@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { addMonths, format, parseISO, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -77,7 +78,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
     const n = Math.round(Number(leaveInput));
     if (!(n >= 0 && n <= 60) || !userId) return;
     try { await mutate.saveSettings(userId, { annual_leave_days: n }); toast.success("Yıllık izin hakkı kaydedildi"); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Kaydedilemedi"); }
+    catch (e) { toast.error(errorText(e, "Kaydedilemedi")); }
   }
   function exportCsv() {
     const rows = ytd.map(({ d, s }) => ({ ay: format(d, "yyyy-MM"), mesai_saat: s.hours, mesai_kazanc: Math.round(s.earned), maas_kesinti: Math.round(s.deduction), toplam_gelir: Math.round(s.income), mesai_gunu: s.workDays }));

@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -29,13 +30,13 @@ export function PayslipSheet({ userId, months, item, defaultMonth, onClose }: {
       await mutate.payslip.save({ user_id: userId, month: `${month}-01`, paid_hours: num(hours), paid_amount: num(amount || "0") || 0, note: null });
       toast.success("Bordro kaydedildi");
       onClose();
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Kaydedilemedi"); setBusy(false); }
+    } catch (e) { toast.error(errorText(e, "Kaydedilemedi")); setBusy(false); }
   }
   async function remove() {
     if (!item) return;
     setBusy(true);
     try { await mutate.payslip.remove(item.id); toast.success("Silindi"); onClose(); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Silinemedi"); setBusy(false); }
+    catch (e) { toast.error(errorText(e, "Silinemedi")); setBusy(false); }
   }
 
   return (

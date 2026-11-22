@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -26,7 +27,7 @@ function NoteEditor({ entry }: { entry: Entry | undefined }) {
     if (!entry) return;
     setBusy(true);
     try { await mutate.updateEntry(entry, { note: text.trim() || null }); toast.success("Not kaydedildi"); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Kaydedilemedi"); }
+    catch (e) { toast.error(errorText(e, "Kaydedilemedi")); }
     finally { setBusy(false); }
   }
   return (
@@ -65,7 +66,7 @@ export function DaySheet({ date, entries, userId, onClose }: {
     if (!pending) return;
     setBusy(true);
     try { await pending.run(); setPending(null); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "İşlem başarısız"); }
+    catch (e) { toast.error(errorText(e, "İşlem başarısız")); }
     finally { setBusy(false); }
   }
   const row = (type: EntryType, hours: number) => ({ user_id: userId, work_date: date!, type, hours, note: null, start_time: null, end_time: null });

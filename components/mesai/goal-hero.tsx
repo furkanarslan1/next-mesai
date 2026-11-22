@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "@/lib/errors";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Pencil, Target } from "lucide-react";
@@ -49,7 +50,7 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
     startTransition(async () => {
       patchOpt(patch);
       try { await mutate.saveSettings(userId, patch); toast.success("Hedef güncellendi"); }
-      catch (e) { toast.error(e instanceof Error ? e.message : "Kaydedilemedi"); }
+      catch (e) { toast.error(errorText(e, "Kaydedilemedi")); }
     });
   }
 
