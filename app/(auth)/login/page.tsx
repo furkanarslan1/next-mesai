@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { resetStore } from "@/lib/store";
 import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
 import { HoursChips } from "@/components/mesai/hours-chips";
+import { FormSection, NumberRow, PercentRow, SwitchRow } from "@/components/mesai/ios-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,7 +43,9 @@ export default function LoginPage() {
   const [sched, setSched] = useState<WorkSchedule>({
     work_start: "08:00", work_end: "16:00", has_shift: false, shift_type: "day",
   });
-  const [pay, setPay] = useState({ monthly_salary: "", hourly_rate: "", sunday_rate: "", holiday_rate: "" });
+  const [pay, setPay] = useState<Pay>({
+    monthly_salary: "", hourly_rate: "", included_overtime_hours: "", weekday_percent: 150, sunday_percent: 100, holiday_percent: 200, sick_leave_unpaid: false,
+  });
   const [shortcutHours, setShortcutHours] = useState<number[]>([2.5, 6.5]);
 
   async function sendReset() {
@@ -84,8 +87,9 @@ export default function LoginPage() {
                   shift_type: sched.has_shift ? sched.shift_type : "",
                   work_start: sched.work_start, work_end: sched.work_end,
                   shortcut_hours: shortcutHours.join(","),
-                  monthly_salary: Number(pay.monthly_salary) || 0, hourly_rate: Number(pay.hourly_rate) || 0,
-                  sunday_rate: Number(pay.sunday_rate) || 0, holiday_rate: Number(pay.holiday_rate) || 0,
+                  monthly_salary: Number(pay.monthly_salary.replace(",", ".")) || 0, hourly_rate: Number(pay.hourly_rate.replace(",", ".")) || 0,
+                  weekday_percent: pay.weekday_percent, sunday_percent: pay.sunday_percent, holiday_percent: pay.holiday_percent,
+                  included_overtime_hours: Number(pay.included_overtime_hours.replace(",", ".")) || 0, sick_leave_unpaid: pay.sick_leave_unpaid,
                 }),
               },
             },
@@ -192,22 +196,17 @@ export default function LoginPage() {
   );
 }
 
-type Pay = { monthly_salary: string; hourly_rate: string; sunday_rate: string; holiday_rate: string };
+type Pay = {
+  monthly_salary: string; hourly_rate: string; included_overtime_hours: string;
+  weekday_percent: number; sunday_percent: number; holiday_percent: number; sick_leave_unpaid: boolean;
+};
 
 function WorkStep({ sched, setSched, pay, setPay, shortcutHours, setShortcutHours }: {
   sched: WorkSchedule; setSched: (s: WorkSchedule) => void;
   pay: Pay; setPay: (p: Pay) => void;
   shortcutHours: number[]; setShortcutHours: (h: number[]) => void;
 }) {
-  const num = (k: keyof Pay, label: string, hint?: string, placeholder = "0") => (
-    <div className="space-y-1.5">
-      <Label htmlFor={k}>{label}</Label>
-      <Input id={k} type="number" inputMode="decimal" min="0" step="0.01" placeholder={placeholder}
-        value={pay[k]} onChange={(e) => setPay({ ...pay, [k]: e.target.value })} />
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-    </div>
-  );
-  const doubled = Number(pay.hourly_rate) > 0 ? String(Number(pay.hourly_rate) * 2) : "0";
+  const set = <K extends keyof Pay>(k: K, v: Pay[K]) => setPay({ ...pay, [k]: v });
   return (
     <>
       <div>
@@ -215,12 +214,17 @@ function WorkStep({ sched, setSched, pay, setPay, shortcutHours, setShortcutHour
         <p className="text-xs text-muted-foreground">Hesaplamalar bu bilgilere göre yapılır, sonra ayarlardan değiştirebilirsin.</p>
       </div>
       <WorkScheduleFields value={sched} onChange={setSched} idPrefix="su" />
-      {num("monthly_salary", "Aylık maaş (₺)")}
-      <div className="grid grid-cols-2 gap-3">
-        {num("hourly_rate", "Saatlik mesai ücreti (₺)")}
-        {num("sunday_rate", "Pazar saatlik (₺)", undefined, doubled)}
-      </div>
-      {num("holiday_rate", "Resmi tatil saatlik (₺)", "Pazar/tatil boş kalırsa saatlik ücretin 2 katı hesaplanır.", doubled)}
+      <FormSection tone="muted" title="Maaş" footer="Bordrondaki net rakamları gir; bilmiyorsan boş bırakıp sonra ayarlardan doldurabilirsin.">
+        <NumberRow label="Aylık net maaş" suffix="₺" value={pay.monthly_salary} onChange={(v) => set("monthly_salary", v)} />
+        <NumberRow label="Maaşa dahil mesai" suffix="saat" placeholder="Örn. 10.5" hint="Maaşın belli saat mesai içeriyorsa" value={pay.included_overtime_hours} onChange={(v) => set("included_overtime_hours", v)} />
+        <SwitchRow label="Raporlu günler maaştan düşer" checked={pay.sick_leave_unpaid} onChange={(v) => set("sick_leave_unpaid", v)} />
+      </FormSection>
+      <FormSection tone="muted" title="Mesai ücreti">
+        <NumberRow label="Saatlik ücret (%100)" suffix="₺" value={pay.hourly_rate} onChange={(v) => set("hourly_rate", v)} />
+        <PercentRow label="Hafta içi mesai" value={pay.weekday_percent} onChange={(v) => set("weekday_percent", v)} />
+        <PercentRow label="Pazar mesaisi" value={pay.sunday_percent} onChange={(v) => set("sunday_percent", v)} />
+        <PercentRow label="Resmi tatil mesaisi" value={pay.holiday_percent} onChange={(v) => set("holiday_percent", v)} />
+      </FormSection>
       <div className="space-y-2">
         <div>
           <p className="text-sm font-medium">Sık yaptığın mesailer</p>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryPay, goalProgress, hoursBetween, hrs, levelFor, monthSummary, overtimeAfter, salaryDeduction } from "../lib/calc";
+import { baseRate, entryPay, goalProgress, hoursBetween, hrs, levelFor, monthSummary, overtimeAfter, paidHoursByPercent, salaryDeduction } from "../lib/calc";
 import { SETTINGS as S, entry as E } from "./helpers";
 
 describe("maaş kesintisi (maaş / 30)", () => {
@@ -69,5 +69,54 @@ describe("saat biçimi ve seviye", () => {
     expect(overtimeAfter("16:00", "15:00")).toBe(0);
     expect(overtimeAfter("00:00", "03:00")).toBe(3);
     expect(hoursBetween("22:00", "06:00")).toBe(8);
+  });
+});
+
+describe("mesai oranları (%)", () => {
+  // Gerçek bordro yapısı: %100 saatlik ücret x oran; hafta içi %150, pazar %100, tatil %200
+  const R = { ...S, base_hourly_rate: 183.33, weekday_percent: 150, sunday_percent: 100, holiday_percent: 200 };
+  it("hafta içi %150, pazar %100, tatil %200", () => {
+    expect(entryPay(E("2026-11-03", "overtime", 2), R)).toBeCloseTo(2 * 183.33 * 1.5, 5); // Salı
+    expect(entryPay(E("2026-11-01", "overtime", 2), R)).toBeCloseTo(2 * 183.33, 5); // Pazar
+    expect(entryPay(E("2026-10-29", "holiday", 2), R)).toBeCloseTo(2 * 183.33 * 2, 5);
+  });
+  it("oran değişince (%125) kazanç değişir", () => {
+    expect(entryPay(E("2026-11-03", "overtime", 4), { ...R, weekday_percent: 125 })).toBeCloseTo(4 * 183.33 * 1.25, 5);
+  });
+  it("özel oran (örn. %175)", () => {
+    expect(entryPay(E("2026-11-03", "overtime", 2), { ...R, weekday_percent: 175 })).toBeCloseTo(2 * 183.33 * 1.75, 5);
+  });
+  it("eski kayıt: taban ücret yoksa eski saatlik ücret hafta içi mesai ücretidir", () => {
+    const legacy = { ...R, base_hourly_rate: null, hourly_rate: 275 };
+    expect(entryPay(E("2026-11-03", "overtime", 2), legacy)).toBeCloseTo(550, 5); // eski davranış: 2 x 275
+    expect(baseRate(legacy)).toBeCloseTo(275 / 1.5, 5);
+  });
+  it("pazar/tatil için sabit TL ücret oranı geçersiz kılar", () => {
+    expect(entryPay(E("2026-11-01", "overtime", 2), { ...R, sunday_rate: 300 })).toBe(600);
+    expect(entryPay(E("2026-10-29", "holiday", 2), { ...R, holiday_rate: 400 })).toBe(800);
+  });
+  it("oran başına ücretli saat, maaşa dahil saati düşer", () => {
+    const S105 = { ...R, included_overtime_hours: 10.5 };
+    const ents = [E("2026-11-03", "overtime", 6), E("2026-11-04", "overtime", 6), E("2026-11-01", "overtime", 8)]; // pazar 1 Kasım ilk sıra
+    // sıra: 1 Kasım (pazar, 8 sa) -> 8 dahil; 3 Kasım (6) -> 2.5 dahil, 3.5 ücretli; 4 Kasım (6) ücretli
+    expect(paidHoursByPercent(ents, S105)).toEqual({ "150": 9.5 });
+  });
+  it("gerçek bordro örneği: 27.5 sa hafta içi %150 + 10.5 sa pazar %100 = net 9494.73", () => {
+    const B = { ...S, base_hourly_rate: 183.47, weekday_percent: 150, sunday_percent: 100, holiday_percent: 200 };
+    // 11 hafta içi gün x 2.5 sa (Ekim 2026) + 2 pazar x 5.25 sa
+    const weekdays = ["05", "06", "07", "08", "09", "12", "13", "14", "15", "16", "19"].map((d) => E(`2026-10-${d}`, "overtime", 2.5));
+    const sundays = [E("2026-10-04", "overtime", 5.25), E("2026-10-11", "overtime", 5.25)];
+    const m = monthSummary([...weekdays, ...sundays], B);
+    expect(m.hours).toBeCloseTo(38, 5);
+    expect(Math.abs(m.earned - 9494.73)).toBeLessThan(1);
+    expect(paidHoursByPercent([...weekdays, ...sundays], B)).toEqual({ "150": 27.5, "100": 10.5 });
+  });
+});
+
+describe("raporlu gün kesintisi (ayar)", () => {
+  const ents = [E("2026-11-03", "sick"), E("2026-11-04", "sick"), E("2026-11-05", "absent")];
+  it("varsayılan: raporlu kesmez", () => expect(salaryDeduction(ents, S).days).toBe(1));
+  it("ayar açıksa raporlu günler de maaş / 30 kesilir", () => {
+    expect(salaryDeduction(ents, { ...S, sick_leave_unpaid: true })).toEqual({ days: 3, amount: 3000 });
   });
 });

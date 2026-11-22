@@ -2,10 +2,7 @@
 
 import { hoursBetween, hrs } from "@/lib/calc";
 import { SHIFTS, type ShiftType } from "@/lib/types";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { FormRow, FormSection, Segmented, SwitchRow } from "@/components/mesai/ios-form";
 
 export interface WorkSchedule {
   work_start: string; // HH:MM
@@ -28,46 +25,26 @@ export function WorkScheduleFields({ value, onChange, idPrefix = "ws" }: {
   const set = (patch: Partial<WorkSchedule>) => onChange({ ...value, ...patch });
   const pickShift = (t: ShiftType) => set({ shift_type: t, work_start: SHIFTS[t].start, work_end: SHIFTS[t].end });
   const daily = dailyHoursOf(value);
+  const timeInput = (id: string, v: string, on: (v: string) => void, label: string) => (
+    <input id={id} type="time" required value={v} aria-label={label} onChange={(e) => on(e.target.value)}
+      className="h-11 rounded-full bg-background px-4 text-[17px] font-semibold tabular-nums outline-none" />
+  );
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor={`${idPrefix}-in`}>Giriş saati</Label>
-          <Input id={`${idPrefix}-in`} type="time" required value={value.work_start} onChange={(e) => set({ work_start: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor={`${idPrefix}-out`}>Çıkış saati</Label>
-          <Input id={`${idPrefix}-out`} type="time" required value={value.work_end} onChange={(e) => set({ work_end: e.target.value })} />
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Günlük normal çalışma: <b className="text-foreground">{daily > 0 ? hrs(daily) : "-"}</b> · Mesai bu süreden sonrası için girilir.
-      </p>
-
-      <label className="flex items-center justify-between text-sm">
-        Vardiyalı çalışıyorum
-        <Switch checked={value.has_shift} onCheckedChange={(v) => set({ has_shift: v })} />
-      </label>
-      {value.has_shift && (
-        <div className="space-y-2">
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Vardiya türü">
-            {(Object.keys(SHIFTS) as ShiftType[]).map((t) => (
-              <button
-                key={t} type="button" role="radio" aria-checked={value.shift_type === t}
-                onClick={() => pickShift(t)}
-                className={cn(
-                  "rounded-xl border px-2 py-2.5 text-sm font-medium transition",
-                  value.shift_type === t ? "border-primary bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground",
-                )}
-              >
-                {SHIFTS[t].label}
-              </button>
-            ))}
+    <div className="space-y-5">
+      <FormSection tone="muted" title="Çalışma saatleri"
+        footer={<>Günlük normal çalışma: <b className="text-foreground">{daily > 0 ? hrs(daily) : "-"}</b> · Mesai bu süreden sonrası için girilir.</>}>
+        <FormRow label="Giriş saati">{timeInput(`${idPrefix}-in`, value.work_start, (v) => set({ work_start: v }), "Giriş saati")}</FormRow>
+        <FormRow label="Çıkış saati">{timeInput(`${idPrefix}-out`, value.work_end, (v) => set({ work_end: v }), "Çıkış saati")}</FormRow>
+        <SwitchRow label="Vardiyalı çalışıyorum" checked={value.has_shift} onChange={(v) => set({ has_shift: v })} />
+        {value.has_shift && (
+          <div className="space-y-2 p-3">
+            <Segmented label="Vardiya türü" value={value.shift_type} onChange={pickShift}
+              options={(Object.keys(SHIFTS) as ShiftType[]).map((t) => ({ value: t, label: SHIFTS[t].label }))} />
+            <p className="px-1 text-xs text-muted-foreground">Tür seçince saatler hazır gelir; yukarıdan istediğin gibi değiştirebilirsin.</p>
           </div>
-          <p className="text-xs text-muted-foreground">Tür seçince saatler hazır gelir; yukarıdaki giriş/çıkıştan istediğin gibi değiştirebilirsin.</p>
-        </div>
-      )}
+        )}
+      </FormSection>
     </div>
   );
 }

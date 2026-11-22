@@ -36,6 +36,9 @@ export async function restoreBackup(text: string) {
     if (time(s.work_end)) patch.work_end = time(s.work_end);
     if (s.goal_mode === "amount" || s.goal_mode === "hours") patch.goal_mode = s.goal_mode;
     if (has("monthly_goal_hours")) patch.monthly_goal_hours = num(s.monthly_goal_hours);
+    if (has("base_hourly_rate")) patch.base_hourly_rate = num(s.base_hourly_rate) > 0 ? num(s.base_hourly_rate) : null;
+    for (const k of ["weekday_percent", "sunday_percent", "holiday_percent"]) if (has(k) && num(s[k]) >= 50) patch[k] = Math.min(500, num(s[k]));
+    if (has("sick_leave_unpaid")) patch.sick_leave_unpaid = s.sick_leave_unpaid === true;
     if (has("annual_leave_days")) patch.annual_leave_days = Math.min(60, Math.round(num(s.annual_leave_days)));
     if (isObj(s.budgets)) {
       const b: Record<string, number> = {};
@@ -74,6 +77,13 @@ export async function restoreBackup(text: string) {
   // Bordrolar ay başına tektir (user_id + ay): aynı aya yeniden yükleme üzerine yazar
   const payslips = rows("payslips").filter((r) => date(r.month)).map((r) => ({
     user_id: uid, month: date(r.month)!, paid_hours: Math.max(0, num(r.paid_hours)), paid_amount: Math.max(0, num(r.paid_amount)), note: str(r.note),
+    // Ayrıntı alanları yalnızca yedekte varsa geri yüklenir (eski yedeklerle uyumlu)
+    ...("net_paid" in r ? {
+      unpaid_days: r.unpaid_days == null ? null : num(r.unpaid_days), sick_unpaid_days: r.sick_unpaid_days == null ? null : num(r.sick_unpaid_days),
+      sick_paid_days: r.sick_paid_days == null ? null : num(r.sick_paid_days), paid_leave_days: r.paid_leave_days == null ? null : num(r.paid_leave_days),
+      overtime_by_pct: isObj(r.overtime_by_pct) ? r.overtime_by_pct : null,
+      special_deductions: r.special_deductions == null ? null : num(r.special_deductions), net_paid: r.net_paid == null ? null : num(r.net_paid),
+    } : {}),
   }));
   if (payslips.length) {
     const { error } = await supabase.from("payslips").upsert(payslips, { onConflict: "user_id,month" });

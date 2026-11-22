@@ -4,7 +4,7 @@ import { errorText } from "@/lib/errors";
 import { useState } from "react";
 import { addMonths, format, parseISO, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
-import { ArrowDownRight, ArrowUpRight, FileText, Minus, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, FileText, Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useToday } from "@/lib/now";
 import { mutate, useEntriesMap, usePayslips, useProfile, useSettings, useTotalHours } from "@/lib/store";
@@ -184,26 +184,34 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
         {payslips?.length === 0 && <p className="r-lg bg-muted px-4 py-4 text-center text-sm text-muted-foreground">Henüz bordro eklemedin.</p>}
         {(payslips ?? []).map((p) => {
           const c = payslipCheck(p, byMonth[p.month.slice(0, 7)] ?? [], settings);
-          const tone = c.status === "ok" ? "text-emerald-600" : "text-destructive";
+          const tone = c.issues === 0 ? "text-emerald-600" : "text-destructive";
           return (
             <div key={p.id} className="r-lg flex items-stretch gap-1 bg-muted pr-2">
-            <button type="button" onClick={() => setSheet({ item: p })} className="min-w-0 flex-1 space-y-1.5 py-3 pl-4 text-left transition active:scale-[0.98]">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold capitalize">{format(parseISO(p.month), "LLLL yyyy", { locale: tr })}</span>
-                <span className={`text-sm font-semibold ${tone}`}>
-                  {c.status === "ok" ? "Uyumlu" : c.status === "missing" ? `${hrs(Math.abs(c.hoursDiff))} eksik ödenmiş olabilir` : `${hrs(c.hoursDiff)} fazla yazılmış`}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground tabular-nums">
-                Bordro {hrs(p.paid_hours)} · {money(p.paid_amount, cur)} &nbsp;|&nbsp; Uygulama {hrs(c.appHours)} · {money(c.appAmount, cur)}
-                {c.status !== "ok" && <> &nbsp;|&nbsp; Tutar farkı {c.amountDiff > 0 ? "+" : ""}{money(c.amountDiff, cur)}</>}
-              </p>
-            </button>
-            <button type="button" aria-label="Bordroyu sil" onClick={() => setSheet({ item: p, del: true })} className="no-print my-2 grid w-10 shrink-0 place-items-center rounded-full bg-destructive text-white transition hover:bg-destructive/90 active:scale-90"><Trash2 className="size-4" /></button>
+              <button type="button" onClick={() => setSheet({ item: p })} className="min-w-0 flex-1 space-y-2 py-3 pl-4 text-left transition active:scale-[0.98]">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold capitalize">{format(parseISO(p.month), "LLLL yyyy", { locale: tr })}</span>
+                  <span className={`text-sm font-semibold ${tone}`}>{c.issues === 0 ? "Uyumlu" : `${c.issues} fark var`}</span>
+                </div>
+                <ul className="space-y-1">
+                  {c.rows.map((r) => (
+                    <li key={r.key} className="text-xs">
+                      <span className="flex items-start gap-1.5">
+                        {r.ok ? <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-label="uyumlu" /> : <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-destructive" aria-label="fark var" />}
+                        <span className="min-w-0 flex-1">
+                          <span className="font-medium">{r.label}</span>
+                          <span className="block tabular-nums text-muted-foreground">Bordro {r.bordro} · Uygulama {r.app}</span>
+                          {r.note && <span className="block text-destructive">{r.note}</span>}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </button>
+              <button type="button" aria-label="Bordroyu sil" onClick={() => setSheet({ item: p, del: true })} className="no-print my-2 grid w-10 shrink-0 place-items-center rounded-full bg-destructive text-white transition hover:bg-destructive/90 active:scale-90"><Trash2 className="size-4" /></button>
             </div>
           );
         })}
-        <p className="text-xs text-muted-foreground">Tutar karşılaştırması, saatlik ücretini bordrodakiyle aynı varsayar; brüt/net farkı yüzünden küçük sapmalar olabilir. Saat farkı daha güvenilir göstergedir.</p>
+        <p className="text-xs text-muted-foreground">Tutarlar net esaslı karşılaştırılır (saatlik ücretini bordrodaki net ücretle girdiysen). Küçük farklar (çeyrek saat, gün kesri, birkaç TL) yok sayılır.</p>
       </CardContent></Card>
 
       <Card><CardContent className="space-y-3">
@@ -223,7 +231,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
       </CardContent></Card>
 
       {sheet && userId && (
-        <PayslipSheet key={`${sheet.item?.id ?? "new"}${sheet.del ? "-del" : ""}`} userId={userId} months={slipMonths} item={sheet.item} startInDelete={sheet.del} existingMonths={slipKeys} defaultMonth={keyOf(addMonths(startOfMonth(today), -1))} onClose={() => setSheet(null)} />
+        <PayslipSheet key={`${sheet.item?.id ?? "new"}${sheet.del ? "-del" : ""}`} userId={userId} months={slipMonths} item={sheet.item} startInDelete={sheet.del} existingMonths={slipKeys} settings={settings} defaultMonth={keyOf(addMonths(startOfMonth(today), -1))} onClose={() => setSheet(null)} />
       )}
     </div>
   );

@@ -529,3 +529,15 @@ body {
 .dark .goal-track { background: color-mix(in oklch, var(--teal) 22%, transparent); }
 .dark [data-slot="input"] { background: var(--muted); }
 .dark [role="dialog"] { border: 1px solid color-mix(in oklch, var(--teal) 24%, transparent); }
+
+/* ---------- Uygulama hissi (iOS): dokunma davranışı ---------- */
+html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+button, [role="button"], [role="radio"], a, label, select, summary { touch-action: manipulation; }
+button, [role="button"], [role="radio"] { -webkit-user-select: none; user-select: none; }
+body { overscroll-behavior-y: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-touch-callout: default; -webkit-user-select: text; user-select: text; }
+select { font-size: 1rem; }
+@media (pointer: coarse) {
+  [data-slot="button"] { min-height: 2.75rem; }
+  select { min-height: 2.75rem; }
+}
