@@ -1,5 +1,5 @@
 import { addMonths, format, getDaysInMonth, startOfMonth } from "date-fns";
-import { goalProgress, monthSummary, salaryDeduction } from "./calc";
+import { goalProgress, hrs, money, monthSummary, paidHoursByPercent, salaryDeduction } from "./calc";
 import type { Entry, Payslip, Settings } from "./types";
 
 const isWork = (e: Entry) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0;
@@ -75,15 +75,47 @@ export function annualLeave(entriesByMonth: Record<string, Entry[]>, year: numbe
 /** Türkiye İş Kanunu m.53: kıdeme göre asgari yıllık izin. */
 export const leaveByTenure = (years: number) => (years >= 15 ? 26 : years >= 5 ? 20 : 14);
 
+export interface CheckRow { key: string; label: string; bordro: string; app: string; ok: boolean; note?: string }
+
 /**
- * Bordro kontrolü: bordroda yazan mesai ile uygulamanın hesabı. Küçük farklar (çeyrek saat, 1 TL) yok sayılır.
- * Tutar karşılaştırması, saatlik ücretin bordrodakiyle aynı olduğunu varsayar (brüt/net farkı olabilir).
+ * Bordro kontrolü: bordrodaki kalemler uygulamanın hesabıyla satır satır karşılaştırılır. Bordroda yalnızca
+ * maaşa dahil saati aşan (ücretli) mesai yazar; küçük farklar (çeyrek saat, gün kesri, birkaç TL) yok sayılır.
+ * Bordroya girilmeyen isteğe bağlı kalemler karşılaştırılmaz. Tutarlar net esaslıdır (saatlik ücret net girilmişse).
  */
 export function payslipCheck(p: Payslip, entries: Entry[], s: Settings) {
   const m = monthSummary(entries, s);
-  // Bordroda yalnızca maaşa dahil saati aşan (ücretli) mesai yazar
+  const cur = s.currency;
+  const days = (types: string[]) => new Set(entries.filter((e) => types.includes(e.type)).map((e) => e.work_date)).size;
   const hoursDiff = Math.round((p.paid_hours - m.paidHours) * 100) / 100;
   const amountDiff = Math.round(p.paid_amount - m.earned);
-  const status: "ok" | "missing" | "extra" = Math.abs(hoursDiff) <= 0.25 ? "ok" : hoursDiff < 0 ? "missing" : "extra";
-  return { appHours: m.paidHours, appAmount: m.earned, hoursDiff, amountDiff, status };
+  const rows: CheckRow[] = [];
+  const hoursRow = (key: string, label: string, bordro: number, app: number, note?: string) =>
+    rows.push({ key, label, bordro: hrs(bordro), app: hrs(app), ok: Math.abs(bordro - app) <= 0.25, note });
+  const daysRow = (key: string, label: string, bordro: number, app: number, note?: string) =>
+    rows.push({ key, label, bordro: `${+bordro.toFixed(2)} gün`, app: `${app} gün`, ok: Math.abs(bordro - app) < 0.5, note });
+
+  hoursRow("hours", "Ek mesai saati", p.paid_hours, m.paidHours);
+  if (p.paid_amount > 0 || m.earned > 0) {
+    rows.push({ key: "amount", label: "Ek mesai tutarı", bordro: money(p.paid_amount, cur), app: money(m.earned, cur), ok: Math.abs(p.paid_amount - m.earned) <= Math.max(10, m.earned * 0.03) });
+  }
+  if (p.overtime_by_pct) {
+    const app = paidHoursByPercent(entries, s);
+    const keys = [...new Set([...Object.keys(p.overtime_by_pct), ...Object.keys(app)])].sort((x, y) => Number(x) - Number(y));
+    keys.forEach((k) => hoursRow(`pct${k}`, `Ek mesai %${k}`, Number(p.overtime_by_pct?.[k] ?? 0), app[k] ?? 0));
+  }
+  if (p.unpaid_days != null) daysRow("unpaid", "Ücretsiz izin / devamsızlık günü", p.unpaid_days, days(["unpaid_leave", "absent"]));
+  if (p.sick_unpaid_days != null || p.sick_paid_days != null) {
+    const note = (p.sick_unpaid_days ?? 0) > 0 && !s.sick_leave_unpaid ? "Ayarlarda raporlu günler maaştan düşmüyor; bordroda ücretsiz görünüyor." : undefined;
+    daysRow("sick", "Raporlu gün", (p.sick_unpaid_days ?? 0) + (p.sick_paid_days ?? 0), days(["sick"]), note);
+  }
+  if (p.paid_leave_days != null) daysRow("leave", "Ücretli / yıllık izin günü", p.paid_leave_days, days(["paid_leave"]));
+  if (p.net_paid != null) {
+    const expected = monthStats(entries, s).income - (p.special_deductions ?? 0);
+    rows.push({ key: "net", label: "Net ödenen", bordro: money(p.net_paid, cur), app: money(expected, cur), ok: Math.abs(p.net_paid - expected) <= Math.max(10, expected * 0.002) });
+  }
+
+  const issues = rows.filter((r) => !r.ok).length;
+  const status: "ok" | "missing" | "extra" | "other" =
+    issues === 0 ? "ok" : hoursDiff < -0.25 ? "missing" : hoursDiff > 0.25 ? "extra" : "other";
+  return { appHours: m.paidHours, appAmount: m.earned, hoursDiff, amountDiff, status, rows, issues };
 }

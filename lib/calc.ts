@@ -1,24 +1,48 @@
 import { getDay, parseISO } from "date-fns";
 import type { Entry, Settings } from "./types";
 
-/** Bir kaydın kazancı: pazar ve tatil çalışması çarpanla hesaplanır. */
+/**
+ * %100 (normal) saatlik ücret. `base_hourly_rate` boşsa (eski kayıtlar) eski `hourly_rate` hafta içi mesai
+ * ücreti sayılır ve oradan geri hesaplanır; böylece eski ayarlar aynı sonucu verir.
+ */
+export function baseRate(s: Settings): number {
+  if (s.base_hourly_rate && s.base_hourly_rate > 0) return s.base_hourly_rate;
+  const wd = (s.weekday_percent > 0 ? s.weekday_percent : 150) / 100;
+  return s.hourly_rate > 0 ? s.hourly_rate / wd : 0;
+}
+const isSunday = (date: string) => getDay(parseISO(date)) === 0;
+
+/** Bir mesai kaydının oranı (%): resmi tatil, pazar ya da hafta içi. */
+export function percentFor(e: { type: string; work_date: string }, s: Settings): number {
+  if (e.type === "holiday") return s.holiday_percent ?? 200;
+  return isSunday(e.work_date) ? (s.sunday_percent ?? 100) : (s.weekday_percent ?? 150);
+}
+
+/** Kaydın saatlik ücreti: sabit TL (pazar/tatil için elle girilmişse) yoksa saatlik ücret x oran. */
+export function rateFor(e: { type: string; work_date: string }, s: Settings): number {
+  if (e.type === "holiday" && s.holiday_rate > 0) return s.holiday_rate;
+  if (e.type !== "holiday" && isSunday(e.work_date) && s.sunday_rate > 0) return s.sunday_rate;
+  return (baseRate(s) * percentFor(e, s)) / 100;
+}
+/** Hafta içi mesai saatlik ücreti (ortalama ücret için varsayılan). */
+export const weekdayRate = (s: Settings) => (baseRate(s) * (s.weekday_percent ?? 150)) / 100;
+
+/** Bir kaydın kazancı: saatlik ücret x mesai oranı (hafta içi / pazar / tatil). */
 export function entryPay(e: Entry, s: Settings): number {
   if (e.type !== "overtime" && e.type !== "holiday") return 0;
-  const isSunday = getDay(parseISO(e.work_date)) === 0;
-  let rate = s.hourly_rate;
-  if (e.type === "holiday") rate = s.holiday_rate > 0 ? s.holiday_rate : s.hourly_rate * s.holiday_multiplier;
-  else if (isSunday) rate = s.sunday_rate > 0 ? s.sunday_rate : s.hourly_rate * s.sunday_multiplier;
-  return e.hours * rate;
+  return e.hours * rateFor(e, s);
 }
 
 /**
  * Maaş kesintisi: ücretsiz izin ve mazeretsiz devamsızlık günleri için aylık maaş / 30 (günlük ücret).
  * Aylık ücretli çalışanda ay, kaç gün çektiğine bakılmaksızın 30 gün sayılır. Aynı güne düşen birden
- * fazla kayıt tek gün sayılır, kesinti maaşı geçemez. Ücretli izin ve rapor kesinti yapmaz.
+ * fazla kayıt tek gün sayılır, kesinti maaşı geçemez. Ücretli izin kesinti yapmaz; raporlu günler yalnızca
+ * "Raporlu günler maaştan düşer" ayarı açıksa (bordroda "Raporlu (Ücretsiz)") kesilir.
  */
-export const DEDUCTED_TYPES = ["unpaid_leave", "absent"];
+export const deductedTypes = (s: Settings) => (s.sick_leave_unpaid ? ["unpaid_leave", "absent", "sick"] : ["unpaid_leave", "absent"]);
 export function salaryDeduction(entries: Entry[], s: Settings): { days: number; amount: number } {
-  const days = new Set(entries.filter((e) => DEDUCTED_TYPES.includes(e.type)).map((e) => e.work_date)).size;
+  const types = deductedTypes(s);
+  const days = new Set(entries.filter((e) => types.includes(e.type)).map((e) => e.work_date)).size;
   const amount = Math.min(s.monthly_salary, (s.monthly_salary / 30) * days);
   return { days, amount };
 }
@@ -64,6 +88,20 @@ function paidSplit(worked: Entry[], s: Settings) {
   return { extra, quotaLeft: quota };
 }
 
+/** Maaşa dahil saatler düşüldükten sonra, oran (%) başına ücretli mesai saati: {"150": 27.5, "100": 10.5}. */
+export function paidHoursByPercent(entries: Entry[], s: Settings): Record<string, number> {
+  const worked = entries.filter((e) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0);
+  const { extra } = paidSplit(worked, s);
+  const out: Record<string, number> = {};
+  worked.forEach((e) => {
+    const h = extra.get(e.id) ?? 0;
+    if (h <= 0) return;
+    const k = String(+percentFor(e, s).toFixed(2));
+    out[k] = +((out[k] ?? 0) + h).toFixed(2);
+  });
+  return out;
+}
+
 export function monthSummary(entries: Entry[], s: Settings) {
   const worked = entries.filter((e) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0);
   const hours = worked.reduce((a, e) => a + Number(e.hours), 0);
@@ -72,7 +110,7 @@ export function monthSummary(entries: Entry[], s: Settings) {
   const paidHours = [...extra.values()].reduce((a, h) => a + h, 0);
   const includedHours = hours - paidHours;
   // Ücretli saat başına ortalama ücret (pazar/tatil çarpanları dahil)
-  const paidRate = paidHours > 0 ? earned / paidHours : s.hourly_rate;
+  const paidRate = paidHours > 0 ? earned / paidHours : weekdayRate(s);
   const goal = s.monthly_goal_amount;
   const avgRate = paidRate;
   return {

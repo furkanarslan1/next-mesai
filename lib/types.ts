@@ -33,6 +33,14 @@ export interface Settings {
   goal_mode: "amount" | "hours";
   monthly_goal_hours: number;
   /** Yıllık izin hakkı (gün) */
+  /** %100 (normal) saatlik ücret. Boşsa eski `hourly_rate` (hafta içi mesai ücreti) esas alınır. */
+  base_hourly_rate: number | null;
+  /** Mesai oranları (%): hafta içi, pazar, resmi tatil. Saatlik ücret x oran / 100 */
+  weekday_percent: number;
+  sunday_percent: number;
+  holiday_percent: number;
+  /** Raporlu günler maaştan düşer mi ("Raporlu (Ücretsiz)") */
+  sick_leave_unpaid: boolean;
   /** Maaşa dahil aylık mesai saati (bu kadarına ayrıca ücret ödenmez) */
   included_overtime_hours: number;
   annual_leave_days: number;
@@ -78,4 +86,13 @@ export interface Payslip {
   paid_hours: number;
   paid_amount: number;
   note: string | null;
+  // Bordro ayrıntıları (isteğe bağlı)
+  unpaid_days?: number | null;
+  sick_unpaid_days?: number | null;
+  sick_paid_days?: number | null;
+  paid_leave_days?: number | null;
+  /** oran (%) -> saat, örn. {"150": 27.5, "100": 10.5} */
+  overtime_by_pct?: Record<string, number> | null;
+  special_deductions?: number | null;
+  net_paid?: number | null;
 }

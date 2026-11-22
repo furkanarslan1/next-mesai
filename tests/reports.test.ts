@@ -78,3 +78,35 @@ describe("aylar ve özet", () => {
     expect([m.hours, m.earned, m.deduction, m.income, m.workDays]).toEqual([10, 1000, 1000, 30000, 2]);
   });
 });
+
+describe("bordro kontrolü (ayrıntılı)", () => {
+  const R = { ...S, base_hourly_rate: 183.33, weekday_percent: 150, sunday_percent: 100, holiday_percent: 200 };
+  // 3 Kasım Salı 4 sa (%150), 1 Kasım Pazar 2 sa (%100)
+  const ents = [E("2026-11-03", "overtime", 4), E("2026-11-01", "overtime", 2), E("2026-11-09", "absent"), E("2026-11-10", "sick"), E("2026-11-12", "paid_leave")];
+  const slip = (p: Partial<import("../lib/types").Payslip> = {}) => ({ id: "p", user_id: "u", month: "2026-11-01", paid_hours: 6, paid_amount: 4 * 183.33 * 1.5 + 2 * 183.33, note: null, ...p });
+  it("oran kırılımı ve tüm satırlar uyumlu", () => {
+    const c = payslipCheck(slip({ overtime_by_pct: { "150": 4, "100": 2 }, unpaid_days: 1, sick_paid_days: 1, paid_leave_days: 1 }), ents, R);
+    expect(c.issues).toBe(0);
+    expect(c.rows.map((r) => r.key)).toEqual(["hours", "amount", "pct100", "pct150", "unpaid", "sick", "leave"]);
+  });
+  it("oran satırı farkı ve gün farkı yakalanır", () => {
+    const c = payslipCheck(slip({ overtime_by_pct: { "150": 1.5, "100": 2 }, unpaid_days: 3 }), ents, R);
+    const bad = c.rows.filter((r) => !r.ok).map((r) => r.key);
+    expect(bad).toEqual(["pct150", "unpaid"]);
+    expect(c.status).toBe("other"); // toplam saat tutuyor, ayrıntılar tutmuyor
+  });
+  it("bordro 'raporlu (ücretsiz)' diyor ama ayar düşmüyorsa not düşer", () => {
+    const c = payslipCheck(slip({ sick_unpaid_days: 1 }), ents, R);
+    expect(c.rows.find((r) => r.key === "sick")?.note).toMatch(/Ayarlarda raporlu/);
+  });
+  it("net ödenen = maaş − kesinti + ek mesai − özel kesinti", () => {
+    // maaş 30000, 1 gün devamsızlık (−1000), ek mesai (4x183.33x1.5 + 2x183.33), BES 500
+    const earned = 4 * 183.33 * 1.5 + 2 * 183.33;
+    const net = 30000 - 1000 + earned - 500;
+    expect(payslipCheck(slip({ net_paid: net, special_deductions: 500 }), ents, R).rows.find((r) => r.key === "net")?.ok).toBe(true);
+    expect(payslipCheck(slip({ net_paid: net + 500, special_deductions: 500 }), ents, R).rows.find((r) => r.key === "net")?.ok).toBe(false);
+  });
+  it("girilmeyen isteğe bağlı alanlar karşılaştırılmaz", () => {
+    expect(payslipCheck(slip(), ents, R).rows.map((r) => r.key)).toEqual(["hours", "amount"]);
+  });
+});

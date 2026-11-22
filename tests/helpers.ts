@@ -5,6 +5,8 @@ export const SETTINGS: Settings = {
   monthly_salary: 30000, daily_hours: 8, has_shift: false, shift_type: null, work_start: "08:00", work_end: "16:00",
   sunday_rate: 0, holiday_rate: 0, goal_mode: "amount", monthly_goal_hours: 0,
   included_overtime_hours: 0, annual_leave_days: 14, budgets: {},
+  // Eski testlerin sayıları korunsun: hafta içi %100 (100 ₺/sa), pazar ve tatil %200
+  base_hourly_rate: 100, weekday_percent: 100, sunday_percent: 200, holiday_percent: 200, sick_leave_unpaid: false,
 };
 let n = 0;
 export const entry = (work_date: string, type: Entry["type"], hours = 0): Entry => ({

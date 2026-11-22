@@ -483,8 +483,18 @@ body {
 
 /* Yazdırma / PDF: menü ve düğmeler gizlenir, zemin beyaz olur */
 @media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  :root, .dark {
+    --background: #fff; --foreground: #111; --card: #fff; --card-foreground: #111; --muted: #eef1f4; --muted-foreground: #444;
+    --border: #c9d0d7; color-scheme: light;
+  }
   aside, nav, .nav-shield, .no-print, [data-slot="toaster"] { display: none !important; }
-  body { background: #fff !important; }
+  body, main { background: #fff !important; }
+  .timesheet { padding: 0 !important; box-shadow: none !important; border: 0 !important; }
+  .timesheet-table { min-width: 0 !important; font-size: 8.5px; }
+  .timesheet-table th, .timesheet-table td { padding: 1.5px 3px !important; }
+  .timesheet-table thead { display: table-header-group; }
+  .timesheet-table tr { break-inside: avoid; }
   .glass, [data-slot="card"] { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
 }
 
@@ -529,3 +539,15 @@ body {
 .dark .goal-track { background: color-mix(in oklch, var(--teal) 22%, transparent); }
 .dark [data-slot="input"] { background: var(--muted); }
 .dark [role="dialog"] { border: 1px solid color-mix(in oklch, var(--teal) 24%, transparent); }
+
+/* ---------- Uygulama hissi (iOS): dokunma davranışı ---------- */
+html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+button, [role="button"], [role="radio"], a, label, select, summary { touch-action: manipulation; }
+button, [role="button"], [role="radio"] { -webkit-user-select: none; user-select: none; }
+body { overscroll-behavior-y: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-touch-callout: default; -webkit-user-select: text; user-select: text; }
+select { font-size: 1rem; }
+@media (pointer: coarse) {
+  [data-slot="button"] { min-height: 2.75rem; }
+  select { min-height: 2.75rem; }
+}

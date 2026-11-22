@@ -17,13 +17,12 @@ import { ShortcutButton } from "@/components/mesai/shortcut-button";
 import { DatePicker } from "@/components/mesai/date-picker";
 import { StatusIcon } from "@/components/mesai/status-icon";
 import { LevelIcon } from "@/components/mesai/level-icon";
+import { FormRow, FormSection, NumberRow, Segmented, SwitchRow } from "@/components/mesai/ios-form";
 import { ReminderCard } from "@/components/mesai/reminder-card";
 import { MonthSummary } from "@/components/mesai/month-summary";
 import { GoalHero } from "@/components/mesai/goal-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -243,7 +242,7 @@ function HomeView({ today }: { today: Date }) {
                   </span>
                   <span>
                     <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
-                    <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri almak için dokun" : locked ? "Önce seçileni geri al" : m.hint}</span>
+                    <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri almak için dokun" : locked ? "Önce seçileni geri al" : t === "sick" && settings?.sick_leave_unpaid ? "Maaştan düşer" : m.hint}</span>
                   </span>
                 </button>
               );
@@ -294,25 +293,26 @@ function HomeView({ today }: { today: Date }) {
       </Dialog>
 
       <Dialog open={custom} onOpenChange={setCustom}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Farklı mesai</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Giriş yöntemi">
-            <Button type="button" role="radio" aria-checked={!byExit} variant={!byExit ? "default" : "secondary"} onClick={() => setByExit(false)}>Saat gir</Button>
-            <Button type="button" role="radio" aria-checked={byExit} variant={byExit ? "default" : "secondary"} onClick={() => setByExit(true)} disabled={!workEnd}>Çıkış saatine göre</Button>
-          </div>
+        <DialogContent className="gap-5 p-5 sm:max-w-md">
+          <DialogHeader><DialogTitle className="text-lg">Farklı mesai</DialogTitle></DialogHeader>
+          <Segmented label="Giriş yöntemi" value={byExit ? "exit" : "hours"} onChange={(v) => setByExit(v === "exit")}
+            options={[{ value: "hours", label: "Saat gir" }, { value: "exit", label: "Çıkış saatine göre", disabled: !workEnd }]} />
           {byExit ? (
-            <div className="space-y-1.5">
-              <label htmlFor="exit-time" className="text-sm font-medium">Bugün kaçta çıktın?</label>
-              <Input id="exit-time" type="time" value={exitTime} onChange={(e) => setExitTime(e.target.value)} />
-              <p className="text-xs text-muted-foreground">
-                Normal çıkışın {workEnd}. {exitTime ? (exitHours > 0 ? <>Mesai: <b className="text-foreground">{hrs(exitHours)}</b></> : "Bu çıkış saatinde mesai oluşmaz.") : "Çıkış saatini girince fazla süre otomatik hesaplanır."}
-              </p>
-            </div>
+            <FormSection tone="muted" footer={<>Normal çıkışın {workEnd}. {exitTime ? (exitHours > 0 ? <>Mesai: <b className="text-foreground">{hrs(exitHours)}</b></> : "Bu çıkış saatinde mesai oluşmaz.") : "Çıkış saatini girince fazla süre otomatik hesaplanır."}</>}>
+              <FormRow label="Bugün kaçta çıktın?">
+                <input id="exit-time" type="time" value={exitTime} onChange={(e) => setExitTime(e.target.value)} aria-label="Çıkış saati"
+                  className="h-11 rounded-full bg-card dark:bg-background px-4 text-[17px] font-semibold tabular-nums outline-none" />
+              </FormRow>
+            </FormSection>
           ) : (
-            <Input type="number" step="0.25" min="0" max="24" placeholder="Örn. 4" value={customHours} onChange={(e) => setCustomHours(e.target.value)} />
+            <FormSection tone="muted">
+              <NumberRow label="Mesai" suffix="saat" placeholder="Örn. 4" value={customHours} onChange={setCustomHours} />
+            </FormSection>
           )}
-          <label className="flex items-center justify-between text-sm">Resmi tatilde çalıştım (tatil çarpanı)<Switch checked={onHoliday} onCheckedChange={setOnHoliday} /></label>
-          <Button disabled={!(customValid > 0 && customValid <= 24)} onClick={() => {
+          <FormSection tone="muted">
+            <SwitchRow label="Resmi tatilde çalıştım" hint="Tatil oranıyla hesaplanır" checked={onHoliday} onChange={setOnHoliday} />
+          </FormSection>
+          <Button className="h-14 text-base font-semibold" disabled={!(customValid > 0 && customValid <= 24)} onClick={() => {
             const h = customValid;
             if (!(h > 0 && h <= 24)) return;
             if (byExit) add(onHoliday ? "holiday" : "overtime", h, workEnd, exitTime, true);
