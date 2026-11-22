@@ -16,12 +16,14 @@ const SLIDE = { "nav-forward": "nav-forward", "nav-back": "nav-back", "nav-tab":
  * - Sayfa geçişleri React ViewTransition ile: ileri/geri kayar, sekmeler arası yumuşak geçer.
  * - Dokunmatik ekranda en üstteyken aşağı çekince veriler yenilenir.
  */
-export function Page({ title, eyebrow, back, actions, onRefresh, children }: {
+export function Page({ title, eyebrow, back, actions, accessory, onRefresh, children }: {
   title: React.ReactNode;
   /** Başlığın üstündeki küçük satır (ör. tarih) */
   eyebrow?: React.ReactNode;
   back?: { href: string; label: string };
   actions?: React.ReactNode;
+  /** Üst satırın (eyebrow) sağındaki öğe: uzun başlıklarda başlığın tek satırda kalması için */
+  accessory?: React.ReactNode;
   /** Aşağı çekip yenile; verilmezse yüklü tüm veriler yenilenir */
   onRefresh?: () => Promise<unknown>;
   children: React.ReactNode;
@@ -64,7 +66,12 @@ export function Page({ title, eyebrow, back, actions, onRefresh, children }: {
               <ChevronLeft className="size-6" strokeWidth={2.4} />{back.label}
             </Link>
           )}
-          {eyebrow && <div className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">{eyebrow}</div>}
+          {(eyebrow || accessory) && (
+            <div className="flex min-h-8 items-center justify-between gap-3">
+              <div className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">{eyebrow}</div>
+              {accessory}
+            </div>
+          )}
           <div className="flex items-end justify-between gap-3">
             <h1 className="large-title min-w-0">{title}</h1>
             {actions && <div className="flex shrink-0 items-center gap-2 pb-1">{actions}</div>}

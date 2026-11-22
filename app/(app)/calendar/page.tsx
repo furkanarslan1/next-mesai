@@ -72,7 +72,7 @@ function CalendarView({ today }: { today: Date }) {
                   style={{ background: worked > 0 ? `color-mix(in oklch, var(--teal) ${Math.round(alpha * 100)}%, var(--fill))` : st ? st.bg : "var(--muted)", color: worked > 0 || st ? (strong ? "var(--ink)" : "oklch(0.99 0 0)") : "var(--foreground)" }}>
                   <span className={isToday ? "font-bold" : ""}>{format(d, "d")}</span>
                   {worked > 0 ? (
-                    <span className="mt-1 text-[10px] font-semibold tabular-nums">{+worked.toFixed(2)} sa</span>
+                    <span className="mt-1 text-[10px] font-semibold tabular-nums">{hrs(worked)}</span>
                   ) : st ? (
                     <span className={`mt-1 text-[10px] font-medium ${st.text}`}>{st.short}</span>
                   ) : null}

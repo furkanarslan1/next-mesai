@@ -44,7 +44,9 @@ function WorkSettingsForm({ userId, settings }: { userId: string; settings: Sett
   const [busy, setBusy] = useState(false);
   const daily = dailyHoursOf(w);
   const dirty = w.work_start !== hhmm5(settings.work_start, "08:00") || w.work_end !== hhmm5(settings.work_end, "16:00")
-    || w.has_shift !== settings.has_shift || (w.has_shift && w.shift_type !== settings.shift_type) || satOff !== savedSat;
+    || w.has_shift !== settings.has_shift || (w.has_shift && w.shift_type !== settings.shift_type) || satOff !== savedSat
+    // Hiç kaydedilmemişse ekrandaki varsayılan (08:00–16:00) da kaydedilebilsin
+    || !settings.work_start || !settings.work_end;
 
   async function save() {
     if (daily <= 0) return toast.error("Giriş ve çıkış saatini gir");

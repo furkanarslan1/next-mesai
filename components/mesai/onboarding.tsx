@@ -83,7 +83,7 @@ export function Onboarding() {
 
   return (
     <div role="dialog" aria-modal aria-label="Mesai'ye hoş geldin"
-      className="fixed inset-0 z-[60] flex flex-col !rounded-none !border-0 bg-background pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))]">
+      className="fixed inset-0 z-[60] !m-0 flex flex-col !rounded-none !border-0 bg-background pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))]">
       <div className="flex justify-end px-5">
         <button type="button" onClick={finish} className="h-10 px-2 text-[17px] text-[var(--tint)]">Geç</button>
       </div>

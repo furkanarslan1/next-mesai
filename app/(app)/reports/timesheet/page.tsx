@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useToday } from "@/lib/now";
 import { errorText } from "@/lib/errors";
 import { monthKey, useMonthEntries, useProfile, useSettings } from "@/lib/store";
-import { hrs } from "@/lib/calc";
+import { hrs, num } from "@/lib/calc";
 import { buildTimesheet } from "@/lib/timesheet";
 import { downloadTimesheetXlsx } from "@/lib/timesheet-xlsx";
 import { SwitchRow, FormSection } from "@/components/mesai/ios-form";
@@ -90,7 +90,7 @@ function TimesheetView({ today }: { today: Date }) {
                   <td className={cell}>{r.start || "-"}</td>
                   <td className={cell}>{r.end || "-"}</td>
                   <td className={cell}>{r.normalHours || 0}</td>
-                  <td className={`${cell} ${r.overtimeHours > 0 ? "font-bold text-foreground" : ""}`}>{+r.overtimeHours.toFixed(2)}</td>
+                  <td className={`${cell} ${r.overtimeHours > 0 ? "font-bold text-foreground" : ""}`}>{num(r.overtimeHours)}</td>
                   <td className={cell}>{r.percent ? `%${r.percent}` : "-"}</td>
                   <td className={cell}>{r.paidLeave}</td><td className={cell}>{r.unpaidLeave}</td><td className={cell}>{r.sick}</td><td className={cell}>{r.absent}</td><td className={cell}>{r.holiday}</td>
                   <td className="px-1.5 py-1.5 leading-tight">{[r.status, r.note].filter(Boolean).join(" · ")}</td>
@@ -100,7 +100,7 @@ function TimesheetView({ today }: { today: Date }) {
             <tfoot>
               <tr className="border-t-2 border-border bg-muted font-bold">
                 <td className={cell} colSpan={4}>TOPLAM</td>
-                <td className={cell}>{ts.totals.normalHours}</td><td className={cell}>{ts.totals.overtimeHours}</td><td className={cell}>-</td>
+                <td className={cell}>{num(ts.totals.normalHours)}</td><td className={cell}>{num(ts.totals.overtimeHours)}</td><td className={cell}>-</td>
                 <td className={cell}>{ts.totals.paidLeave}</td><td className={cell}>{ts.totals.unpaidLeave}</td><td className={cell}>{ts.totals.sick}</td><td className={cell}>{ts.totals.absent}</td><td className={cell}>{ts.totals.holiday}</td>
                 <td />
               </tr>

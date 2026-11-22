@@ -9,7 +9,7 @@ import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, FileText, Minus, Pl
 import { toast } from "sonner";
 import { useToday } from "@/lib/now";
 import { mutate, useEntriesMap, usePayslips, useProfile, useSettings, useTotalHours } from "@/lib/store";
-import { hrs, levelFor, LEVELS, money } from "@/lib/calc";
+import { hrs, levelFor, LEVELS, money, num } from "@/lib/calc";
 import { Page } from "@/components/mesai/page";
 import { SwipeRow } from "@/components/mesai/swipe-row";
 import { LevelIcon } from "@/components/mesai/level-icon";
@@ -144,7 +144,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
             const isCur = key === keyOf(today);
             return (
               <div key={key} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
-                <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">{v > 0 ? (metric === "hours" ? +v.toFixed(1) : `${Math.round(v / 1000)}b`) : ""}</span>
+                <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">{v > 0 ? (metric === "hours" ? num(+v.toFixed(1)) : `${Math.round(v / 1000)}b`) : ""}</span>
                 <div className="w-full rounded-t-xl" style={{ height: `${Math.max(v > 0 ? 6 : 2, (v / max) * 100)}%`, background: isCur ? "var(--teal)" : "color-mix(in oklch, var(--teal) 38%, transparent)" }} />
                 <span className="text-[11px] capitalize text-muted-foreground">{format(d, "LLL", { locale: tr })}</span>
               </div>

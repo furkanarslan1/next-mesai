@@ -38,7 +38,7 @@ export function SwipeRow({ children, onDelete, label = "Sil", className = "" }: 
     if (!st.dir) {
       if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
       st.dir = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
-      if (st.dir === "h") { e.currentTarget.setPointerCapture(e.pointerId); setDragging(true); }
+      if (st.dir === "h") { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* yakalama desteklenmiyor */ } setDragging(true); }
     }
     if (st.dir !== "h") return;
     st.moved = true;

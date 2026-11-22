@@ -60,7 +60,7 @@ describe("hedef", () => {
 });
 
 describe("saat biçimi ve seviye", () => {
-  it("hrs en çok iki ondalık", () => { expect(hrs(2.25)).toBe("2.25 sa"); expect(hrs(6)).toBe("6 sa"); expect(hrs(2.5)).toBe("2.5 sa"); });
+  it("hrs en çok iki ondalık", () => { expect(hrs(2.25)).toBe("2,25 sa"); expect(hrs(6)).toBe("6 sa"); expect(hrs(2.5)).toBe("2,5 sa"); });
   it("seviye sınırları", () => {
     expect(levelFor(0).level).toBe(1); expect(levelFor(10).level).toBe(2); expect(levelFor(250).next).toBeUndefined();
   });

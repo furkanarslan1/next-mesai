@@ -6,7 +6,7 @@ import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export const fmtHours = (h: number) => `${Number.isInteger(h) ? h : +h.toFixed(2)} saat`;
+export const fmtHours = (h: number) => `${(+h.toFixed(2)).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} saat`;
 
 /** Sık yapılan mesai saatlerini (2.5, 6.5 gibi) ekleyip çıkarmak için küçük düzenleyici. */
 export function HoursChips({ items, onAdd, onRemove, max = 8, loading = false }: {
