@@ -47,7 +47,7 @@ export default function SettingsPage() {
         {employee && (
           <SettingsGroup title="Çalışma">
             <SettingsRow href="/profile/work" icon={Clock} color="#3b82c4" label="Çalışma saati"
-              value={s ? (s.has_shift && s.shift_type ? `${SHIFTS[s.shift_type].label} · ` : "") + `${s.work_start?.slice(0, 5) ?? "--"}–${s.work_end?.slice(0, 5) ?? "--"}` : undefined} />
+              value={s ? (s.has_shift && s.shift_type ? `${SHIFTS[s.shift_type].label} · ` : "") + `${s.work_start?.slice(0, 5) ?? "--"}–${s.work_end?.slice(0, 5) ?? "--"}` + ((s.saturday_off ?? true) ? "" : " · 6 gün") : undefined} />
             <SettingsRow href="/profile/pay" icon={BadgeDollarSign} color="#2f9e6e" label="Ücret ve hedef"
               value={s ? (s.monthly_salary > 0 ? money(s.monthly_salary, s.currency) : "Ayarlanmadı") : undefined} />
             <SettingsRow href="/profile/shortcuts" icon={Zap} color="#e08a3c" label="Mesai kısayolları"

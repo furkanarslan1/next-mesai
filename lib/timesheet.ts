@@ -1,6 +1,7 @@
-import { eachDayOfInterval, endOfMonth, format, getDay, startOfMonth } from "date-fns";
+import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
 import { holidayName } from "./holidays";
+import { isRestDay } from "./day";
 import { hhmm, monthSummary, paidHoursByPercent, percentFor } from "./calc";
 import type { Entry, Settings } from "./types";
 
@@ -44,7 +45,7 @@ export function addHours(time: string, hours: number): string {
  * Aylık gün gün çalışma çizelgesi (insan kaynaklarına verilebilir, çalışan kontrol edebilir).
  * Uygulama günlük giriş/çıkışı ayrıca tutmaz: normal çalışma günlerinde giriş/çıkış ayarlardaki çalışma saatinden,
  * mesai olan günlerde çıkış mesai kadar uzatılarak (ya da kayıttaki çıkış saatinden) türetilir.
- * `assumeWorkdays` açıksa kayıt olmayan Pazartesi–Cuma günleri normal çalışma günü sayılır; hafta sonu ve resmi tatil boş kalır.
+ * `assumeWorkdays` açıksa kayıt olmayan iş günleri normal çalışma günü sayılır (cumartesi ayara göre); hafta tatili ve resmi tatil boş kalır.
  */
 export function buildTimesheet(month: Date, entries: Entry[], s: Settings, opts: { assumeWorkdays?: boolean } = {}): Timesheet {
   const assume = opts.assumeWorkdays ?? true;
@@ -54,8 +55,7 @@ export function buildTimesheet(month: Date, entries: Entry[], s: Settings, opts:
 
   const rows: TimesheetRow[] = days.map((d) => {
     const date = format(d, "yyyy-MM-dd");
-    const dow = getDay(d);
-    const weekend = dow === 0 || dow === 6;
+    const weekend = isRestDay(d, s);
     const recs = entries.filter((e) => e.work_date === date);
     const ot = recs.filter(isWork);
     const overtime = ot.reduce((a, e) => a + Number(e.hours), 0);
@@ -93,7 +93,7 @@ export function buildTimesheet(month: Date, entries: Entry[], s: Settings, opts:
     const status = [
       paidLeave && "Ücretli izin", unpaidLeave && "Ücretsiz izin", sick && "Raporlu", absent && "Gelmedi",
       holiday && (holName ? `Resmi tatil (${holName})` : "Resmi tatil"),
-      !holiday && weekend && !off && !ot.length && "Hafta sonu",
+      !holiday && weekend && !off && !ot.length && "Hafta tatili",
     ].filter(Boolean).join(", ");
 
     return {

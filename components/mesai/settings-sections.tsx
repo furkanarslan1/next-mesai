@@ -14,6 +14,7 @@ import { parseNum } from "@/lib/num";
 import { load, mutate, resetStore, useLinks, useProfile, useSettings, useShortcuts } from "@/lib/store";
 import { SHIFTS, type Settings } from "@/lib/types";
 import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
+import { FormSection, SwitchRow } from "@/components/mesai/ios-form";
 import { fmtHours } from "@/components/mesai/hours-chips";
 import { SettingsGroup, SettingsRow } from "@/components/mesai/settings-list";
 import { SwipeRow } from "@/components/mesai/swipe-row";
@@ -38,10 +39,12 @@ function WorkSettingsForm({ userId, settings }: { userId: string; settings: Sett
     work_start: hhmm5(settings.work_start, "08:00"), work_end: hhmm5(settings.work_end, "16:00"),
     has_shift: settings.has_shift, shift_type: settings.shift_type ?? "day",
   });
+  const savedSat = settings.saturday_off ?? true;
+  const [satOff, setSatOff] = useState(savedSat);
   const [busy, setBusy] = useState(false);
   const daily = dailyHoursOf(w);
   const dirty = w.work_start !== hhmm5(settings.work_start, "08:00") || w.work_end !== hhmm5(settings.work_end, "16:00")
-    || w.has_shift !== settings.has_shift || (w.has_shift && w.shift_type !== settings.shift_type);
+    || w.has_shift !== settings.has_shift || (w.has_shift && w.shift_type !== settings.shift_type) || satOff !== savedSat;
 
   async function save() {
     if (daily <= 0) return toast.error("Giriş ve çıkış saatini gir");
@@ -50,17 +53,25 @@ function WorkSettingsForm({ userId, settings }: { userId: string; settings: Sett
       await mutate.saveSettings(userId, {
         work_start: w.work_start, work_end: w.work_end, daily_hours: daily,
         has_shift: w.has_shift, shift_type: w.has_shift ? w.shift_type : null,
+        ...(satOff !== savedSat ? { saturday_off: satOff } : {}),
       });
       haptic("success");
       toast.success(w.has_shift ? `${SHIFTS[w.shift_type].label} vardiyası kaydedildi` : "Çalışma saati kaydedildi");
     } catch (e) {
-      toast.error(errorText(e, "Kaydedilemedi"));
+      // Sunucuya 0011 migration'ı uygulanmadıysa sütun yoktur
+      const missing = /saturday_off/.test(String((e as { message?: string })?.message));
+      toast.error(missing ? "Cumartesi ayarı için sunucu güncellemesi gerekli." : errorText(e, "Kaydedilemedi"));
     } finally { setBusy(false); }
   }
 
   return (
     <div className="space-y-5">
       <WorkScheduleFields value={w} onChange={setW} idPrefix="set" tone="card" />
+      <FormSection title="Çalışma günleri" footer={satOff
+        ? "Haftada 5 gün: cumartesi ve pazar tatil. Çizelgede cumartesi boş kalır."
+        : "Haftada 6 gün: cumartesi normal iş günü, yalnızca pazar tatil. Cumartesi mesaisi hafta içi oranıyla hesaplanır."}>
+        <SwitchRow label="Cumartesi tatil" hint="İş yerinde cumartesi çalışılmıyorsa açık bırak" checked={satOff} onChange={setSatOff} />
+      </FormSection>
       <Button type="button" className="h-14 w-full text-base font-semibold" onClick={save} disabled={busy || !dirty}>Kaydet</Button>
     </div>
   );

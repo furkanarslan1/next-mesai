@@ -55,7 +55,7 @@ function TimesheetView({ today }: { today: Date }) {
 
       <div className="no-print space-y-4">
         <FormSection footer="Uygulama her günün giriş/çıkışını ayrıca tutmaz: normal günlerde giriş/çıkış çalışma saatinden, mesai olan günlerde çıkış mesai kadar uzatılarak yazılır.">
-          <SwitchRow label="Kayıtsız hafta içi günler normal çalışma sayılsın" hint="Cumartesi, Pazar ve resmi tatiller boş kalır" checked={assume} onChange={setAssume} />
+          <SwitchRow label="Kayıtsız hafta içi günler normal çalışma sayılsın" hint={settings.saturday_off ?? true ? "Cumartesi, pazar ve resmi tatiller boş kalır" : "Pazar ve resmi tatiller boş kalır (cumartesi iş günü)"} checked={assume} onChange={setAssume} />
         </FormSection>
         {noSchedule && <p className="rounded-[var(--r-md)] bg-muted px-4 py-3 text-sm text-muted-foreground">Giriş/çıkış saatleri boş görünüyor. Profil sayfasında çalışma saatini kaydedersen çizelgede dolu çıkar.</p>}
         <div className="grid grid-cols-2 gap-3">
