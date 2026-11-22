@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Page } from "@/components/mesai/page";
 
 interface Emp { id: string; linkId: string; full_name: string; entries: Entry[] }
 interface Pending { id: string; name: string }
@@ -99,12 +100,12 @@ function ManagerView({ today }: { today: Date }) {
   const absentDays = new Set(all.filter((x) => x.type === "absent").map((x) => `${x.user_id}:${x.work_date}`)).size;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
+    <Page eyebrow={<span className="capitalize">{format(month, "LLLL yyyy", { locale: tr })}</span>} title="Ekip" onRefresh={load} actions={
+      <div className="flex gap-2">
         <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft /></Button>
-        <h1 className="text-xl font-bold capitalize">Ekip · {format(month, "LLLL yyyy", { locale: tr })}</h1>
         <Button size="icon" variant="secondary" aria-label="Sonraki ay" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight /></Button>
       </div>
+    }>
 
       <Card><CardContent className="space-y-2">
         <p className="text-sm font-semibold">Ekibe çalışan ekle</p>
@@ -193,6 +194,6 @@ function ManagerView({ today }: { today: Date }) {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </Page>
   );
 }

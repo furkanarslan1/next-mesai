@@ -1,5 +1,8 @@
+"use client";
+
 import { goalProgress, hrs, money, monthSummary } from "@/lib/calc";
 import type { Entry, Settings } from "@/lib/types";
+import { AnimatedNumber } from "@/components/mesai/animated-number";
 
 /** Aylık özet: toplam kazanç (maaş − kesinti + mesai) ve mesai saati / günü / kazancı. Hedef kartında (hedef yokken) ve hedef varken günün durum kartlarının altında kullanılır. */
 export function MonthSummary({ entries, settings }: { entries: Entry[]; settings: Settings }) {
@@ -11,7 +14,7 @@ export function MonthSummary({ entries, settings }: { entries: Entry[]; settings
     <div className="space-y-5">
       <div className="text-center">
         <p className="text-sm text-muted-foreground">Bu ay toplam kazanç</p>
-        <p className="mt-1 text-5xl font-bold tabular-nums tracking-tight">{money(g.income, cur)}</p>
+        <AnimatedNumber value={g.income} format={(n) => money(n, cur)} className="mt-1 block text-5xl font-bold tracking-tight" />
         <p className="mt-2 text-xs text-muted-foreground tabular-nums">
           Maaş {money(settings.monthly_salary, cur)}{g.deduction > 0 && <> − kesinti {money(g.deduction, cur)}</>} + mesai {money(g.earned, cur)}
         </p>

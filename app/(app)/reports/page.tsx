@@ -5,11 +5,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { addMonths, format, parseISO, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, FileText, Minus, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, FileText, Minus, Plus, Table2 } from "lucide-react";
 import { toast } from "sonner";
 import { useToday } from "@/lib/now";
 import { mutate, useEntriesMap, usePayslips, useProfile, useSettings, useTotalHours } from "@/lib/store";
-import { hrs, money } from "@/lib/calc";
+import { hrs, levelFor, LEVELS, money } from "@/lib/calc";
+import { Page } from "@/components/mesai/page";
+import { SwipeRow } from "@/components/mesai/swipe-row";
+import { LevelIcon } from "@/components/mesai/level-icon";
 import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck } from "@/lib/reports";
 import { BADGES, earnedBadges, streaks } from "@/lib/badges";
 import { download, toCSV } from "@/lib/backup";
@@ -76,6 +79,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
   const [leaveInput, setLeaveInput] = useState(String(settings.annual_leave_days));
   const earned = earnedBadges(byMonth, settings, totalHours, today);
   const st = streaks(Object.values(byMonth).flat(), today);
+  const lvl = levelFor(totalHours);
 
   async function saveLeave() {
     const n = Math.round(Number(leaveInput));
@@ -90,15 +94,21 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
 
   const slipMonths = lastMonths(today, 12).reverse();
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Raporlar</h1>
-        <div className="no-print flex gap-2">
-          <Link href="/reports/timesheet" className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground active:scale-95">Çizelge</Link>
-          <Button size="sm" variant="secondary" onClick={exportCsv}>CSV</Button>
-          <Button size="sm" variant="secondary" onClick={() => window.print()}><FileText className="size-4" />PDF</Button>
-        </div>
+    <Page title="Raporlar" actions={
+      <div className="no-print flex gap-2">
+        <Button size="sm" variant="secondary" onClick={exportCsv}>CSV</Button>
+        <Button size="sm" variant="secondary" onClick={() => window.print()}><FileText className="size-4" />PDF</Button>
       </div>
+    }>
+      <Link href="/reports/timesheet" transitionTypes={["nav-forward"]}
+        className="no-print settings-row flex items-center gap-3.5 rounded-[var(--r-lg)] bg-card px-4 py-3.5 shadow-[var(--shadow-soft),0_0_0_0.5px_var(--hairline)]">
+        <span className="settings-icon" style={{ background: "var(--teal)" }}><Table2 className="size-[18px]" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[17px] font-semibold">Aylık çalışma çizelgesi</span>
+          <span className="text-[13px] text-muted-foreground">Gün gün giriş-çıkış · Excel ve PDF</span>
+        </span>
+        <span className="text-xl text-muted-foreground/60" aria-hidden>›</span>
+      </Link>
 
       <Card><CardContent className="space-y-4">
         <h2 className="font-semibold">Bu ay · geçen aya göre</h2>
@@ -190,8 +200,8 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
           const c = payslipCheck(p, byMonth[p.month.slice(0, 7)] ?? [], settings);
           const tone = c.issues === 0 ? "text-emerald-600" : "text-destructive";
           return (
-            <div key={p.id} className="r-lg flex items-stretch gap-1 bg-muted pr-2">
-              <button type="button" onClick={() => setSheet({ item: p })} className="min-w-0 flex-1 space-y-2 py-3 pl-4 text-left transition active:scale-[0.98]">
+            <SwipeRow key={p.id} className="r-lg" onDelete={() => setSheet({ item: p, del: true })}>
+              <button type="button" onClick={() => setSheet({ item: p })} className="w-full space-y-2 bg-muted px-4 py-3 text-left transition active:brightness-95">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold capitalize">{format(parseISO(p.month), "LLLL yyyy", { locale: tr })}</span>
                   <span className={`text-sm font-semibold ${tone}`}>{c.issues === 0 ? "Uyumlu" : `${c.issues} fark var`}</span>
@@ -211,11 +221,10 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
                   ))}
                 </ul>
               </button>
-              <button type="button" aria-label="Bordroyu sil" onClick={() => setSheet({ item: p, del: true })} className="no-print my-2 grid w-10 shrink-0 place-items-center rounded-full bg-destructive text-white transition hover:bg-destructive/90 active:scale-90"><Trash2 className="size-4" /></button>
-            </div>
+            </SwipeRow>
           );
         })}
-        <p className="text-xs text-muted-foreground">Tutarlar net esaslı karşılaştırılır (saatlik ücretini bordrodaki net ücretle girdiysen). Küçük farklar (çeyrek saat, gün kesri, birkaç TL) yok sayılır.</p>
+        <p className="text-xs text-muted-foreground">Silmek için bordroyu sola kaydır. Tutarlar net esaslı karşılaştırılır (saatlik ücretini bordrodaki net ücretle girdiysen). Küçük farklar (çeyrek saat, gün kesri, birkaç TL) yok sayılır.</p>
       </CardContent></Card>
 
       <Card><CardContent className="space-y-3">
@@ -234,9 +243,29 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
         </div>
       </CardContent></Card>
 
+      <Card><CardContent className="space-y-3">
+        <div className="flex items-center gap-3">
+          <LevelIcon level={lvl.level} className="size-12" />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold">Seviye {lvl.level} · {lvl.name}</h2>
+            <p className="text-xs text-muted-foreground">{lvl.next ? `${lvl.next.name} için ${hrs(lvl.toNext)} kaldı` : "En yüksek seviyedesin"} · toplam {hrs(totalHours)}</p>
+          </div>
+        </div>
+        <Progress value={lvl.progress} />
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {LEVELS.map((l, i) => (
+            <div key={l.name} className={`flex flex-col items-center gap-1 text-center ${i + 1 <= lvl.level ? "" : "opacity-40 grayscale"}`}>
+              <LevelIcon level={i + 1} className="size-9" />
+              <span className="text-[11px] font-semibold leading-tight">{l.name}</span>
+              <span className="text-[10px] text-muted-foreground">{l.min} sa</span>
+            </div>
+          ))}
+        </div>
+      </CardContent></Card>
+
       {sheet && userId && (
         <PayslipSheet key={`${sheet.item?.id ?? "new"}${sheet.del ? "-del" : ""}`} userId={userId} months={slipMonths} item={sheet.item} startInDelete={sheet.del} existingMonths={slipKeys} settings={settings} defaultMonth={keyOf(addMonths(startOfMonth(today), -1))} onClose={() => setSheet(null)} />
       )}
-    </div>
+    </Page>
   );
 }

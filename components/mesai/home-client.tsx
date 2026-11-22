@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
-import { CalendarDays, Check, ChevronDown, Plus } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Plus, Sparkles } from "lucide-react";
 import { monthKey, mutate, useMonthEntries, useProfile, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
 import { realTap } from "@/lib/tap";
 import { useToday } from "@/lib/now";
@@ -23,6 +23,11 @@ import { FormRow, FormSection, NumberRow, Segmented, SwitchRow } from "@/compone
 import { ReminderCard } from "@/components/mesai/reminder-card";
 import { MonthSummary } from "@/components/mesai/month-summary";
 import { GoalHero } from "@/components/mesai/goal-hero";
+import { Page } from "@/components/mesai/page";
+import { TodayCard } from "@/components/mesai/today-card";
+import { Onboarding } from "@/components/mesai/onboarding";
+import { AnimatedNumber } from "@/components/mesai/animated-number";
+import { haptic } from "@/lib/haptics";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -98,6 +103,7 @@ function HomeView({ today }: { today: Date }) {
       applyOpt({ add: { ...row, id: `tmp-${crypto.randomUUID()}` } });
       try {
         const saved = await mutate.addEntry(row);
+        haptic("success");
         // Kısayol/durum kartları ikinci dokunuşla geri alır; "Farklı mesai"nin geri alma yolu bu bildirimdeki düğme
         toast.success(`${TYPE_META[type].label} eklendi`, undo ? { duration: 4500, action: { label: "Geri al", onClick: () => remove(saved) } } : undefined);
       }
@@ -135,19 +141,18 @@ function HomeView({ today }: { today: Date }) {
   const monthHours = entries.filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
 
   return (
-    <div className="space-y-5">
-      <header className="flex items-end justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">{format(parseISO(date), "d MMMM EEEE", { locale: tr })}</p>
-          <h1 className="text-2xl font-bold">Merhaba{name ? `, ${name.split(" ")[0]}` : " 👋"}</h1>
-        </div>
-        <button type="button" onClick={() => setPickerOpen(true)} aria-label="Tarih seç"
-          className="glass-navy flex h-11 items-center gap-2 pr-3 pl-3.5 text-sm font-semibold">
+    <Page
+      eyebrow={format(parseISO(todayStr), "d MMMM EEEE", { locale: tr })}
+      title={name ? `Merhaba, ${name.split(" ")[0]}` : "Merhaba"}
+      actions={
+        <button type="button" onClick={() => { haptic(); setPickerOpen(true); }} aria-label="Tarih seç"
+          className="glass-navy flex h-10 items-center gap-1.5 rounded-full pr-2.5 pl-3 text-sm font-semibold">
           <CalendarDays className="size-4.5 opacity-90" aria-hidden />
-          <span className="tabular-nums">{format(parseISO(date), date === todayStr ? "'Bugün' · d MMM" : "d MMM yyyy", { locale: tr })}</span>
+          <span className="tabular-nums">{format(parseISO(date), date === todayStr ? "'Bugün'" : "d MMM", { locale: tr })}</span>
           <ChevronDown className="size-4 opacity-70" aria-hidden />
         </button>
-      </header>
+      }>
+      {profile?.role === "employee" && <Onboarding />}
 
       <DatePicker open={pickerOpen} value={date} today={todayStr} onSelect={(d) => { setDate(d); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />
 
@@ -160,9 +165,17 @@ function HomeView({ today }: { today: Date }) {
 
       <ReminderCard todayStr={todayStr} hasRecords={todays.length > 0} isToday={date === todayStr} />
 
+      {date === todayStr && settings && realEntries && (
+        <TodayCard settings={settings} entries={todays} holiday={holiday}
+          onAddUntil={(exit, h) => setConfirm({
+            title: "Mesai eklensin mi?", desc: `Normal çıkışın ${workEnd}, şu an ${exit}. Bugüne ${hrs(h)} ${rules.isHoliday ? "resmi tatil mesaisi" : "mesai"} eklenecek.`,
+            yes: "Evet, ekle", run: () => add(rules.workType, h, workEnd, exit, true),
+          })} />
+      )}
+
       {holiday && !activeStatus && (
         <div className="glass r-lg flex items-center justify-between px-4 py-3 text-sm">
-          <span>🎉 {holiday}</span>
+          <span className="flex items-center gap-2 font-medium"><Sparkles className="size-4 text-amber-500" aria-hidden />{holiday}</span>
           <Button size="sm" variant="secondary" {...realTap(() => askStatus("holiday"))}>Tatil olarak işaretle</Button>
         </div>
       )}
@@ -176,11 +189,11 @@ function HomeView({ today }: { today: Date }) {
       <div className="grid grid-cols-2 gap-3">
         <Card size="sm" className="r-lg"><CardContent className="text-center">
           <p className="text-xs text-muted-foreground">{date === todayStr ? "Bugünün mesaisi" : `${dayLabel} mesaisi`}</p>
-          <p className="text-xl font-bold tabular-nums">{hrs(todayHours)}</p>
+          <AnimatedNumber value={todayHours} format={hrs} className="block text-xl font-bold" />
         </CardContent></Card>
         <Card size="sm" className="r-lg"><CardContent className="text-center">
           <p className="text-xs text-muted-foreground">{format(parseISO(date), "LLLL", { locale: tr })} toplamı</p>
-          <p className="text-xl font-bold tabular-nums">{hrs(monthHours)}</p>
+          <AnimatedNumber value={monthHours} format={hrs} className="block text-xl font-bold" />
         </CardContent></Card>
       </div>
 
@@ -292,7 +305,7 @@ function HomeView({ today }: { today: Date }) {
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3">
             <Button variant="secondary" autoFocus className="h-14 text-base font-semibold" onClick={() => setConfirm(null)}>Hayır</Button>
-            <Button className="h-14 text-base font-semibold" onClick={() => { const c = confirm; setConfirm(null); c?.run(); }}>{confirm?.yes ?? "Evet"}</Button>
+            <Button className="h-14 text-base font-semibold" onClick={() => { const c = confirm; setConfirm(null); haptic(); c?.run(); }}>{confirm?.yes ?? "Evet"}</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -326,6 +339,6 @@ function HomeView({ today }: { today: Date }) {
           }}>Ekle</Button>
         </DialogContent>
       </Dialog>
-    </div>
+    </Page>
   );
 }

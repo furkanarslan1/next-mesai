@@ -420,5 +420,9 @@ export const mutate = {
         state.payslips ? load.payslips(true) : Promise.resolve(),
       ]);
     },
+    /** Aşağı çekip yenileme: profil ve bağlantılar dahil ekranda olabilecek her şey. */
+    everything: () => Promise.all([
+      mutate.refresh.all(), load.profile(true), state.links ? load.links(true) : Promise.resolve(),
+    ]),
   },
 };

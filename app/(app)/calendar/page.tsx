@@ -13,6 +13,8 @@ import { goalProgress, hrs, money, monthSummary } from "@/lib/calc";
 import { TYPE_META } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Page } from "@/components/mesai/page";
+import { AnimatedNumber } from "@/components/mesai/animated-number";
 
 /** İzin/rapor gibi günlerin hücre rengi ve kısa etiketi (mesai olan günlerde saat yazar) */
 const STATUS_CELL: Record<string, { bg: string; text: string; short: string }> = {
@@ -44,12 +46,12 @@ function CalendarView({ today }: { today: Date }) {
   const maxH = Math.max(1, ...dayTotals.values());
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft /></Button>
-        <h1 className="text-xl font-bold capitalize">{format(month, "MMMM yyyy", { locale: tr })}</h1>
-        <Button size="icon" variant="secondary" aria-label="Sonraki ay" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight /></Button>
-      </div>
+    <Page eyebrow="Takvim" title={<span className="capitalize">{format(month, "MMMM yyyy", { locale: tr })}</span>} actions={
+        <div className="flex gap-2">
+          <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft /></Button>
+          <Button size="icon" variant="secondary" aria-label="Sonraki ay" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight /></Button>
+        </div>
+      }>
       <Card>
         <CardContent>
           <div className="grid grid-cols-7 gap-1.5 text-center text-xs text-muted-foreground">
@@ -100,12 +102,12 @@ function CalendarView({ today }: { today: Date }) {
         <Card className="r-lg"><CardContent className="text-center"><p className="text-xs text-muted-foreground">Mesai kazancı</p><p className="text-xl font-bold tabular-nums">{money(sum.earned, settings.currency)}</p></CardContent></Card>
         <Card className="r-lg col-span-2"><CardContent className="text-center">
           <p className="text-xs text-muted-foreground">Toplam maaş</p>
-          <p className="text-2xl font-bold tabular-nums">{money(total.income, settings.currency)}</p>
+          <AnimatedNumber value={total.income} format={(n) => money(n, settings.currency)} className="block text-2xl font-bold" />
           <p className="mt-1 text-xs text-muted-foreground tabular-nums">
             Maaş {money(settings.monthly_salary, settings.currency)}{total.deduction > 0 && <> − kesinti {money(total.deduction, settings.currency)}</>} + mesai {money(sum.earned, settings.currency)}
           </p>
         </CardContent></Card>
       </div>
-    </div>
+    </Page>
   );
 }

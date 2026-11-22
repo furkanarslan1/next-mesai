@@ -3,6 +3,7 @@
 import { parseNum } from "@/lib/num";
 import { useId, useState } from "react";
 import { Switch } from "@/components/ui/switch";
+import { haptic } from "@/lib/haptics";
 
 /**
  * iOS tarzı form parçaları: gruplanmış satırlar, sağa yaslı büyük sayı girişleri, segmentli kontrol ve oran seçici.
@@ -53,7 +54,7 @@ export function NumberRow({ label, hint, value, onChange, suffix, placeholder = 
 export function SwitchRow({ label, hint, checked, onChange }: { label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <FormRow label={label} hint={hint}>
-      <Switch checked={checked} onCheckedChange={onChange} aria-label={label} />
+      <Switch checked={checked} onCheckedChange={(v) => { haptic(); onChange(v); }} aria-label={label} />
     </FormRow>
   );
 }
@@ -66,7 +67,7 @@ export function Segmented<T extends string | number>({ options, value, onChange,
     <div role="radiogroup" aria-label={label} className="flex gap-1 rounded-full bg-muted p-1">
       {options.map((o) => (
         <button key={String(o.value)} type="button" role="radio" aria-checked={value === o.value} disabled={o.disabled}
-          onClick={() => onChange(o.value)}
+          onClick={() => { if (value !== o.value) haptic(); onChange(o.value); }}
           className={`h-10 min-w-0 flex-1 rounded-full px-2 text-sm font-semibold transition active:scale-[0.97] disabled:opacity-40 ${
             value === o.value ? "bg-background text-foreground shadow-sm dark:bg-accent dark:text-accent-foreground" : "text-muted-foreground"
           }`}>
@@ -92,7 +93,7 @@ export function PercentRow({ label, hint, value, onChange }: { label: string; hi
       </div>
       <div className="grid grid-cols-5 gap-1.5">
         {PRESETS.map((p) => (
-          <button key={p} type="button" aria-pressed={!custom && value === p} className={chip(!custom && value === p)} onClick={() => { setCustom(false); onChange(p); }}>%{p}</button>
+          <button key={p} type="button" aria-pressed={!custom && value === p} className={chip(!custom && value === p)} onClick={() => { haptic(); setCustom(false); onChange(p); }}>%{p}</button>
         ))}
         <button type="button" aria-pressed={custom} className={chip(custom)} onClick={() => setCustom(true)}>Özel</button>
       </div>
