@@ -301,7 +301,7 @@ function HomeView({ today }: { today: Date }) {
             <FormSection tone="muted" footer={<>Normal çıkışın {workEnd}. {exitTime ? (exitHours > 0 ? <>Mesai: <b className="text-foreground">{hrs(exitHours)}</b></> : "Bu çıkış saatinde mesai oluşmaz.") : "Çıkış saatini girince fazla süre otomatik hesaplanır."}</>}>
               <FormRow label="Bugün kaçta çıktın?">
                 <input id="exit-time" type="time" value={exitTime} onChange={(e) => setExitTime(e.target.value)} aria-label="Çıkış saati"
-                  className="h-11 rounded-full bg-background px-4 text-[17px] font-semibold tabular-nums outline-none" />
+                  className="h-11 rounded-full bg-card dark:bg-background px-4 text-[17px] font-semibold tabular-nums outline-none" />
               </FormRow>
             </FormSection>
           ) : (

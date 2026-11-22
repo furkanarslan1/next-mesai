@@ -27,7 +27,7 @@ export function WorkScheduleFields({ value, onChange, idPrefix = "ws" }: {
   const daily = dailyHoursOf(value);
   const timeInput = (id: string, v: string, on: (v: string) => void, label: string) => (
     <input id={id} type="time" required value={v} aria-label={label} onChange={(e) => on(e.target.value)}
-      className="h-11 rounded-full bg-background px-4 text-[17px] font-semibold tabular-nums outline-none" />
+      className="h-11 rounded-full bg-card dark:bg-background px-4 text-[17px] font-semibold tabular-nums outline-none" />
   );
 
   return (

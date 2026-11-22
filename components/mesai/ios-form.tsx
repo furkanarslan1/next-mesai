@@ -67,7 +67,7 @@ export function Segmented<T extends string | number>({ options, value, onChange,
         <button key={String(o.value)} type="button" role="radio" aria-checked={value === o.value} disabled={o.disabled}
           onClick={() => onChange(o.value)}
           className={`h-10 min-w-0 flex-1 rounded-full px-2 text-sm font-semibold transition active:scale-[0.97] disabled:opacity-40 ${
-            value === o.value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+            value === o.value ? "bg-background text-foreground shadow-sm dark:bg-accent dark:text-accent-foreground" : "text-muted-foreground"
           }`}>
           {o.label}
         </button>

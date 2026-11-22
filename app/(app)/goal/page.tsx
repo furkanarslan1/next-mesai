@@ -87,7 +87,7 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
         <div className="space-y-5">
           <FormSection title="Maaş" footer="Bordrondaki sicil (net) maaşın.">
             <NumberRow label="Aylık net maaş" suffix="₺" value={f.monthly_salary} onChange={(v) => set("monthly_salary", v)} />
-            <NumberRow label="Maaşa dahil mesai" suffix="saat" placeholder="Örn. 10.5" hint="Maaşın bu kadar saat mesai içeriyorsa gir"
+            <NumberRow label="Maaşa dahil mesai" suffix="saat" placeholder="10.5" hint="Maaşın bu kadar saat mesai içeriyorsa"
               value={f.included_overtime_hours} onChange={(v) => set("included_overtime_hours", v)} />
             <SwitchRow label="Raporlu günler maaştan düşer" hint="Bordroda “Raporlu (Ücretsiz)” varsa aç" checked={f.sick_leave_unpaid} onChange={(v) => set("sick_leave_unpaid", v)} />
           </FormSection>

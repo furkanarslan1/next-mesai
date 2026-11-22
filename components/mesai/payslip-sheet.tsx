@@ -46,7 +46,8 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
   const rowsValid = rows.every((r) => !Number.isNaN(r.pct) && r.pct > 0 && !Number.isNaN(r.hours));
   const totalHours = rows.reduce((a, r) => a + (Number.isNaN(r.hours) ? 0 : r.hours), 0);
   const amountOk = amount.trim() === "" || !Number.isNaN(toNum(amount));
-  const valid = rowsValid && amountOk;
+  const hasData = totalHours > 0 || (amount.trim() !== "" && toNum(amount) > 0) || [unpaid, sickUnpaid, sickPaid, leave, special, net].some((v) => v.trim() !== "");
+  const valid = rowsValid && amountOk && hasData;
   const mark = (i: number, patch: Partial<OtRow>) => setOt(ot.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
   async function save() {
@@ -98,7 +99,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
               <FormSection tone="muted">
                 <FormRow label="Dönem">
                   <select value={month} onChange={(e) => setMonth(e.target.value)} disabled={!!item} aria-label="Dönem"
-                    className="h-11 rounded-full bg-background px-4 text-[16px] font-semibold capitalize outline-none">
+                    className="h-11 rounded-full bg-card dark:bg-background px-4 text-[16px] font-semibold capitalize outline-none">
                     {monthOptions.map((d) => <option key={format(d, "yyyy-MM")} value={format(d, "yyyy-MM")}>{format(d, "LLLL yyyy", { locale: tr })}</option>)}
                   </select>
                 </FormRow>
@@ -112,7 +113,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
                   <div key={i} className="flex min-h-[3.25rem] items-center gap-2 px-4">
                     <span className="text-muted-foreground">%</span>
                     <input inputMode="decimal" aria-label="Oran" value={r.pct} onChange={(e) => mark(i, { pct: e.target.value.replace(/[^0-9.,]/g, "") })}
-                      className="h-11 w-16 rounded-full bg-background px-3 text-center text-[17px] font-semibold tabular-nums outline-none" />
+                      className="h-11 w-16 rounded-full bg-card dark:bg-background px-3 text-center text-[17px] font-semibold tabular-nums outline-none" />
                     <input inputMode="decimal" aria-label={`%${r.pct} mesai saati`} placeholder="0" value={r.hours} onChange={(e) => mark(i, { hours: e.target.value.replace(/[^0-9.,]/g, "") })}
                       className="h-11 min-w-0 flex-1 bg-transparent text-right text-[17px] font-semibold tabular-nums outline-none placeholder:font-normal placeholder:text-muted-foreground/50" />
                     <span className="text-[15px] text-muted-foreground">saat</span>
@@ -143,7 +144,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
 
             {/* Kaydet çubuğu panelin altında sabit kalır */}
             <div className="sticky bottom-0 space-y-2 border-t border-border/60 bg-popover px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
-              {!valid && <p className="text-xs text-destructive">Oran ve saat alanlarında geçerli sayılar gir.</p>}
+              {!rowsValid || !amountOk ? <p className="text-xs text-destructive">Oran ve saat alanlarında geçerli sayılar gir.</p> : !hasData ? <p className="text-xs text-muted-foreground">Kaydetmek için en az bir satıra değer gir.</p> : null}
               <Button className="h-14 w-full text-base font-semibold" disabled={!valid || busy} onClick={save}>Kaydet</Button>
               {item && <Button className="h-12 w-full bg-destructive text-base font-semibold text-white hover:bg-destructive/90" disabled={busy} onClick={() => setView("delete")}><Trash2 className="size-4" />Bordroyu sil</Button>}
             </div>

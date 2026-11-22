@@ -216,7 +216,7 @@ function WorkStep({ sched, setSched, pay, setPay, shortcutHours, setShortcutHour
       <WorkScheduleFields value={sched} onChange={setSched} idPrefix="su" />
       <FormSection tone="muted" title="Maaş" footer="Bordrondaki net rakamları gir; bilmiyorsan boş bırakıp sonra ayarlardan doldurabilirsin.">
         <NumberRow label="Aylık net maaş" suffix="₺" value={pay.monthly_salary} onChange={(v) => set("monthly_salary", v)} />
-        <NumberRow label="Maaşa dahil mesai" suffix="saat" placeholder="Örn. 10.5" hint="Maaşın belli saat mesai içeriyorsa" value={pay.included_overtime_hours} onChange={(v) => set("included_overtime_hours", v)} />
+        <NumberRow label="Maaşa dahil mesai" suffix="saat" placeholder="10.5" hint="Maaşın belli saat mesai içeriyorsa" value={pay.included_overtime_hours} onChange={(v) => set("included_overtime_hours", v)} />
         <SwitchRow label="Raporlu günler maaştan düşer" checked={pay.sick_leave_unpaid} onChange={(v) => set("sick_leave_unpaid", v)} />
       </FormSection>
       <FormSection tone="muted" title="Mesai ücreti">
