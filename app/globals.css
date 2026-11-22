@@ -483,8 +483,18 @@ body {
 
 /* Yazdırma / PDF: menü ve düğmeler gizlenir, zemin beyaz olur */
 @media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  :root, .dark {
+    --background: #fff; --foreground: #111; --card: #fff; --card-foreground: #111; --muted: #eef1f4; --muted-foreground: #444;
+    --border: #c9d0d7; color-scheme: light;
+  }
   aside, nav, .nav-shield, .no-print, [data-slot="toaster"] { display: none !important; }
-  body { background: #fff !important; }
+  body, main { background: #fff !important; }
+  .timesheet { padding: 0 !important; box-shadow: none !important; border: 0 !important; }
+  .timesheet-table { min-width: 0 !important; font-size: 8.5px; }
+  .timesheet-table th, .timesheet-table td { padding: 1.5px 3px !important; }
+  .timesheet-table thead { display: table-header-group; }
+  .timesheet-table tr { break-inside: avoid; }
   .glass, [data-slot="card"] { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
 }
 

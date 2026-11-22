@@ -2,6 +2,7 @@
 
 import { errorText } from "@/lib/errors";
 import { useState } from "react";
+import Link from "next/link";
 import { addMonths, format, parseISO, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, FileText, Minus, Plus, Trash2 } from "lucide-react";
@@ -91,6 +92,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Raporlar</h1>
         <div className="no-print flex gap-2">
+          <Link href="/reports/timesheet" className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground active:scale-95">Çizelge</Link>
           <Button size="sm" variant="secondary" onClick={exportCsv}>CSV</Button>
           <Button size="sm" variant="secondary" onClick={() => window.print()}><FileText className="size-4" />PDF</Button>
         </div>

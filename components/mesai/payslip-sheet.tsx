@@ -78,7 +78,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
     <Sheet open onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent side="bottom" className="mx-auto max-h-[94dvh] max-w-lg gap-4 overflow-y-auto rounded-t-[2rem] p-0">
         <SheetHeader className="px-5 pt-5">
-          <SheetTitle className="text-lg">{item ? "Bordroyu düzenle" : "Bordro ekle"}</SheetTitle>
+          <SheetTitle className="text-lg">{view === "delete" ? "Bordroyu sil" : item ? "Bordroyu düzenle" : "Bordro ekle"}</SheetTitle>
           <SheetDescription>Bordrondaki satırları gir; uygulamanın hesabıyla karşılaştıralım. Boş bıraktığın satırlar karşılaştırılmaz.</SheetDescription>
         </SheetHeader>
 
