@@ -12,7 +12,7 @@ export default function Profile() {
         <Txt muted>Giriş yapılan hesap</Txt>
         <Txt style={{ fontWeight: "600" }}>{session?.user.email}</Txt>
       </Card>
-      <Button title="Çıkış yap" variant="ghost" onPress={() => Alert.alert("Çıkış yapılsın mı?", undefined, [
+      <Button title="Çıkış yap" variant="secondary" size="lg" onPress={() => Alert.alert("Çıkış yapılsın mı?", undefined, [
         { text: "Vazgeç", style: "cancel" },
         { text: "Çıkış yap", style: "destructive", onPress: async () => { await supabase.auth.signOut(); resetStore(); } },
       ])} />

@@ -21,40 +21,42 @@ export function CalendarGrid({ month, onMonthChange, value, today, marked, onSel
   const rows = Array.from({ length: cells.length / 7 }, (_, i) => cells.slice(i * 7, i * 7 + 7));
 
   return (
-    <View style={{ gap: 14 }}>
+    <View style={{ gap: 16 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <NavBtn dir={-1} month={month} onMonthChange={onMonthChange} />
-        <Txt style={{ fontSize: 18, fontWeight: "700", textTransform: "capitalize" }}>{format(month, "MMMM yyyy", { locale: tr })}</Txt>
+        <Txt style={{ fontSize: 18, lineHeight: 28, fontWeight: "700", textTransform: "capitalize" }}>{format(month, "MMMM yyyy", { locale: tr })}</Txt>
         <NavBtn dir={1} month={month} onMonthChange={onMonthChange} />
       </View>
-      <View style={{ flexDirection: "row" }}>
-        {DAYS.map((d) => <Txt key={d} muted style={{ flex: 1, textAlign: "center", fontSize: 12 }}>{d}</Txt>)}
-      </View>
-      {rows.map((row, ri) => (
-        <View key={ri} style={{ flexDirection: "row", gap: 6 }}>
-          {row.map((d, ci) => {
-            if (!d) return <View key={ci} style={{ flex: 1, aspectRatio: 1 }} />;
-            const key = format(d, "yyyy-MM-dd");
-            const selected = key === value;
-            const isMarked = marked?.has(key);
-            const isToday = key === today;
-            const hol = !!holidayName(key);
-            return (
-              <Pressable key={key} onPress={() => { haptic(); onSelect(key); }} accessibilityLabel={format(d, "d MMMM EEEE", { locale: tr })}
-                accessibilityState={{ selected }}
-                style={({ pressed }) => ({
-                  flex: 1, aspectRatio: 1, borderRadius: radius.md - 4, alignItems: "center", justifyContent: "center",
-                  backgroundColor: selected ? c.ring : isMarked ? c.fill : c.muted,
-                  borderWidth: (isToday || hol) && !selected ? 2 : 0, borderColor: hol ? "#fbbf24" : c.ring,
-                  transform: [{ scale: pressed ? 0.94 : 1 }],
-                })}>
-                <Txt style={{ fontSize: 14, fontWeight: "600", color: selected ? "#071b2b" : isMarked ? "#ffffff" : c.foreground }}>{format(d, "d")}</Txt>
-                {isMarked && selected ? <View style={{ position: "absolute", bottom: 5, width: 5, height: 5, borderRadius: 3, backgroundColor: "#071b2b" }} /> : null}
-              </Pressable>
-            );
-          })}
+      <View style={{ gap: 6 }}>
+        <View style={{ flexDirection: "row", gap: 6 }}>
+          {DAYS.map((d) => <Txt key={d} muted style={{ flex: 1, textAlign: "center", fontSize: 12, lineHeight: 16 }}>{d}</Txt>)}
         </View>
-      ))}
+        {rows.map((row, ri) => (
+          <View key={ri} style={{ flexDirection: "row", gap: 6 }}>
+            {row.map((d, ci) => {
+              if (!d) return <View key={ci} style={{ flex: 1, aspectRatio: 1 }} />;
+              const key = format(d, "yyyy-MM-dd");
+              const selected = key === value;
+              const isMarked = marked?.has(key);
+              const isToday = key === today && !selected;
+              const hol = !!holidayName(key) && !selected;
+              return (
+                <Pressable key={key} onPress={() => onSelect(key)} accessibilityLabel={format(d, "d MMMM EEEE", { locale: tr })}
+                  accessibilityState={{ selected }}
+                  style={({ pressed }) => ({
+                    flex: 1, aspectRatio: 1, borderRadius: radius.md, alignItems: "center", justifyContent: "center",
+                    backgroundColor: selected ? c.teal : isMarked ? c.fill : c.muted,
+                    outlineWidth: hol || isToday ? 2 : 0, outlineColor: hol ? "#fbbf24" : c.teal, outlineOffset: isToday && !hol ? 2 : 0, outlineStyle: "solid",
+                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                  })}>
+                  <Txt style={{ fontSize: 14, fontWeight: "500", color: selected ? c.ink : isMarked ? "#ffffff" : c.foreground }}>{format(d, "d")}</Txt>
+                  {isMarked && selected ? <View style={{ position: "absolute", bottom: 6, width: 6, height: 6, borderRadius: 3, backgroundColor: c.ink }} /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -63,8 +65,8 @@ function NavBtn({ dir, month, onMonthChange }: { dir: -1 | 1; month: Date; onMon
   const c = useColors();
   return (
     <Pressable onPress={() => { haptic(); onMonthChange(addMonths(month, dir)); }} accessibilityLabel={dir < 0 ? "Önceki ay" : "Sonraki ay"}
-      style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: c.muted, opacity: pressed ? 0.7 : 1 })}>
-      {dir < 0 ? <ChevronLeft size={20} color={c.foreground} /> : <ChevronRight size={20} color={c.foreground} />}
+      style={({ pressed }) => ({ width: 32, height: 32, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: c.secondary, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
+      {dir < 0 ? <ChevronLeft size={16} color={c.secondaryForeground} /> : <ChevronRight size={16} color={c.secondaryForeground} />}
     </Pressable>
   );
 }

@@ -1,54 +1,63 @@
+import { BlurView } from "expo-blur";
+import { CircleCheck, Info, OctagonX } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { radius, useColors } from "@/theme";
+import { useColors, useIsDark } from "@/theme";
 
 /**
- * Üstten inen bildirim balonu (web'deki sonner bildirimlerinin karşılığı).
- * `toast.success("Kaydedildi")`, `toast.error(...)`, `toast.info(...)`; isteğe bağlı "Geri al" gibi bir düğme.
+ * Web'deki bildirim balonunun aynısı (sonner, üstte ortada): yarı saydam bulanık zemin, 1.4rem köşe,
+ * solda küçük ikon, kalın metin; aynı anda tek bildirim, 1,6 sn (geri al düğmeli olanlar daha uzun).
  */
 type Kind = "success" | "error" | "info";
 interface Item { id: number; kind: Kind; text: string; action?: { label: string; onPress: () => void }; duration: number }
 interface Opts { action?: Item["action"]; duration?: number }
 
 let push: ((i: Omit<Item, "id">) => void) | null = null;
-const show = (kind: Kind) => (text: string, o: Opts = {}) => push?.({ kind, text, action: o.action, duration: o.duration ?? 2600 });
+const show = (kind: Kind) => (text: string, o: Opts = {}) => push?.({ kind, text, action: o.action, duration: o.duration ?? 1600 });
 export const toast = { success: show("success"), error: show("error"), info: show("info") };
 
 export function Toaster() {
   const [item, setItem] = useState<Item | null>(null);
-  const [y] = useState(() => new Animated.Value(-120));
+  const [v] = useState(() => new Animated.Value(0));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
   const c = useColors();
+  const dark = useIsDark();
 
   useEffect(() => {
     let n = 0;
-    const hide = () => Animated.timing(y, { toValue: -120, duration: 200, useNativeDriver: true }).start(() => setItem(null));
+    const hide = () => Animated.timing(v, { toValue: 0, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => setItem(null));
     push = (i) => {
       if (timer.current) clearTimeout(timer.current);
       setItem({ ...i, id: ++n });
-      y.setValue(-120);
-      Animated.spring(y, { toValue: 0, useNativeDriver: true, damping: 18, stiffness: 220 }).start();
+      v.setValue(0);
+      Animated.timing(v, { toValue: 1, duration: 400, easing: Easing.bezier(0.21, 1.02, 0.73, 1), useNativeDriver: true }).start();
       timer.current = setTimeout(hide, i.duration);
     };
     return () => { push = null; if (timer.current) clearTimeout(timer.current); };
-  }, [y]);
+  }, [v]);
 
   if (!item) return null;
-  const dot = item.kind === "error" ? c.destructive : item.kind === "success" ? c.ring : c.mutedForeground;
+  const Icon = item.kind === "error" ? OctagonX : item.kind === "success" ? CircleCheck : Info;
   const close = () => {
     if (timer.current) clearTimeout(timer.current);
-    Animated.timing(y, { toValue: -120, duration: 180, useNativeDriver: true }).start(() => setItem(null));
+    Animated.timing(v, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => setItem(null));
   };
   return (
-    <Animated.View pointerEvents="box-none" style={[styles.wrap, { top: insets.top + 8, transform: [{ translateY: y }] }]}>
-      <View style={[styles.toast, { backgroundColor: c.card, shadowColor: "#000" }]}>
-        <View style={[styles.dot, { backgroundColor: dot }]} />
+    <Animated.View pointerEvents="box-none" style={[styles.wrap, {
+      top: Math.max(12, insets.top),
+      opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) }],
+    }]}>
+      <View style={[styles.toast, { boxShadow: c.shadow.toast }]}>
+        <BlurView intensity={100} tint={dark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: c.toastBg }]} />
+        <Icon size={16} color={c.foreground} />
         <Text style={[styles.text, { color: c.foreground }]} numberOfLines={3}>{item.text}</Text>
         {item.action ? (
-          <Pressable onPress={() => { item.action?.onPress(); close(); }} hitSlop={8}>
-            <Text style={{ color: c.tint, fontWeight: "700", fontSize: 15 }}>{item.action.label}</Text>
+          <Pressable onPress={() => { item.action?.onPress(); close(); }} hitSlop={8}
+            style={{ height: 24, paddingHorizontal: 8, borderRadius: 6, justifyContent: "center", backgroundColor: c.foreground }}>
+            <Text style={{ color: c.popover, fontWeight: "500", fontSize: 12 }}>{item.action.label}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -59,10 +68,8 @@ export function Toaster() {
 const styles = StyleSheet.create({
   wrap: { position: "absolute", left: 16, right: 16, alignItems: "center", zIndex: 1000 },
   toast: {
-    flexDirection: "row", alignItems: "center", gap: 10, maxWidth: 480, width: "100%",
-    paddingVertical: 13, paddingHorizontal: 18, borderRadius: radius.lg,
-    shadowOpacity: 0.18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 10,
+    flexDirection: "row", alignItems: "center", gap: 6, width: "100%", maxWidth: 356, overflow: "hidden",
+    paddingVertical: 12.8, paddingHorizontal: 17.6, borderRadius: 22.4,
   },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  text: { flex: 1, fontSize: 15, fontWeight: "600" },
+  text: { flex: 1, fontSize: 13, fontWeight: "600", lineHeight: 19.5 },
 });

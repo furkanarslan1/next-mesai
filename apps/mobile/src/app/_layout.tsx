@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { ConfirmHost } from "@/components/dialog";
 import { Toaster } from "@/components/toast";
 import { AuthProvider, useSession } from "@/lib/auth";
 import { useColors } from "@/theme";
@@ -31,6 +32,7 @@ export default function RootLayout() {
     <AuthProvider>
       <StatusBar style="auto" />
       <RootStack />
+      <ConfirmHost />
       <Toaster />
     </AuthProvider>
   );

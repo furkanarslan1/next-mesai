@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import { Briefcase, CheckCircle2, Coffee, Moon, Plus, Sparkles, Sunrise, type LucideIcon } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { AppState, Pressable, View } from "react-native";
-import { useColors } from "@/theme";
+import { radius, useColors } from "@/theme";
 import { Card, Txt } from "./ui";
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
@@ -42,7 +42,7 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
   const off = entries.find((e) => ["paid_leave", "unpaid_leave", "sick", "absent"].includes(e.type));
   const weekend = isRestDay(now, settings);
 
-  let Icon: LucideIcon = Briefcase, title = "", sub = "", progress: number | null = null, tone = "#5b91a3";
+  let Icon: LucideIcon = Briefcase, title = "", sub = "", progress: number | null = null, tone = c.teal;
   let action: React.ReactNode = null;
 
   if (work) {
@@ -54,8 +54,8 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
   } else if (!start || !end) {
     title = "Bugün iş günü"; sub = "Giriş/çıkış saatini girersen çıkışa geri sayım burada görünür.";
     action = (
-      <Pressable onPress={() => router.navigate("/profile")} style={{ height: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: "center", backgroundColor: c.muted }}>
-        <Txt style={{ fontWeight: "600", color: c.tint }}>Ekle</Txt>
+      <Pressable onPress={() => router.navigate("/profile")} style={{ height: 40, paddingHorizontal: 14, borderRadius: radius.pill, justifyContent: "center", backgroundColor: c.muted }}>
+        <Txt style={{ fontSize: 14, fontWeight: "600", color: c.tint }}>Ekle</Txt>
       </Pressable>
     );
   } else {
@@ -78,8 +78,8 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
       if (rounded > 0 && rounded <= 12) {
         action = (
           <Pressable onPress={() => onAddUntil(clock, rounded)}
-            style={({ pressed }) => ({ height: 40, paddingHorizontal: 14, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: c.primary, opacity: pressed ? 0.85 : 1 })}>
-            <Plus size={16} color={c.primaryForeground} /><Txt style={{ fontWeight: "600", color: c.primaryForeground }}>{hrs(rounded)}</Txt>
+            style={({ pressed }) => ({ height: 40, paddingHorizontal: 14, borderRadius: radius.md, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: c.primary, boxShadow: c.shadow.navy, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+            <Plus size={16} color={c.primaryForeground} /><Txt style={{ fontSize: 14, fontWeight: "600", color: c.primaryForeground }}>{hrs(rounded)}</Txt>
           </Pressable>
         );
       }
@@ -89,19 +89,19 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
   return (
     <Card style={{ padding: 16, gap: 12 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: tone }}>
+        <View style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: tone, boxShadow: "0px 1px 3px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)" }}>
           <Icon size={22} color="#fff" strokeWidth={2.2} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Txt muted style={{ fontSize: 11, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase" }}>Bugün · {clock}</Txt>
-          <Txt numberOfLines={1} style={{ fontSize: 17, fontWeight: "600" }}>{title}</Txt>
-          <Txt muted numberOfLines={2} style={{ fontSize: 13 }}>{sub}</Txt>
+          <Txt muted style={{ fontSize: 11, lineHeight: 16.5, fontWeight: "600", letterSpacing: 0.55, textTransform: "uppercase" }}>Bugün · {clock}</Txt>
+          <Txt numberOfLines={1} style={{ fontSize: 17, lineHeight: 23.4, fontWeight: "600" }}>{title}</Txt>
+          <Txt muted numberOfLines={1} style={{ fontSize: 13, lineHeight: 19.5 }}>{sub}</Txt>
         </View>
         {action}
       </View>
       {progress !== null ? (
         <View style={{ height: 6, borderRadius: 3, overflow: "hidden", backgroundColor: c.ringTrack }}>
-          <View style={{ height: "100%", width: `${Math.max(2, progress * 100)}%`, borderRadius: 3, backgroundColor: c.ringB }} />
+          <View style={{ height: "100%", width: `${Math.max(2, progress * 100)}%`, borderRadius: 3, experimental_backgroundImage: `linear-gradient(to right, ${c.ringA}, ${c.ringB})` }} />
         </View>
       ) : null}
     </Card>

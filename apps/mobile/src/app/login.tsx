@@ -30,7 +30,7 @@ export default function Login() {
           <Field ref={pw} label="Şifre" value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password"
             textContentType="password" returnKeyType="go" onSubmitEditing={signIn} />
           <View style={{ marginTop: 4 }}>
-            <Button title="Giriş yap" loading={busy} onPress={signIn} />
+            <Button title="Giriş yap" size="lg" loading={busy} onPress={signIn} />
           </View>
         </Card>
       </Screen>
