@@ -31,6 +31,11 @@ export function MonthSummary({ entries, settings }: { entries: Entry[]; settings
           </div>
         ))}
       </div>
+      {sum.sickHours > 0 && (
+        <p className="text-center text-xs text-muted-foreground tabular-nums">
+          {sum.sickDays} raporlu gün için {hrs(sum.sickHours)} mesaiden düşüldü ({hrs(sum.grossHours)} girildi)
+        </p>
+      )}
       {sum.includedHours > 0 && (
         <p className="text-center text-xs text-muted-foreground tabular-nums">
           {hrs(sum.includedHours)} maaşa dahil · {hrs(sum.paidHours)} ücretli mesai

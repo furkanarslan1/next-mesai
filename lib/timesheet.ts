@@ -27,7 +27,7 @@ export interface TimesheetRow {
 export interface Timesheet {
   rows: TimesheetRow[];
   totals: {
-    normalDays: number; normalHours: number; overtimeHours: number; paidOvertimeHours: number; includedHours: number;
+    normalDays: number; normalHours: number; overtimeHours: number; paidOvertimeHours: number; includedHours: number; sickDeductedHours: number;
     overtimeByPercent: Record<string, number>; paidLeave: number; unpaidLeave: number; sick: number; absent: number; holiday: number; weekendDays: number;
   };
 }
@@ -112,7 +112,7 @@ export function buildTimesheet(month: Date, entries: Entry[], s: Settings, opts:
       normalDays: rows.filter((r) => r.normalHours > 0).length,
       normalHours: rows.reduce((a, r) => a + r.normalHours, 0),
       overtimeHours: +rows.reduce((a, r) => a + r.overtimeHours, 0).toFixed(2),
-      paidOvertimeHours: +sum.paidHours.toFixed(2), includedHours: +sum.includedHours.toFixed(2),
+      paidOvertimeHours: +sum.paidHours.toFixed(2), includedHours: +sum.includedHours.toFixed(2), sickDeductedHours: +sum.sickHours.toFixed(2),
       overtimeByPercent: paidHoursByPercent(entries, s),
       paidLeave: total("paidLeave"), unpaidLeave: total("unpaidLeave"), sick: total("sick"), absent: total("absent"), holiday: total("holiday"),
       weekendDays: rows.filter((r) => r.weekend).length,
