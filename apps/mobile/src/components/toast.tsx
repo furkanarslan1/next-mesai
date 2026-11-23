@@ -50,8 +50,8 @@ export function Toaster() {
       opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) }],
     }]}>
       <View style={[styles.toast, { boxShadow: c.shadow.toast }]}>
-        <BlurView intensity={100} tint={dark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: c.toastBg }]} />
+        <BlurView intensity={100} tint={dark ? "dark" : "light"} style={[StyleSheet.absoluteFill, { borderRadius: 22.4, overflow: "hidden" }]} />
+        <View style={[StyleSheet.absoluteFill, { borderRadius: 22.4, backgroundColor: c.toastBg }]} />
         <Icon size={16} color={c.foreground} />
         <Text style={[styles.text, { color: c.foreground }]} numberOfLines={3}>{item.text}</Text>
         {item.action ? (
