@@ -5,7 +5,7 @@ Mobil öncelikli mesai, hedef maaş ve gelir-gider takip uygulaması (Next.js 16
 ## Yapı (pnpm monorepo)
 ```
 apps/web/        Next.js web uygulaması (çalışan + yönetici paneli)
-apps/mobile/     Expo (React Native) uygulaması — yakında
+apps/mobile/     Expo (React Native) uygulaması (çalışan ekranları), bkz. apps/mobile/README.md
 packages/core/   Ortak hesap mantığı: mesai/maaş hesabı, raporlar, puantaj, tipler (+ testler)
 supabase/        Veritabanı migration'ları
 ```

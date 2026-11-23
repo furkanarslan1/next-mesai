@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @mesai/web dev",
+    "mobile": "pnpm --filter @mesai/mobile start",
     "build": "pnpm --filter @mesai/web build",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
