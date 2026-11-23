@@ -5,6 +5,7 @@ import {
   type PressableProps, type StyleProp, type TextInputInstance, type TextInputProps, type TextProps, type ViewProps, type ViewStyle, View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ChevronLeft } from "lucide-react-native";
 import { haptic } from "@/lib/haptics";
 import { PageStack } from "./sheet";
 import { radius, space, useColors, useIsDark } from "@/theme";
@@ -104,8 +105,10 @@ export function Stat({ label, value, size = 18 }: { label: string; value: string
  * iOS büyük başlıklı sayfa iskeleti (web: components/mesai/page.tsx): üstte küçük satır (eyebrow) ve sağında
  * öğe, büyük başlık ve sağında düğmeler; kaydırınca küçük başlık şeridi; alttan panel açılınca sayfa geri çekilir.
  */
-export function Screen({ title, compactTitle, eyebrow, accessory, actions, children, tabs = true, refreshControl }: {
+export function Screen({ title, compactTitle, eyebrow, accessory, actions, back, children, tabs = true, refreshControl }: {
   title: React.ReactNode; compactTitle?: string; eyebrow?: React.ReactNode; accessory?: React.ReactNode; actions?: React.ReactNode;
+  /** Sol üstte "‹ Raporlar" gibi geri bağlantısı (web: back) */
+  back?: { label: string; onPress: () => void };
   children: React.ReactNode; tabs?: boolean;
   refreshControl?: React.ComponentProps<typeof ScrollView>["refreshControl"];
 }) {
@@ -120,6 +123,7 @@ export function Screen({ title, compactTitle, eyebrow, accessory, actions, child
         refreshControl={refreshControl}
         contentContainerStyle={{ paddingTop: insets.top + space.top, paddingBottom: (tabs ? TAB_BAR_SPACE : 24) + insets.bottom, paddingHorizontal: space.page, gap: space.section }}>
         <View style={{ gap: 4, paddingBottom: 5 }}>
+          {back ? <BackLink {...back} /> : null}
           {eyebrow || accessory ? (
             <View style={{ minHeight: 32, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <Eyebrow>{eyebrow}</Eyebrow>
@@ -135,7 +139,7 @@ export function Screen({ title, compactTitle, eyebrow, accessory, actions, child
         </View>
         {children}
       </ScrollView>
-      <CompactBar title={compactTitle ?? (typeof title === "string" ? title : "")} visible={compact} />
+      <CompactBar title={compactTitle ?? (typeof title === "string" ? title : "")} visible={compact} onBack={back?.onPress} />
     </PageStack>
   );
 }
@@ -163,7 +167,7 @@ export const COMPACT_AT = space.top + 36 + 4 + 41 + 5 - 56;
  * Kaydırınca üstte beliren küçük başlık şeridi (web: .compact-bar): bulanık yarı saydam zemin,
  * alt kenarda ince çizgi, ortada 17px başlık; 180 ms'de solarak açılır/kapanır.
  */
-export function CompactBar({ title, visible }: { title: string; visible: boolean }) {
+export function CompactBar({ title, visible, onBack }: { title: string; visible: boolean; onBack?: () => void }) {
   const c = useColors();
   const dark = useIsDark();
   const insets = useSafeAreaInsets();
@@ -176,7 +180,24 @@ export function CompactBar({ title, visible }: { title: string; visible: boolean
       <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: c.barBg }} />
       <View style={{ height: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: 48 }}>
         <Text numberOfLines={1} style={{ fontSize: 17, fontWeight: "600", color: c.foreground }}>{title}</Text>
+        {onBack ? (
+          <Pressable onPress={onBack} accessibilityLabel="Geri" hitSlop={8} style={{ position: "absolute", left: 8, top: 0, bottom: 0, justifyContent: "center" }}>
+            <ChevronLeft size={24} strokeWidth={2.4} color={c.tint} />
+          </Pressable>
+        ) : null}
       </View>
     </Animated.View>
+  );
+}
+
+/** "‹ Raporlar" geri bağlantısı (web: 17px tint renkli, 24px ok) */
+export function BackLink({ label, onPress }: { label: string; onPress: () => void }) {
+  const c = useColors();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="link" accessibilityLabel={`${label} sayfasına dön`}
+      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", height: 36, marginLeft: -6, alignSelf: "flex-start", opacity: pressed ? 0.5 : 1 })}>
+      <ChevronLeft size={24} strokeWidth={2.4} color={c.tint} />
+      <Text style={{ fontSize: 17, color: c.tint }}>{label}</Text>
+    </Pressable>
   );
 }

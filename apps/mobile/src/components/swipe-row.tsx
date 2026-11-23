@@ -38,8 +38,10 @@ function rowDrag(x: Animated.Value) {
  * Web'deki SwipeRow'un aynısı: sola kaydırınca arkadan kırmızı "Sil" çıkar. Satır açıkken içteki dokunuş
  * (düzenleme) yerine satır kapanır.
  */
-export function SwipeRow({ children, onDelete, onPress, label = "Sil", style }: {
+export function SwipeRow({ children, onDelete, onPress, label = "Sil", style, bg }: {
   children: React.ReactNode; onDelete: () => void; onPress: () => void; label?: string; style?: ViewStyle;
+  /** Satır zemini (varsayılan kart rengi; bordro kontrolünde muted) */
+  bg?: string;
 }) {
   const c = useColors();
   const [x] = useState(() => new Animated.Value(0));
@@ -55,7 +57,7 @@ export function SwipeRow({ children, onDelete, onPress, label = "Sil", style }: 
       </Animated.View>
       <Animated.View {...drag.handlers} style={{ transform: [{ translateX: x }] }}>
         <Pressable onPress={() => { if (drag.isOpen()) drag.close(); else onPress(); }}
-          style={({ pressed }) => ({ backgroundColor: pressed ? c.muted : c.card })}>
+          style={({ pressed }) => ({ backgroundColor: bg ?? (pressed ? c.muted : c.card), opacity: bg && pressed ? 0.9 : 1 })}>
           {children}
         </Pressable>
       </Animated.View>

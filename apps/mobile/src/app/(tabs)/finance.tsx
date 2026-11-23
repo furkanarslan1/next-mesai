@@ -172,8 +172,8 @@ export default function FinanceScreen() {
           {trend.map((t) => (
             <View key={t.k} style={{ flex: 1, height: "100%", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
               <View style={{ flex: 1, width: "100%", flexDirection: "row", alignItems: "flex-end", justifyContent: "center", gap: 4 }}>
-                <View style={{ width: "50%", maxWidth: 16, borderTopLeftRadius: 8, borderTopRightRadius: 8, backgroundColor: c.teal, height: `${Math.max(t.income > 0 ? 4 : 1, (t.income / trendMax) * 100)}%` }} />
-                <View style={{ width: "50%", maxWidth: 16, borderTopLeftRadius: 8, borderTopRightRadius: 8, backgroundColor: EXPENSE_BAR, height: `${Math.max(t.expense > 0 ? 4 : 1, (t.expense / trendMax) * 100)}%` }} />
+                <View style={{ width: "50%", maxWidth: 16, flexShrink: 1, borderTopLeftRadius: 8, borderTopRightRadius: 8, backgroundColor: c.teal, height: `${Math.max(t.income > 0 ? 4 : 1, (t.income / trendMax) * 100)}%` }} />
+                <View style={{ width: "50%", maxWidth: 16, flexShrink: 1, borderTopLeftRadius: 8, borderTopRightRadius: 8, backgroundColor: EXPENSE_BAR, height: `${Math.max(t.expense > 0 ? 4 : 1, (t.expense / trendMax) * 100)}%` }} />
               </View>
               <Txt muted style={{ fontSize: 11, lineHeight: 16.5, textTransform: "capitalize" }}>{format(t.d, "LLL", { locale: tr })}</Txt>
             </View>
