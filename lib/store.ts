@@ -53,6 +53,8 @@ function readSavedProfile(): Profile | null {
 let state: State = { ...EMPTY, profile: readSavedProfile() };
 const listeners = new Set<() => void>();
 const inflight = new Map<string, Promise<void>>();
+// Şu an okunmakta olan aylar ("e:2026-11", "f:2026-11"): aynı ay için ikinci (çakışan aralıklı) istek atılmaz
+const loadingMonths = new Set<string>();
 // Kullanıcı değişirse eski isteklerin sonucu yeni oturuma yazılmasın
 let epoch = 0;
 
@@ -68,6 +70,7 @@ export function resetStore() {
   epoch++;
   stamps = {};
   inflight.clear();
+  loadingMonths.clear();
   set({ ...EMPTY, entries: {}, finance: {}, payslips: null });
 }
 
@@ -134,11 +137,13 @@ export const load = {
    * ekranlarda ay başına ayrı istek atmak yerine kullanılır: hem istek sayısı hem veri trafiği düşer.
    */
   entriesRange: (keys: string[], force = false): Promise<void> => {
-    const need = keys.filter((k) => force || !state.entries[k] || !fresh(`e:${k}`, TTL.entries));
+    const need = keys.filter((k) => force || ((!state.entries[k] || !fresh(`e:${k}`, TTL.entries)) && !loadingMonths.has(`e:${k}`)));
     if (need.length === 0) return Promise.resolve();
     const span = monthSpan(need);
     return once(`er:${span[0]}:${span[span.length - 1]}`, async () => {
       const ep = epoch;
+      span.forEach((k) => loadingMonths.add(`e:${k}`));
+      try {
       const from = `${span[0]}-01`;
       const to = format(endOfMonth(new Date(`${span[span.length - 1]}-01T00:00:00`)), "yyyy-MM-dd");
       const supabase = createClient();
@@ -151,17 +156,20 @@ export const load = {
       const next = { ...state.entries };
       span.forEach((k) => { next[k] = rows.filter((e) => e.work_date.startsWith(k)); touch(`e:${k}`); });
       set({ entries: next });
+      } finally { if (ep === epoch) span.forEach((k) => loadingMonths.delete(`e:${k}`)); }
     });
   },
   /** Bir ayın gelir/gider kalemleri; o ayda geçerli tekrarlayanlar da gelir. */
   finance: (key: string, force = false) => load.financeRange([key], force),
   /** Birden çok ayın gelir/gider kalemleri TEK istekle (tekrarlayanlar her ayda geçerli olduğu yerde kopyalanır). */
   financeRange: (keys: string[], force = false): Promise<void> => {
-    const need = keys.filter((k) => force || !state.finance[k] || !fresh(`f:${k}`, TTL.finance));
+    const need = keys.filter((k) => force || ((!state.finance[k] || !fresh(`f:${k}`, TTL.finance)) && !loadingMonths.has(`f:${k}`)));
     if (need.length === 0) return Promise.resolve();
     const span = monthSpan(need);
     return once(`fr:${span[0]}:${span[span.length - 1]}`, async () => {
       const ep = epoch;
+      span.forEach((k) => loadingMonths.add(`f:${k}`));
+      try {
       const a = `${span[0]}-01`;
       const b = `${span[span.length - 1]}-01`;
       const supabase = createClient();
@@ -186,6 +194,7 @@ export const load = {
         touch(`f:${k}`);
       });
       set({ finance: next });
+      } finally { if (ep === epoch) span.forEach((k) => loadingMonths.delete(`f:${k}`)); }
     });
   },
   /** Bordro kayıtları (bordro kontrolü). */

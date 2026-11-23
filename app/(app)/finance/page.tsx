@@ -37,15 +37,16 @@ function FinanceView({ today }: { today: Date }) {
   const [budget, setBudget] = useState<{ cat: CategoryKey | null } | null>(null);
   const userId = useProfile()?.id ?? "";
   const key = monthKey(month);
-  const items = useFinance(key);
-  const { entries, settings } = useMesai(month);
-  const cur = settings.currency;
-  const todayStr = format(today, "yyyy-MM-dd");
-  // Son 6 ay gelir/gider grafiği için aylar (kayıtlar önbellekten gelir)
+  // Son 6 ay gelir/gider grafiği için aylar. Önce 6 aylık aralık istenir: bu ay da içinde olduğundan
+  // aşağıdaki tek aylık okumalar ayrı istek atmaz (aynı ay için ikinci istek gitmez).
   const six = lastMonths(today, 6);
   const sixKeys = six.map(keyOf);
   const finMap = useFinanceMap(sixKeys);
   const entMap = useEntriesMap(sixKeys);
+  const items = useFinance(key);
+  const { entries, settings } = useMesai(month);
+  const cur = settings.currency;
+  const todayStr = format(today, "yyyy-MM-dd");
   const defaultDate = key === monthKey(today) ? todayStr : `${key}-01`;
 
   if (!items) return <div className="glass min-h-[28rem] w-full animate-pulse" aria-busy />;
