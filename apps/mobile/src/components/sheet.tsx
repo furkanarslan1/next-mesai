@@ -85,11 +85,13 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
       ]).start();
       return () => setDepth(depth - 1);
     }
+    // Kapanma animasyonu yalnızca açık bir panel kapanırken; yarıda kesilirse (yeniden açıldıysa) gizlemez
+    if (!visible) return;
     Animated.parallel([
       Animated.timing(y, { toValue: 800, duration: 260, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
       Animated.timing(fade, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start(() => setVisible(false));
-  }, [open, y, fade]);
+    ]).start(({ finished }) => { if (finished) setVisible(false); });
+  }, [open, y, fade]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
 
