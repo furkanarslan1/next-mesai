@@ -1,5 +1,6 @@
 "use client";
 
+import { InstallCard } from "@/components/mesai/install-card";
 import { errorText } from "@mesai/core/errors";
 import { parsePositive } from "@mesai/core/num";
 import { useState } from "react";
@@ -193,6 +194,8 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
+      {/* Siteye ilk gelen de uygulamayı kurabilsin: iPhone'da ana ekrana ekleme, Android'de APK / yükle */}
+      <InstallCard />
     </main>
   );
 }
