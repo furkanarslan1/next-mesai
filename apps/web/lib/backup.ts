@@ -14,13 +14,4 @@ export function download(name: string, content: string, mime: string) {
 /** Art arda birden çok dosya indirirken tarayıcı engellemesin diye aralarına kısa bekleme koyar. */
 export const nextDownload = () => new Promise<void>((r) => window.setTimeout(r, 400));
 
-export function toCSV(rows: Record<string, unknown>[]) {
-  if (!rows.length) return "";
-  const cols = Object.keys(rows[0]);
-  const esc = (v: unknown) => {
-    const t = v !== null && typeof v === "object" ? JSON.stringify(v) : String(v ?? "");
-    // Excel'de "=, +, -, @" ile başlayan hücreler formül sayılır: metnin başına ' eklenir
-    return `"${(/^[=+\-@]/.test(t) && Number.isNaN(Number(t)) ? `'${t}` : t).replace(/"/g, '""')}"`;
-  };
-  return "﻿" + [cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\n");
-}
+export { toCSV } from "@mesai/core/csv";

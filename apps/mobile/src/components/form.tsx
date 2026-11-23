@@ -9,11 +9,12 @@ import { Txt } from "./ui";
  * sağa yaslı 17px sayı girişleri, segmentli kontrol ve küçük anahtar.
  * `tone="muted"` kart/pencere içinde, `tone="card"` sayfa zemininde.
  */
-export function FormSection({ children, footer, tone = "card" }: { children: React.ReactNode; footer?: React.ReactNode; tone?: "card" | "muted" }) {
+export function FormSection({ children, footer, title, tone = "card" }: { children: React.ReactNode; footer?: React.ReactNode; title?: string; tone?: "card" | "muted" }) {
   const c = useColors();
   const rows = Children.toArray(children).filter((x) => isValidElement(x));
   return (
     <View style={{ gap: 6 }}>
+      {title ? <Txt muted style={{ paddingHorizontal: 16, fontSize: 12, lineHeight: 16, fontWeight: "500", letterSpacing: 0.3, textTransform: "uppercase" }}>{title}</Txt> : null}
       <View style={{ backgroundColor: tone === "card" ? c.card : c.muted, borderRadius: radius.lg, overflow: "hidden" }}>
         {rows.map((r, i) => (
           <Fragment key={i}>

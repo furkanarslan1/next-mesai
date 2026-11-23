@@ -59,8 +59,10 @@ export function PageStack({ children }: { children: React.ReactNode }) {
  * Alttan açılan panel (web'deki bottom sheet): üstte tutamak, yarı saydam bulanık zemin, 2rem üst köşeler.
  * Arka plana dokununca ya da aşağı sürükleyince kapanır; klavye açılınca yukarı kayar.
  */
-export function Sheet({ open, onClose, title, description, showClose = false, gap = 16, children }: {
-  open: boolean; onClose: () => void; title?: string; description?: string; showClose?: boolean; gap?: number; children: React.ReactNode;
+export function Sheet({ open, onClose, title, description, showClose = false, gap = 16, footer, children }: {
+  open: boolean; onClose: () => void; title?: string; description?: string; showClose?: boolean; gap?: number;
+  /** Panelin altında sabit kalan alan (ör. Kaydet çubuğu) */
+  footer?: React.ReactNode; children: React.ReactNode;
 }) {
   const c = useColors();
   const dark = useIsDark();
@@ -111,7 +113,7 @@ export function Sheet({ open, onClose, title, description, showClose = false, ga
           <View style={[styles.grabber, { backgroundColor: c.mutedForeground }]} />
           <ScrollView keyboardShouldPersistTaps="handled" bounces={false} scrollEventThrottle={16}
             onScroll={(e) => { drag.setTop(e.nativeEvent.contentOffset.y); }}
-            contentContainerStyle={{ gap, paddingHorizontal: 20, paddingTop: 20, paddingBottom: insets.bottom + 24 }}>
+            contentContainerStyle={{ gap, paddingHorizontal: 20, paddingTop: 20, paddingBottom: footer ? 16 : insets.bottom + 24 }}>
             {title ? (
               <View style={{ gap: 2 }}>
                 <Txt style={{ fontSize: 18, lineHeight: 28, fontWeight: "500", paddingRight: showClose ? 28 : 0 }}>{title}</Txt>
@@ -120,6 +122,9 @@ export function Sheet({ open, onClose, title, description, showClose = false, ga
             ) : null}
             {children}
           </ScrollView>
+          {footer ? (
+            <View style={{ gap: 8, borderTopWidth: 1, borderTopColor: c.border, paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.popover }}>{footer}</View>
+          ) : null}
           {showClose ? (
             <Pressable onPress={onClose} accessibilityLabel="Kapat" hitSlop={8}
               style={({ pressed }) => ({ position: "absolute", top: 12, right: 12, width: 28, height: 28, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? c.muted : "transparent", zIndex: 2 })}>

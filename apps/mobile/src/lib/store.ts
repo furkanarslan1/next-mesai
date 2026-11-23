@@ -84,3 +84,10 @@ export function useFinanceMap(keys: string[]) {
   useEffect(() => { void load.financeRange(joined.split(",").filter(Boolean)); }, [joined]);
   return v;
 }
+
+/** Bordro kayıtları (bordro kontrolü). */
+export function usePayslips() {
+  const v = useSyncExternalStore(subscribe, () => getState().payslips);
+  useEffect(() => { load.payslips(); }, []);
+  return v;
+}
