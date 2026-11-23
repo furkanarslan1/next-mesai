@@ -336,7 +336,7 @@ export default function Home() {
       <CompactBar title={profile?.full_name ? `Merhaba, ${profile.full_name.split(" ")[0]}` : "Merhaba"} visible={compact} />
 
       {/* Tarih seçici (web: alttan panel) */}
-      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)}>
+      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} gap={20}>
         <CalendarGrid month={pickerMonth} onMonthChange={setPickerMonth} value={date} today={todayStr}
           marked={new Set((pickerEntries ?? []).map((e) => e.work_date))}
           onSelect={(d) => { setDate(d); setPickerOpen(false); }} />

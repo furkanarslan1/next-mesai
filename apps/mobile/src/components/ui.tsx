@@ -6,6 +6,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { haptic } from "@/lib/haptics";
+import { PageStack } from "./sheet";
 import { radius, space, useColors, useIsDark } from "@/theme";
 
 /** Alt menünün kapladığı alan (web: pb-[calc(7rem+safe-area)]) */
@@ -40,7 +41,7 @@ type BtnVariant = "primary" | "secondary" | "navy";
 type BtnSize = "default" | "sm" | "lg" | "xl";
 const SIZES: Record<BtnSize, { h: number; fs: number; fw: "500" | "600"; px: number }> = {
   sm: { h: 28, fs: 12.8, fw: "500", px: 10 },
-  default: { h: 36, fs: 14, fw: "500", px: 12 },
+  default: { h: 32, fs: 14, fw: "500", px: 10 },
   lg: { h: 48, fs: 16, fw: "500", px: 16 },
   xl: { h: 56, fs: 16, fw: "600", px: 10 },
 };
@@ -99,29 +100,59 @@ export function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** iOS büyük başlıklı sayfa iskeleti (web: Page bileşeni). */
-export function Screen({ title, eyebrow, accessory, children, tabs = true, refreshControl }: {
-  title: string; eyebrow?: React.ReactNode; accessory?: React.ReactNode; children: React.ReactNode; tabs?: boolean;
+/**
+ * iOS büyük başlıklı sayfa iskeleti (web: components/mesai/page.tsx): üstte küçük satır (eyebrow) ve sağında
+ * öğe, büyük başlık ve sağında düğmeler; kaydırınca küçük başlık şeridi; alttan panel açılınca sayfa geri çekilir.
+ */
+export function Screen({ title, compactTitle, eyebrow, accessory, actions, children, tabs = true, refreshControl }: {
+  title: React.ReactNode; compactTitle?: string; eyebrow?: React.ReactNode; accessory?: React.ReactNode; actions?: React.ReactNode;
+  children: React.ReactNode; tabs?: boolean;
   refreshControl?: React.ComponentProps<typeof ScrollView>["refreshControl"];
 }) {
-  const c = useColors();
   const insets = useSafeAreaInsets();
+  const [compact, setCompact] = useState(false);
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: c.background }}
-      refreshControl={refreshControl}
-      contentContainerStyle={{ paddingTop: insets.top + space.top, paddingBottom: (tabs ? TAB_BAR_SPACE : 24) + insets.bottom, paddingHorizontal: space.page, gap: space.section }}>
-      <View style={{ gap: 4, paddingBottom: 5 }}>
-        {eyebrow || accessory ? (
-          <View style={{ minHeight: 32, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <Eyebrow>{eyebrow}</Eyebrow>
-            {accessory}
+    <PageStack>
+      <ScrollView
+        style={{ flex: 1 }}
+        scrollEventThrottle={16}
+        onScroll={(e) => setCompact(e.nativeEvent.contentOffset.y > COMPACT_AT)}
+        refreshControl={refreshControl}
+        contentContainerStyle={{ paddingTop: insets.top + space.top, paddingBottom: (tabs ? TAB_BAR_SPACE : 24) + insets.bottom, paddingHorizontal: space.page, gap: space.section }}>
+        <View style={{ gap: 4, paddingBottom: 5 }}>
+          {eyebrow || accessory ? (
+            <View style={{ minHeight: 32, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <Eyebrow>{eyebrow}</Eyebrow>
+              {accessory}
+            </View>
+          ) : null}
+          <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
+            {typeof title === "string" ? (
+              <Txt numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1, fontSize: 34, lineHeight: 40.8, fontWeight: "700", letterSpacing: -0.748 }}>{title}</Txt>
+            ) : <View style={{ flexShrink: 1 }}>{title}</View>}
+            {actions ? <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingBottom: 4 }}>{actions}</View> : null}
           </View>
-        ) : null}
-        <Txt numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 34, lineHeight: 40.8, fontWeight: "700", letterSpacing: -0.748 }}>{title}</Txt>
-      </View>
+        </View>
+        {children}
+      </ScrollView>
+      <CompactBar title={compactTitle ?? (typeof title === "string" ? title : "")} visible={compact} />
+    </PageStack>
+  );
+}
+
+/** Büyük başlık metni (Screen'e özel başlık verilirken aynı biçim için) */
+export function LargeTitle({ children }: { children: React.ReactNode }) {
+  return <Txt numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 34, lineHeight: 40.8, fontWeight: "700", letterSpacing: -0.748 }}>{children}</Txt>;
+}
+
+/** Yuvarlak ikon düğme (web: Button size="icon" variant="secondary", 32px) */
+export function IconButton({ onPress, label, children }: { onPress: () => void; label: string; children: React.ReactNode }) {
+  const c = useColors();
+  return (
+    <Pressable onPress={() => { haptic(); onPress(); }} accessibilityLabel={label} accessibilityRole="button"
+      style={({ pressed }) => ({ width: 32, height: 32, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: c.secondary, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
       {children}
-    </ScrollView>
+    </Pressable>
   );
 }
 

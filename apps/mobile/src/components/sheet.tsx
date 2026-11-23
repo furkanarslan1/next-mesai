@@ -1,4 +1,5 @@
 import { BlurView } from "expo-blur";
+import { X } from "lucide-react-native";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   Animated, Easing, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, View,
@@ -58,7 +59,9 @@ export function PageStack({ children }: { children: React.ReactNode }) {
  * Alttan açılan panel (web'deki bottom sheet): üstte tutamak, yarı saydam bulanık zemin, 2rem üst köşeler.
  * Arka plana dokununca ya da aşağı sürükleyince kapanır; klavye açılınca yukarı kayar.
  */
-export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: React.ReactNode }) {
+export function Sheet({ open, onClose, title, description, showClose = false, gap = 16, children }: {
+  open: boolean; onClose: () => void; title?: string; description?: string; showClose?: boolean; gap?: number; children: React.ReactNode;
+}) {
   const c = useColors();
   const dark = useIsDark();
   const insets = useSafeAreaInsets();
@@ -108,10 +111,21 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
           <View style={[styles.grabber, { backgroundColor: c.mutedForeground }]} />
           <ScrollView keyboardShouldPersistTaps="handled" bounces={false} scrollEventThrottle={16}
             onScroll={(e) => { drag.setTop(e.nativeEvent.contentOffset.y); }}
-            contentContainerStyle={{ gap: 20, paddingHorizontal: 20, paddingTop: 20, paddingBottom: insets.bottom + 24 }}>
-            {title ? <Txt style={{ fontSize: 18, lineHeight: 24, fontWeight: "600" }}>{title}</Txt> : null}
+            contentContainerStyle={{ gap, paddingHorizontal: 20, paddingTop: 20, paddingBottom: insets.bottom + 24 }}>
+            {title ? (
+              <View style={{ gap: 2 }}>
+                <Txt style={{ fontSize: 18, lineHeight: 28, fontWeight: "500", paddingRight: showClose ? 28 : 0 }}>{title}</Txt>
+                {description ? <Txt muted style={{ fontSize: 14, lineHeight: 20 }}>{description}</Txt> : null}
+              </View>
+            ) : null}
             {children}
           </ScrollView>
+          {showClose ? (
+            <Pressable onPress={onClose} accessibilityLabel="Kapat" hitSlop={8}
+              style={({ pressed }) => ({ position: "absolute", top: 12, right: 12, width: 28, height: 28, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? c.muted : "transparent", zIndex: 2 })}>
+              <X size={16} color={c.foreground} />
+            </Pressable>
+          ) : null}
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
