@@ -34,8 +34,8 @@ export function ConfirmHost() {
   }, [anim]);
 
   const close = (then?: () => void) => {
-    Animated.timing(anim, { toValue: 0, duration: 140, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => {
-      setVisible(false);
+    Animated.timing(anim, { toValue: 0, duration: 140, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setVisible(false);
       then?.();
     });
   };
@@ -88,9 +88,16 @@ export function Dialog({ open, onClose, title, titleSize = 16, padding = 16, gap
     if (open) setVisible(true);
   }
   useEffect(() => {
-    if (open) { anim.setValue(0); Animated.timing(anim, { toValue: 1, duration: 150, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); }
-    else Animated.timing(anim, { toValue: 0, duration: 120, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => setVisible(false));
-  }, [open, anim]);
+    if (open) {
+      anim.setValue(0);
+      Animated.timing(anim, { toValue: 1, duration: 150, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+      return;
+    }
+    // Kapanma animasyonu yalnızca açık bir pencere kapanırken; bitiş adımı yarıda kesilirse (yeniden açıldıysa) gizlemez
+    if (!visible) return;
+    Animated.timing(anim, { toValue: 0, duration: 120, easing: Easing.in(Easing.cubic), useNativeDriver: true })
+      .start(({ finished }) => { if (finished) setVisible(false); });
+  }, [open, anim]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
