@@ -20,6 +20,12 @@ const light = {
   ring: palette.teal,
   destructive: "#d4183d",
   shadow: "rgba(7, 27, 43, 0.09)",
+  /** Takvimde kayıtlı gün dolgusu */
+  fill: palette.navy,
+  /** Hedef halkası: nane → teal geçiş, iz rengi */
+  ringA: "#8fb9be",
+  ringB: palette.teal,
+  ringTrack: "rgba(91, 145, 163, 0.16)",
 };
 
 const dark: typeof light = {
@@ -35,6 +41,10 @@ const dark: typeof light = {
   ring: palette.teal,
   destructive: "#f0707a",
   shadow: "rgba(0, 0, 0, 0.35)",
+  fill: "#314d5d",
+  ringA: palette.mint,
+  ringB: palette.teal,
+  ringTrack: "rgba(91, 145, 163, 0.22)",
 };
 
 export type Colors = typeof light;

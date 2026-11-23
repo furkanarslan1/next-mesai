@@ -15,8 +15,17 @@
     "date-fns": "^4.4.0"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "2.119.2",
+    "@types/node": "^20",
     "typescript": "^5",
-    "vitest": "^5.1.1",
-    "@types/node": "^20"
+    "vitest": "^5.1.1"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2"
+  },
+  "peerDependenciesMeta": {
+    "@supabase/supabase-js": {
+      "optional": true
+    }
   }
 }
