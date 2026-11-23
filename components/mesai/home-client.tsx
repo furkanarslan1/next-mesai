@@ -261,7 +261,7 @@ function HomeView({ today }: { today: Date }) {
                   </span>
                   <span>
                     <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
-                    <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri almak için dokun" : blockedByWork ? "Bu gün mesai var" : locked ? "Önce seçileni geri al" : t === "sick" && settings?.sick_leave_unpaid ? "Maaştan düşer" : m.hint}</span>
+                    <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri almak için dokun" : blockedByWork ? "Bu gün mesai var" : locked ? "Önce seçileni geri al" : t === "sick" && (settings?.sick_leave_unpaid || settings?.sick_deducts_overtime) ? [settings.sick_leave_unpaid && "Maaştan düşer", settings.sick_deducts_overtime && "Mesaiden düşer"].filter(Boolean).join(" · ") : m.hint}</span>
                   </span>
                 </button>
               );

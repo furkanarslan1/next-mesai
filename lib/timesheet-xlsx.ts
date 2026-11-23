@@ -33,6 +33,7 @@ export function buildTimesheetSheet(ts: Timesheet, month: Date, who: string) {
     [{ value: "Özet", fontWeight: "bold" }],
     [{ value: "Normal çalışma günü" }, null, null, null, { value: ts.totals.normalDays, type: Number }],
     [{ value: "Toplam mesai (saat)" }, null, null, null, { value: ts.totals.overtimeHours, type: Number }],
+    ...(ts.totals.sickDeductedHours > 0 ? [[{ value: "Rapor düşümü (saat)" }, null, null, null, { value: -ts.totals.sickDeductedHours, type: Number }]] : []),
     [{ value: "Maaşa dahil mesai (saat)" }, null, null, null, { value: ts.totals.includedHours, type: Number }],
     [{ value: "Ücretli mesai (saat)" }, null, null, null, { value: ts.totals.paidOvertimeHours, type: Number }],
     ...Object.entries(ts.totals.overtimeByPercent).sort((a, b) => Number(a[0]) - Number(b[0])).map(([p, h]) => [{ value: `  Ek mesai %${p} (saat)` }, null, null, null, { value: h, type: Number }]),

@@ -39,6 +39,7 @@ export async function restoreBackup(text: string) {
     if (has("base_hourly_rate")) patch.base_hourly_rate = num(s.base_hourly_rate) > 0 ? num(s.base_hourly_rate) : null;
     for (const k of ["weekday_percent", "sunday_percent", "holiday_percent"]) if (has(k) && num(s[k]) >= 50) patch[k] = Math.min(500, num(s[k]));
     if (has("sick_leave_unpaid")) patch.sick_leave_unpaid = s.sick_leave_unpaid === true;
+    if (has("sick_deducts_overtime")) patch.sick_deducts_overtime = s.sick_deducts_overtime === true;
     if (has("saturday_off")) patch.saturday_off = s.saturday_off !== false;
     if (has("annual_leave_days")) patch.annual_leave_days = Math.min(60, Math.round(num(s.annual_leave_days)));
     if (isObj(s.budgets)) {

@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <div className="mx-auto flex min-h-dvh w-full max-w-6xl gap-6 xl:max-w-3xl 2xl:max-w-4xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] md:pb-6">
+      <div className="mx-auto flex min-h-svh w-full max-w-6xl gap-6 xl:max-w-3xl 2xl:max-w-4xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] md:pb-6">
         <Suspense fallback={<div className="hidden w-56 shrink-0 md:block xl:hidden" />}><BottomNav /></Suspense>
         <main className="app-main min-w-0 flex-1">{children}</main>
       </div>

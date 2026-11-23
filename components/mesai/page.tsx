@@ -47,7 +47,7 @@ export function Page({ title, eyebrow, back, actions, accessory, onRefresh, chil
         <PullToRefresh onRefresh={onRefresh ?? mutate.refresh.everything} />
 
         {/* Kaydırınca beliren küçük başlık şeridi (telefon) */}
-        <div aria-hidden={!compact}
+        <div aria-hidden={!compact} style={{ viewTransitionName: "compact-bar" }}
           className={`compact-bar fixed inset-x-0 top-0 z-30 md:hidden ${compact ? "opacity-100" : "pointer-events-none opacity-0"}`}>
           <div className="relative flex h-11 items-center justify-center px-12">
             {back && (

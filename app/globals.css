@@ -179,7 +179,8 @@ body {
     radial-gradient(50rem 40rem at 50% 110%, oklch(0.6 0.1 150 / 8%), transparent 60%),
     var(--background);
   background-attachment: fixed;
-  min-height: 100dvh;
+  /* svh: iOS Safari'de araç çubuğu açılıp kapanırken dvh değişir ve tüm sayfa yeniden yerleşip zıplar */
+  min-height: 100svh;
 }
 .glass {
   background: var(--card);
@@ -526,6 +527,13 @@ select { font-size: 1rem; }
 ::view-transition-new(.nav-back) { --vt-from: -30%; animation: 380ms var(--ease-ios) both vt-slide-in, 260ms ease-out both vt-fade-in; }
 ::view-transition-old(.nav-tab) { animation: 140ms ease-in both vt-fade-out; }
 ::view-transition-new(.nav-tab) { animation: 260ms var(--ease-ios) 60ms both vt-rise; }
+/* Sayfa dışında kalan kök görüntü (zemin) çapraz geçiş yapmaz: iOS'ta tüm ekranın iki kopyası boşuna karıştırılmasın */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-old(root) { display: none; }
+/* Küçük başlık şeridi (position: fixed) sayfa görüntüsünün içinde kaymasın: ayrı yakalanır, yerinde değişir */
+::view-transition-group(compact-bar) { animation: none; z-index: 90; }
+::view-transition-old(compact-bar) { display: none; }
+::view-transition-new(compact-bar) { animation: none; }
 /* Menüler geçiş sırasında yerinde kalır */
 ::view-transition-group(tab-bar), ::view-transition-group(side-bar) { animation: none; z-index: 100; }
 ::view-transition-old(tab-bar), ::view-transition-old(side-bar) { display: none; }

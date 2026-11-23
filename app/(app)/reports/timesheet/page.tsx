@@ -111,6 +111,7 @@ function TimesheetView({ today }: { today: Date }) {
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
           <div><dt className="text-xs text-muted-foreground">Normal çalışma günü</dt><dd className="font-semibold tabular-nums">{ts.totals.normalDays}</dd></div>
           <div><dt className="text-xs text-muted-foreground">Toplam mesai</dt><dd className="font-semibold tabular-nums">{hrs(ts.totals.overtimeHours)}</dd></div>
+          {ts.totals.sickDeductedHours > 0 && <div><dt className="text-xs text-muted-foreground">Rapor düşümü</dt><dd className="font-semibold tabular-nums">−{hrs(ts.totals.sickDeductedHours)}</dd></div>}
           <div><dt className="text-xs text-muted-foreground">Maaşa dahil mesai</dt><dd className="font-semibold tabular-nums">{hrs(ts.totals.includedHours)}</dd></div>
           <div><dt className="text-xs text-muted-foreground">Ücretli mesai</dt><dd className="font-semibold tabular-nums">{hrs(ts.totals.paidOvertimeHours)}</dd></div>
           {Object.entries(ts.totals.overtimeByPercent).sort((a, b) => Number(a[0]) - Number(b[0])).map(([p, h]) => (

@@ -41,6 +41,8 @@ export interface Settings {
   holiday_percent: number;
   /** Raporlu günler maaştan düşer mi ("Raporlu (Ücretsiz)") */
   sick_leave_unpaid: boolean;
+  /** Raporlu her gün için günlük çalışma saati aylık mesaiden düşülür */
+  sick_deducts_overtime: boolean;
   /** Maaşa dahil aylık mesai saati (bu kadarına ayrıca ücret ödenmez) */
   included_overtime_hours: number;
   annual_leave_days: number;

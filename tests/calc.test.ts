@@ -120,3 +120,33 @@ describe("raporlu gün kesintisi (ayar)", () => {
     expect(salaryDeduction(ents, { ...S, sick_leave_unpaid: true })).toEqual({ days: 3, amount: 3000 });
   });
 });
+
+describe("raporlu gün mesaiden düşer (ayar)", () => {
+  // S: günlük 8 sa, hafta içi %100 (100 ₺), pazar/tatil %200
+  const D = { ...S, sick_deducts_overtime: true };
+  const ents = [
+    E("2026-11-01", "overtime", 6), // Pazar
+    E("2026-11-03", "overtime", 5), // Salı
+    E("2026-11-04", "overtime", 4), // Çarşamba
+    E("2026-11-10", "sick"), E("2026-11-10", "sick"), // aynı gün iki kayıt: tek gün
+  ];
+  it("kapalıyken mesai değişmez", () => {
+    const m = monthSummary(ents, S);
+    expect(m.hours).toBe(15); expect(m.sickHours).toBe(0);
+  });
+  it("açıkken raporlu gün başına günlük saat düşer, önce hafta içi mesaiden", () => {
+    const m = monthSummary(ents, D);
+    expect(m.grossHours).toBe(15); expect(m.sickDays).toBe(1); expect(m.sickHours).toBe(8);
+    expect(m.hours).toBe(7);
+    // 5 + 4 hafta içi saatin 8'i düşer, 1 sa hafta içi (100 ₺) + 6 sa pazar (200 ₺) kalır
+    expect(m.earned).toBe(100 + 6 * 200);
+    expect(paidHoursByPercent(ents, D)).toEqual({ "100": 1, "200": 6 });
+  });
+  it("mesai sıfırın altına inmez", () => {
+    const m = monthSummary([E("2026-11-03", "overtime", 3), E("2026-11-05", "sick"), E("2026-11-06", "sick")], D);
+    expect(m.hours).toBe(0); expect(m.sickHours).toBe(3); expect(m.earned).toBe(0);
+  });
+  it("saat hedefi net mesaiye göre ilerler", () => {
+    expect(goalProgress(ents, { ...D, goal_mode: "hours", monthly_goal_hours: 14 }).percent).toBe(50);
+  });
+});

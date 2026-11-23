@@ -110,7 +110,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 p-5">
+    <main className="mx-auto flex min-h-svh w-full max-w-sm flex-col justify-center gap-6 p-5">
       <div className="text-center">
         <div className="glass mx-auto mb-4 grid size-16 place-items-center text-primary">
           <Clock className="size-8" />
