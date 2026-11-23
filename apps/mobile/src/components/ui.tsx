@@ -90,11 +90,11 @@ export const Field = forwardRef<TextInputInstance, TextInputProps & { label: str
 });
 
 /** Küçük istatistik kutusu (web: r-md bg-muted px-2 py-3, değer 18px kalın, etiket 11px). */
-export function Stat({ label, value }: { label: string; value: string }) {
+export function Stat({ label, value, size = 18 }: { label: string; value: string; size?: number }) {
   const c = useColors();
   return (
     <View style={{ flex: 1, borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 8, alignItems: "center", backgroundColor: c.muted }}>
-      <Txt numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 18, lineHeight: 22.5, fontWeight: "700", fontVariant: ["tabular-nums"] }}>{value}</Txt>
+      <Txt numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: size, lineHeight: size * 1.25, fontWeight: "700", fontVariant: ["tabular-nums"] }}>{value}</Txt>
       <Txt muted style={{ fontSize: 11, lineHeight: 13.75, marginTop: 4, textAlign: "center" }}>{label}</Txt>
     </View>
   );

@@ -7,7 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   configureStore, getState, hydrateProfile, load, retain, revalidateStale, subscribe,
 } from "@mesai/core/store";
-import type { Entry, Profile } from "@mesai/core/types";
+import type { Entry, FinanceItem, Profile } from "@mesai/core/types";
 import { useEffect, useSyncExternalStore } from "react";
 import { AppState } from "react-native";
 import { supabase } from "./supabase";
@@ -65,5 +65,22 @@ export function useEntriesMap(keys: string[]) {
   const joined = keys.join(",");
   useActive(keys.map((k) => `e:${k}`));
   useEffect(() => { void load.entriesRange(joined.split(",").filter(Boolean)); }, [joined]);
+  return v;
+}
+
+const NO_FINANCE: Record<string, FinanceItem[]> = {};
+/** Bir ayın gelir/gider kalemleri (o ayda geçerli tekrarlayanlar dahil). */
+export function useFinance(key: string) {
+  const v = useSyncExternalStore(subscribe, () => getState().finance[key] ?? null);
+  useActive([`f:${key}`]);
+  useEffect(() => { load.finance(key); }, [key]);
+  return v;
+}
+/** Birden çok ayın gelir/gider kalemleri tek istekle (son 6 ay grafiği). */
+export function useFinanceMap(keys: string[]) {
+  const v = useSyncExternalStore(subscribe, () => getState().finance ?? NO_FINANCE);
+  const joined = keys.join(",");
+  useActive(keys.map((k) => `f:${k}`));
+  useEffect(() => { void load.financeRange(joined.split(",").filter(Boolean)); }, [joined]);
   return v;
 }

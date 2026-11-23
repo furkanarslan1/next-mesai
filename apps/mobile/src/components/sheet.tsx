@@ -106,8 +106,8 @@ export function Sheet({ open, onClose, title, description, showClose = false, ga
       </Animated.View>
       <KeyboardAvoidingView pointerEvents="box-none" style={{ flex: 1, justifyContent: "flex-end" }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <Animated.View {...drag.handlers} style={[styles.panel, { borderColor: c.dialogBorder, transform: [{ translateY: y }] }]}>
-          <BlurView intensity={100} tint={dark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: c.sheetBg }]} />
+          <BlurView intensity={100} tint={dark ? "dark" : "light"} style={[StyleSheet.absoluteFill, styles.topRound]} />
+          <View style={[StyleSheet.absoluteFill, styles.topRound, { backgroundColor: c.sheetBg }]} />
           <View style={[styles.grabber, { backgroundColor: c.mutedForeground }]} />
           <ScrollView keyboardShouldPersistTaps="handled" bounces={false} scrollEventThrottle={16}
             onScroll={(e) => { drag.setTop(e.nativeEvent.contentOffset.y); }}
@@ -134,5 +134,6 @@ export function Sheet({ open, onClose, title, description, showClose = false, ga
 
 const styles = StyleSheet.create({
   panel: { maxHeight: "92%", width: "100%", maxWidth: 512, alignSelf: "center", overflow: "hidden", borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, borderWidth: 1, borderBottomWidth: 0 },
+  topRound: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, overflow: "hidden" },
   grabber: { position: "absolute", top: 8, alignSelf: "center", width: 36, height: 5, borderRadius: 3, opacity: 0.45, zIndex: 1 },
 });

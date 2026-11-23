@@ -25,7 +25,7 @@ export function MonthSummary({ entries, settings }: { entries: Entry[]; settings
     <View style={{ gap: 20 }}>
       <View style={{ alignItems: "center" }}>
         <Txt muted style={{ fontSize: 14, lineHeight: 20 }}>Bu ay toplam kazanç</Txt>
-        <Txt numberOfLines={1} adjustsFontSizeToFit style={{ marginTop: 4, fontSize: 48, lineHeight: 52, fontWeight: "700", letterSpacing: -1.2, fontVariant: ["tabular-nums"] }}>{money(g.income, cur)}</Txt>
+        <Txt numberOfLines={1} adjustsFontSizeToFit style={{ marginTop: 4, fontSize: 48, lineHeight: 48, fontWeight: "700", letterSpacing: -1.2, fontVariant: ["tabular-nums"] }}>{money(g.income, cur)}</Txt>
         <Txt muted style={{ marginTop: 8, fontSize: 12, lineHeight: 16, textAlign: "center", fontVariant: ["tabular-nums"] }}>
           Maaş {money(settings.monthly_salary, cur)}{g.deduction > 0 ? ` − kesinti ${money(g.deduction, cur)}` : ""} + mesai {money(g.earned, cur)}
         </Txt>

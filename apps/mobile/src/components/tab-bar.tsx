@@ -28,8 +28,8 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
       <View pointerEvents="box-none" style={[styles.wrap, { bottom: Math.max(16, insets.bottom) }]}>
         <View style={[styles.bar, { borderColor: c.cardBorder, boxShadow: c.shadow.nav }]}>
           <View style={[StyleSheet.absoluteFill, styles.clip]}>
-            <BlurView intensity={100} tint={dark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: c.navBg }]} />
+            <BlurView intensity={100} tint={dark ? "dark" : "light"} style={[StyleSheet.absoluteFill, styles.clip]} />
+            <View style={[StyleSheet.absoluteFill, styles.clip, { backgroundColor: c.navBg }]} />
           </View>
           {state.routes.map((route, i) => {
             const meta = ICONS[route.name];
