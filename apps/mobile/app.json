@@ -46,6 +46,15 @@
     },
     "runtimeVersion": {
       "policy": "fingerprint"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2a4373ba-f6df-4d1c-a0c9-ec9df1515954"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2a4373ba-f6df-4d1c-a0c9-ec9df1515954"
+    },
+    "owner": "furkan6"
   }
 }
