@@ -39,7 +39,7 @@ export function Card({ style, size = "xl", ...p }: ViewProps & { size?: "xl" | "
 }
 
 type BtnVariant = "primary" | "secondary" | "navy" | "destructive";
-type BtnSize = "default" | "sm" | "md" | "lg" | "xl";
+type BtnSize = "default" | "sm" | "md" | "lg" | "xl" | "cta";
 const SIZES: Record<BtnSize, { h: number; fs: number; fw: "500" | "600"; px: number }> = {
   sm: { h: 28, fs: 12.8, fw: "500", px: 10 },
   default: { h: 32, fs: 14, fw: "500", px: 10 },
@@ -47,6 +47,8 @@ const SIZES: Record<BtnSize, { h: number; fs: number; fw: "500" | "600"; px: num
   md: { h: 48, fs: 14, fw: "500", px: 10 },
   lg: { h: 48, fs: 16, fw: "500", px: 16 },
   xl: { h: 56, fs: 16, fw: "600", px: 10 },
+  /** Tanıtımdaki ana düğme (web: h-14 text-[17px] font-semibold) */
+  cta: { h: 56, fs: 17, fw: "600", px: 10 },
 };
 
 /** Hap düğme (web: shadcn Button + [data-slot=button] { border-radius: 9999px }). */

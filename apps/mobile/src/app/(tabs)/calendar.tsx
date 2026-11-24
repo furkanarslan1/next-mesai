@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { DaySheet } from "@/components/day-sheet";
+import { AnimatedNumber } from "@/components/animated-number";
 import { Card, IconButton, LargeTitle, Screen, Txt } from "@/components/ui";
 import { mixOklch } from "@/lib/color";
 import { haptic } from "@/lib/haptics";
@@ -148,7 +149,7 @@ export default function CalendarScreen() {
         </View>
         <Card size="lg" style={{ paddingVertical: 16, paddingHorizontal: 16, alignItems: "center" }}>
           <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>Toplam maaş</Txt>
-          <Txt style={{ fontSize: 24, lineHeight: 32, fontWeight: "700", fontVariant: ["tabular-nums"] }}>{money(total.income, settings.currency)}</Txt>
+          <AnimatedNumber value={total.income} format={(n) => money(n, settings.currency)} style={{ fontSize: 24, lineHeight: 32, fontWeight: "700" }} />
           <Txt muted style={{ marginTop: 4, fontSize: 12, lineHeight: 16, textAlign: "center", fontVariant: ["tabular-nums"] }}>
             Maaş {money(settings.monthly_salary, settings.currency)}{total.deduction > 0 ? ` − kesinti ${money(total.deduction, settings.currency)}` : ""} + mesai {money(sum.earned, settings.currency)}
           </Txt>
