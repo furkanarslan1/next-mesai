@@ -1,5 +1,5 @@
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
+import { format } from "date-fns/format";
+import { tr } from "date-fns/locale/tr";
 import type { Timesheet } from "./timesheet";
 
 /** Çizelgeyi Excel sayfa verisine çevirir (dosya yazmadan, test edilebilir). */

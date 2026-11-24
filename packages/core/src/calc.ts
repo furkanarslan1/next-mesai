@@ -1,4 +1,5 @@
-import { getDay, parseISO } from "date-fns";
+import { getDay } from "date-fns/getDay";
+import { parseISO } from "date-fns/parseISO";
 import type { Entry, Settings } from "./types";
 
 /**

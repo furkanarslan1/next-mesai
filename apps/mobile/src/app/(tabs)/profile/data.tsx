@@ -3,7 +3,7 @@ import { toCSV } from "@mesai/core/csv";
 import { errorText } from "@mesai/core/errors";
 import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
-import { Download, FileJson, FileSpreadsheet, Upload } from "lucide-react-native";
+import { Download, FileJson, FileSpreadsheet, Upload } from "@/components/icons";
 import { useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SettingsGroup, SettingsRow } from "@/components/settings-list";

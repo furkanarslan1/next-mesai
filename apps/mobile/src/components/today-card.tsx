@@ -2,7 +2,7 @@ import { hhmm, hrs, overtimeAfter } from "@mesai/core/calc";
 import { isRestDay } from "@mesai/core/day";
 import { TYPE_META, type Entry, type Settings } from "@mesai/core/types";
 import { router } from "expo-router";
-import { Briefcase, CheckCircle2, Coffee, Moon, Plus, Sparkles, Sunrise, type LucideIcon } from "lucide-react-native";
+import { Briefcase, CheckCircle2, Coffee, Moon, Plus, Sparkles, Sunrise, type LucideIcon } from "@/components/icons";
 import { useEffect, useState } from "react";
 import { AppState, Pressable, View } from "react-native";
 import { radius, useColors } from "@/theme";

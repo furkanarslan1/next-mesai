@@ -1,7 +1,5 @@
 import { File, Paths } from "expo-file-system";
-import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import writeXlsxFile from "write-excel-file/universal";
 
 /**
  * Telefonda dışa aktarma: web'deki "indir" yerine dosya önbellek klasörüne yazılır ve telefonun paylaş
@@ -47,6 +45,8 @@ export async function shareXlsx(name: string, data: unknown, options: unknown) {
     }
   }
   try {
+    // Excel kütüphanesi yalnızca dışa aktarırken yüklenir (açılışta paket/başlatma yükü olmasın)
+    const { default: writeXlsxFile } = await import("write-excel-file/universal");
     (globalThis as { Blob: unknown }).Blob = Capture;
     await writeXlsxFile(data as any, options as any).toBlob();
   } finally {
@@ -58,6 +58,7 @@ export async function shareXlsx(name: string, data: unknown, options: unknown) {
 
 /** HTML'den PDF (yazdırma modülü) ve paylaşım */
 export async function sharePdf(name: string, html: string, landscape = false) {
+  const Print = await import("expo-print");
   const { uri } = await Print.printToFileAsync({ html, ...(landscape ? { width: 842, height: 595 } : {}) });
   const src = new File(uri);
   const dest = new File(Paths.cache, name);

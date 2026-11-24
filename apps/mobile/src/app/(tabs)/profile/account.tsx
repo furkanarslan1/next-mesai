@@ -1,6 +1,6 @@
 import { errorText } from "@mesai/core/errors";
 import { router } from "expo-router";
-import { LogOut } from "lucide-react-native";
+import { LogOut } from "@/components/icons";
 import { useState } from "react";
 import { TextInput, View } from "react-native";
 import { Dialog } from "@/components/dialog";

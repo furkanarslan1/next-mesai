@@ -4,9 +4,12 @@ import { CATEGORY_META, categoryKey, financeSummary, type CategoryKey } from "@m
 import { keyOf, lastMonths } from "@mesai/core/reports";
 import { DEFAULT_SETTINGS } from "@mesai/core/settings";
 import type { FinanceItem } from "@mesai/core/types";
-import { addMonths, format, parseISO, startOfMonth } from "date-fns";
-import { tr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, Repeat } from "lucide-react-native";
+import { addMonths } from "date-fns/addMonths";
+import { format } from "date-fns/format";
+import { parseISO } from "date-fns/parseISO";
+import { startOfMonth } from "date-fns/startOfMonth";
+import { tr } from "date-fns/locale/tr";
+import { ChevronLeft, ChevronRight, Plus, Repeat } from "@/components/icons";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { CategoryIcon } from "@/components/category-icon";

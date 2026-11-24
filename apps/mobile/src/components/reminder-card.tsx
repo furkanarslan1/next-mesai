@@ -1,4 +1,4 @@
-import { BellRing, X } from "lucide-react-native";
+import { BellRing, X } from "@/components/icons";
 import { useEffect, useState } from "react";
 import { AppState, Pressable } from "react-native";
 import { setPrefs, usePrefs } from "@/lib/prefs";

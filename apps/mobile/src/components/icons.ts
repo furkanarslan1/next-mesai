@@ -1,0 +1,52 @@
+/**
+ * Kullanılan ikonlar tek tek içe aktarılır: `from "lucide-react-native"` (toplu içe aktarma) Metro'da kütüphanedeki
+ * binlerce ikonun hepsini pakete koyuyordu (~4,7 MB geliştirme paketi). Yeni ikon gerekince buraya ekle.
+ */
+export type { LucideIcon } from "lucide-react-native";
+export { default as AlertTriangle } from "lucide-react-native/icons/triangle-exclamation-point";
+export { default as ArrowDownRight } from "lucide-react-native/icons/arrow-down-right";
+export { default as ArrowUpRight } from "lucide-react-native/icons/arrow-up-right";
+export { default as BadgeDollarSign } from "lucide-react-native/icons/badge-dollar-sign";
+export { default as BarChart3 } from "lucide-react-native/icons/chart-column";
+export { default as Bell } from "lucide-react-native/icons/bell";
+export { default as BellRing } from "lucide-react-native/icons/bell-ring";
+export { default as Briefcase } from "lucide-react-native/icons/briefcase";
+export { default as Calculator } from "lucide-react-native/icons/calculator";
+export { default as CalendarDays } from "lucide-react-native/icons/calendar-days";
+export { default as Check } from "lucide-react-native/icons/check";
+export { default as CheckCircle2 } from "lucide-react-native/icons/circle-check";
+export { default as ChevronDown } from "lucide-react-native/icons/chevron-down";
+export { default as ChevronLeft } from "lucide-react-native/icons/chevron-left";
+export { default as ChevronRight } from "lucide-react-native/icons/chevron-right";
+export { default as CircleCheck } from "lucide-react-native/icons/circle-check";
+export { default as Clock } from "lucide-react-native/icons/clock";
+export { default as Coffee } from "lucide-react-native/icons/coffee";
+export { default as DatabaseBackup } from "lucide-react-native/icons/database-backup";
+export { default as Download } from "lucide-react-native/icons/download";
+export { default as FileJson } from "lucide-react-native/icons/file-braces";
+export { default as FileSpreadsheet } from "lucide-react-native/icons/file-spreadsheet";
+export { default as FileText } from "lucide-react-native/icons/file-text";
+export { default as Home } from "lucide-react-native/icons/house";
+export { default as Info } from "lucide-react-native/icons/info";
+export { default as LogOut } from "lucide-react-native/icons/log-out";
+export { default as Minus } from "lucide-react-native/icons/minus";
+export { default as Moon } from "lucide-react-native/icons/moon";
+export { default as OctagonX } from "lucide-react-native/icons/octagon-x";
+export { default as Palette } from "lucide-react-native/icons/palette";
+export { default as Pencil } from "lucide-react-native/icons/pencil";
+export { default as Plus } from "lucide-react-native/icons/plus";
+export { default as Repeat } from "lucide-react-native/icons/repeat";
+export { default as Settings } from "lucide-react-native/icons/settings";
+export { default as Sparkles } from "lucide-react-native/icons/sparkles";
+export { default as Sun } from "lucide-react-native/icons/sun";
+export { default as SunMoon } from "lucide-react-native/icons/sun-moon";
+export { default as Sunrise } from "lucide-react-native/icons/sunrise";
+export { default as Table2 } from "lucide-react-native/icons/table-2";
+export { default as Target } from "lucide-react-native/icons/target";
+export { default as Trash2 } from "lucide-react-native/icons/trash";
+export { default as Undo2 } from "lucide-react-native/icons/undo-2";
+export { default as Upload } from "lucide-react-native/icons/upload";
+export { default as UserRound } from "lucide-react-native/icons/user-round";
+export { default as Users } from "lucide-react-native/icons/users";
+export { default as X } from "lucide-react-native/icons/x";
+export { default as Zap } from "lucide-react-native/icons/zap";

@@ -1,7 +1,7 @@
 import {
   authErrorText, dailyHoursOf, DEFAULT_SCHEDULE, DEFAULT_SHORTCUT_HOURS, DEFAULT_SIGNUP_PAY, SIGNUP_STEPS, signupData, type SignupPay, type WorkSchedule,
 } from "@mesai/core/auth";
-import { Clock } from "lucide-react-native";
+import { Clock } from "@/components/icons";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Pressable, ScrollView, type ScrollViewInstance, type TextInputInstance, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

@@ -9,7 +9,8 @@
  *   dolunca eski veri ekranda kalırken arka planda yenilenir (stale-while-revalidate).
  *   Uygulamaya dönüldüğünde (sekme/uygulama öne gelince) yalnızca süresi dolmuş dilimler yenilenir.
  */
-import { endOfMonth, format } from "date-fns";
+import { endOfMonth } from "date-fns/endOfMonth";
+import { format } from "date-fns/format";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchAll, monthSpan } from "./fetch-all";
 import { DEFAULT_SETTINGS } from "./settings";
