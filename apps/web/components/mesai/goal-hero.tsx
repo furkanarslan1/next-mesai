@@ -99,7 +99,10 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
               <>
                 <Stat label="Bu ay kazanç"><AnimatedNumber value={g.income} format={fmtMoney} /></Stat>
                 <Stat label="Kalan">{remainingMoney > 0 ? <AnimatedNumber value={remainingMoney} format={fmtMoney} /> : <span className="text-[var(--tint)]">Tamamlandı</span>}</Stat>
-                <Stat label="Gereken toplam mesai" small><AnimatedNumber value={g.hoursNeeded} format={fmtHrs} /></Stat>
+                {/* Hedef için DAHA yapılması gereken mesai; ay toplamı altında küçük */}
+                <Stat label="Kalan mesai" small note={remainingMoney > 0 ? `toplam ${fmtHrs(g.hoursNeeded)}` : undefined}>
+                  {remainingMoney > 0 ? <AnimatedNumber value={g.hoursLeft} format={fmtHrs} /> : <span className="text-[var(--tint)]">Tamamlandı</span>}
+                </Stat>
               </>
             )}
           </dl>
@@ -152,11 +155,12 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
   );
 }
 
-function Stat({ label, small, children }: { label: string; small?: boolean; children: React.ReactNode }) {
+function Stat({ label, small, note, children }: { label: string; small?: boolean; note?: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
       <dt className="text-[12px] text-muted-foreground">{label}</dt>
       <dd className={`truncate font-bold tabular-nums leading-tight ${small ? "text-[15px]" : "text-[20px] tracking-tight"}`}>{children}</dd>
+      {note && <dd className="truncate text-[11px] tabular-nums text-muted-foreground">{note}</dd>}
     </div>
   );
 }
