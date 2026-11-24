@@ -5,6 +5,7 @@ import { holidayName } from "@mesai/core/holidays";
 import { parseNum } from "@mesai/core/num";
 import { TYPE_META, type Entry, type EntryType } from "@mesai/core/types";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { router } from "expo-router";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { CalendarDays, Check, ChevronDown, Plus, Sparkles } from "lucide-react-native";
@@ -267,7 +268,11 @@ export default function Home() {
 
         <View style={{ flexDirection: "row", gap: 12 }}>
           {smallCard(isToday ? "Bugünün mesaisi" : `${dayLabel} mesaisi`, todayHours)}
-          {smallCard(`${format(parseISO(date), "LLLL", { locale: tr })} toplamı`, monthHours)}
+          {/* Dokununca Raporlar → Özet (hafta / ay / yıl dökümü) */}
+          <Pressable onPress={() => { haptic(); router.navigate("/reports"); }} accessibilityRole="button" accessibilityLabel="Mesai özetini aç"
+            style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+            {smallCard(`${format(parseISO(date), "LLLL", { locale: tr })} toplamı`, monthHours)}
+          </Pressable>
         </View>
 
         {/* Mesai kısayolları */}

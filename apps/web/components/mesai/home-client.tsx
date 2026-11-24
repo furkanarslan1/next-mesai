@@ -4,6 +4,7 @@ import { parseNum } from "@mesai/core/num";
 import { errorText } from "@mesai/core/errors";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -192,10 +193,13 @@ function HomeView({ today }: { today: Date }) {
           <p className="text-xs text-muted-foreground">{date === todayStr ? "Bugünün mesaisi" : `${dayLabel} mesaisi`}</p>
           <AnimatedNumber value={todayHours} format={hrs} className="block text-xl font-bold" />
         </CardContent></Card>
-        <Card size="sm" className="r-lg"><CardContent className="text-center">
-          <p className="text-xs text-muted-foreground">{format(parseISO(date), "LLLL", { locale: tr })} toplamı</p>
-          <AnimatedNumber value={monthHours} format={hrs} className="block text-xl font-bold" />
-        </CardContent></Card>
+        {/* Dokununca Raporlar → Özet (hafta / ay / yıl dökümü) */}
+        <Link href="/reports" transitionTypes={["nav-forward"]} aria-label="Mesai özetini aç" className="block transition active:scale-[0.97]">
+          <Card size="sm" className="r-lg h-full"><CardContent className="text-center">
+            <p className="text-xs text-muted-foreground">{format(parseISO(date), "LLLL", { locale: tr })} toplamı</p>
+            <AnimatedNumber value={monthHours} format={hrs} className="block text-xl font-bold" />
+          </CardContent></Card>
+        </Link>
       </div>
 
       <section className="space-y-2">

@@ -1,8 +1,9 @@
 import { BADGES, earnedBadges, streaks } from "@mesai/core/badges";
-import { hrs, levelFor, LEVELS, money, num } from "@mesai/core/calc";
+import { goalProgress, hrs, levelFor, LEVELS, money, num } from "@mesai/core/calc";
 import { toCSV } from "@mesai/core/csv";
 import { errorText } from "@mesai/core/errors";
-import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck } from "@mesai/core/reports";
+import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck, projection } from "@mesai/core/reports";
+import { periodMonths, periodRange, periodSummary, type Period } from "@mesai/core/period";
 import type { Payslip, Settings } from "@mesai/core/types";
 import { addMonths, format, parseISO, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -10,6 +11,7 @@ import { router } from "expo-router";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, FileText, Minus, Plus, Table2 } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
+import { AnimatedNumber } from "@/components/animated-number";
 import { BadgeIcon } from "@/components/badge-icon";
 import { LevelIcon } from "@/components/level-icon";
 import { PayslipSheet } from "@/components/payslip-sheet";
@@ -63,6 +65,8 @@ function ReportsView({ settings }: { settings: Settings }) {
   const totalHours = useTotalHours() ?? 0;
   const cur = settings.currency;
   const [metric, setMetric] = useState<"hours" | "income">("hours");
+  const [period, setPeriod] = useState<Period>("month");
+  const [segW, setSegW] = useState(0);
   const [sheet, setSheet] = useState<{ item: Payslip | null; del?: boolean } | null>(null);
 
   // Grafik için son 6 ay, yıllık özet/izin için yılın tüm ayları, bordrolu aylar
@@ -71,7 +75,9 @@ function ReportsView({ settings }: { settings: Settings }) {
   const yearMonths = Array.from({ length: today.getMonth() + 1 }, (_, i) => new Date(year, i, 1));
   const slipKeys = (payslips ?? []).map((p) => p.month.slice(0, 7));
   const fullYear = Array.from({ length: 12 }, (_, i) => new Date(year, i, 1));
-  const keys = [...new Set([...six.map(keyOf), ...fullYear.map(keyOf), ...slipKeys])];
+  // Özetteki hafta önceki/sonraki yıla taşabilir: o aylar da okunur
+  const weekMonths = periodMonths(periodRange("week", today));
+  const keys = [...new Set([...six.map(keyOf), ...fullYear.map(keyOf), ...slipKeys, ...weekMonths])];
   const byMonth = useEntriesMap(keys);
   // Kaydı olmayan ay "veri yok" sayılır (uygulama kullanılmadan önceki aylar tam maaş gibi görünmesin)
   const ZERO = { hours: 0, earned: 0, deduction: 0, absentDays: 0, salaryNet: 0, income: 0, workDays: 0 };
@@ -94,6 +100,11 @@ function ReportsView({ settings }: { settings: Settings }) {
   const earned = earnedBadges(byMonth, settings, totalHours, today);
   const st = streaks(Object.values(byMonth).flat(), today);
   const lvl = levelFor(totalHours);
+  // Özet: seçili dönem (hafta pazartesi başlar); hedef yalnızca "Bu ay"da gösterilir
+  const ps = periodSummary(byMonth, settings, periodRange(period, today));
+  const monthEntries = byMonth[keyOf(today)] ?? [];
+  const goal = goalProgress(monthEntries, settings);
+  const pr = projection(monthEntries, settings, today);
   const okColor = "#009966";
 
   async function saveLeave() {
@@ -135,6 +146,72 @@ function ReportsView({ settings }: { settings: Settings }) {
         <Button title="PDF" size="sm" variant="secondary" icon={<FileText size={16} color={c.secondaryForeground} />} onPress={exportPdf} />
       </>
     )}>
+      {/* Özet: bu hafta / bu ay / bu yıl */}
+      <Card style={{ paddingVertical: 16, paddingHorizontal: 16, gap: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <Txt style={h2}>Özet</Txt>
+          <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 4, borderRadius: radius.pill, backgroundColor: c.muted, padding: 4 }}>
+            {(["week", "month", "year"] as const).map((p) => (
+              <Pressable key={p} accessibilityRole="radio" accessibilityState={{ selected: period === p }} onPress={() => { haptic(); setPeriod(p); }}
+                // Web: grid-cols-3, üç sekme en genişi kadar eşit
+                onLayout={(e) => { const w = Math.ceil(e.nativeEvent.layout.width); setSegW((cur) => Math.max(cur, w)); }}
+                style={{ minWidth: segW || undefined, alignItems: "center", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: period === p ? c.primary : "transparent" }}>
+                <Txt style={{ fontSize: 12, lineHeight: 16, fontWeight: "600", color: period === p ? c.primaryForeground : c.mutedForeground }}>
+                  {p === "week" ? "Bu hafta" : p === "month" ? "Bu ay" : "Bu yıl"}
+                </Txt>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <View style={[tile, { paddingHorizontal: 12, paddingVertical: 12 }]}>
+            <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>Mesai</Txt>
+            <AnimatedNumber value={ps.hours} format={hrs} numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 20, lineHeight: 28, fontWeight: "700" }} />
+            <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>{ps.workDays} gün çalışıldı</Txt>
+          </View>
+          <View style={[tile, { paddingHorizontal: 12, paddingVertical: 12 }]}>
+            <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>Mesai kazancı</Txt>
+            <AnimatedNumber value={ps.earned} format={(n) => money(n, cur)} numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 20, lineHeight: 28, fontWeight: "700" }} />
+            <Txt muted style={{ fontSize: 12, lineHeight: 16, textTransform: period === "month" ? "capitalize" : "none" }}>
+              {period === "week" ? "Pazartesi–pazar" : period === "month" ? format(today, "LLLL", { locale: tr }) : year}
+            </Txt>
+          </View>
+        </View>
+        {period === "month" ? (
+          goal.set ? (
+            <View style={{ borderRadius: radius.md, backgroundColor: c.muted, paddingHorizontal: 16, paddingVertical: 12 }}>
+              <Txt style={{ fontSize: 14, lineHeight: 20, fontWeight: "600" }}>{goal.mode === "hours" ? `Hedef ${hrs(goal.goal)} mesai` : `Hedef ${money(goal.goal, cur)}`}</Txt>
+              <Txt muted style={{ fontSize: 14, lineHeight: 20, fontVariant: ["tabular-nums"] }}>
+                {goal.mode === "hours" ? `${hrs(goal.done)} yapıldı` : `${money(goal.income, cur)} kazanıldı`}
+                {" · "}
+                {pr.reached ? <Txt style={{ fontSize: 14, fontWeight: "600", color: c.tint }}>Tamamlandı</Txt>
+                  : goal.mode === "hours" ? `${hrs(Math.max(0, goal.goal - goal.done))} kaldı` : `${money(Math.max(0, goal.goal - goal.income), cur)} kaldı`}
+              </Txt>
+              {!pr.reached && pr.neededHours > 0 ? (
+                <Txt muted style={{ fontSize: 14, lineHeight: 20, fontVariant: ["tabular-nums"] }}>
+                  Hedef için {hrs(Math.round(pr.neededHours * 10) / 10)} mesai daha{pr.remaining > 0 ? `, günde ~${hrs(Math.round(pr.perDay * 10) / 10)} (kalan ${pr.remaining} gün)` : ""}
+                </Txt>
+              ) : null}
+            </View>
+          ) : (
+            <View style={{ borderRadius: radius.md, backgroundColor: c.muted, paddingHorizontal: 16, paddingVertical: 12 }}>
+              <Txt muted style={{ fontSize: 14, lineHeight: 20 }}>Ana sayfadan aylık hedef belirlersen kaç saat mesai daha gerektiği burada görünür.</Txt>
+            </View>
+          )
+        ) : null}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 8 }}>
+          {([
+            ["Ücretli izin", ps.paidLeave], ["Ücretsiz izin", ps.unpaidLeave], ["Raporlu", ps.sick],
+            ["Gelmedi", ps.absent], ["Resmi tatil", ps.holiday], ["Çalışılan gün", ps.workDays],
+          ] as const).map(([k, v], i) => (
+            <View key={k} style={{ width: "50%", flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8, paddingRight: i % 2 === 0 ? 12 : 0, paddingLeft: i % 2 === 1 ? 12 : 0 }}>
+              <Txt muted style={{ fontSize: 14, lineHeight: 20 }}>{k}</Txt>
+              <Txt style={{ fontSize: 14, lineHeight: 20, fontWeight: "600", fontVariant: ["tabular-nums"] }}>{v} gün</Txt>
+            </View>
+          ))}
+        </View>
+      </Card>
+
       {/* Aylık çalışma çizelgesi */}
       <Pressable onPress={() => router.push("/reports/timesheet")}
         style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 14,
