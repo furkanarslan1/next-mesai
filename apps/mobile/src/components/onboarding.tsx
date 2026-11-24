@@ -83,7 +83,7 @@ function TapArt({ reduce }: { reduce: boolean }) {
           <Rect key={`${i}${j}`} x={42 + i * 23} y={46 + j * 23} width="18" height="18" rx="5" fill={c.teal} opacity={LIT.includes(i + j * 7) ? 0.9 : 0.16} />
         )))}
       </>}
-      float={<G><Rect x="70" y="146" width="100" height="40" rx="20" fill={NAVY} /><SvgText x="120" y="171" textAnchor="middle" fontSize="15" fontWeight="700" fill="#fff">+2,5 sa</SvgText></G>} />
+      float={<G><Rect x="70" y="146" width="100" height="40" rx="20" fill={NAVY} /><SvgText x="120" y="171" textAnchor="middle" fontSize="15" fontWeight="700" fill="#fff">+2,5 saat</SvgText></G>} />
   );
 }
 

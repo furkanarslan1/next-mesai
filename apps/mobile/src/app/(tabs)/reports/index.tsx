@@ -400,7 +400,7 @@ function ReportsView({ settings }: { settings: Settings }) {
                 <View key={l.name} style={{ flex: 1, alignItems: "center", gap: 4, opacity: i + 1 <= lvl.level ? 1 : 0.4, filter: i + 1 <= lvl.level ? undefined : "grayscale(1)" }}>
                   <LevelIcon level={i + 1} size={36} />
                   <Txt style={{ fontSize: 11, lineHeight: 13.75, fontWeight: "600", textAlign: "center" }}>{l.name}</Txt>
-                  <Txt muted style={{ fontSize: 10, lineHeight: 15 }}>{l.min} sa</Txt>
+                  <Txt muted style={{ fontSize: 10, lineHeight: 15 }}>{l.min} saat</Txt>
                 </View>
               );
             })}

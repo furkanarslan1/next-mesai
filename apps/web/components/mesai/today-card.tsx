@@ -18,7 +18,7 @@ const minuteNow = () => Math.floor(Date.now() / 60_000);
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const dur = (mins: number) => {
   const h = Math.floor(mins / 60), m = mins % 60;
-  return h > 0 ? (m > 0 ? `${h} sa ${m} dk` : `${h} sa`) : `${m} dk`;
+  return h > 0 ? (m > 0 ? `${h} saat ${m} dk` : `${h} saat`) : `${m} dk`;
 };
 
 /**

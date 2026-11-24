@@ -322,7 +322,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
             <div key={l.name} className={`flex flex-col items-center gap-1 text-center ${i + 1 <= lvl.level ? "" : "opacity-40 grayscale"}`}>
               <LevelIcon level={i + 1} className="size-9" />
               <span className="text-[11px] font-semibold leading-tight">{l.name}</span>
-              <span className="text-[10px] text-muted-foreground">{l.min} sa</span>
+              <span className="text-[10px] text-muted-foreground">{l.min} saat</span>
             </div>
           ))}
         </div>

@@ -72,7 +72,7 @@ function PayForm({ settings }: { settings: Settings }) {
   // Kaydetmeden de özet canlı güncellensin
   const live: Settings = { ...settings, ...next };
   const g = goalProgress(entries ?? [], live);
-  const rateText = (pct: number) => (base > 0 ? `${money((base * pct) / 100, live.currency)}/sa` : "-");
+  const rateText = (pct: number) => (base > 0 ? `${money((base * pct) / 100, live.currency)}/saat` : "-");
 
   // Kaydet çubuğu: değişiklik varken alttaki menünün hemen üstünde belirir (web: sticky, opacity + translate)
   const [bar] = useState(() => new Animated.Value(0));

@@ -37,7 +37,7 @@ function TapArt() {
       )))}
       <g className="ob-float">
         <rect x="70" y="146" width="100" height="40" rx="20" fill="var(--navy)" />
-        <text x="120" y="171" textAnchor="middle" fontSize="15" fontWeight="700" fill="#fff">+2,5 sa</text>
+        <text x="120" y="171" textAnchor="middle" fontSize="15" fontWeight="700" fill="#fff">+2,5 saat</text>
       </g>
     </svg>
   );

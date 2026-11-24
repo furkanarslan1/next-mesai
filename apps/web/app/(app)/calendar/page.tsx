@@ -9,7 +9,7 @@ import { useProfile } from "@/lib/store";
 import { DaySheet } from "@/components/mesai/day-sheet";
 import { useToday } from "@/lib/now";
 import { holidayName } from "@mesai/core/holidays";
-import { goalProgress, hrs, money, monthSummary } from "@mesai/core/calc";
+import { goalProgress, hrs, money, monthSummary, num } from "@mesai/core/calc";
 import { TYPE_META } from "@mesai/core/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -76,7 +76,10 @@ function CalendarView({ today }: { today: Date }) {
                   style={{ background: worked > 0 ? `color-mix(in oklch, var(--teal) ${Math.round(alpha * 100)}%, var(--fill))` : st ? st.bg : "var(--muted)", color: worked > 0 || st ? (strong ? "var(--ink)" : "oklch(0.99 0 0)") : "var(--foreground)" }}>
                   <span className={isToday ? "font-bold" : ""}>{format(d, "d")}</span>
                   {worked > 0 ? (
-                    <span className="mt-1 text-[10px] font-semibold tabular-nums">{hrs(worked)}</span>
+                    // Hücre dar: sayı ve "saat" alt alta (kısaltma yok, her değer sığar)
+                    <span className="mt-0.5 flex flex-col items-center text-[10px] font-semibold leading-[1.1] tabular-nums">
+                      {num(worked)}<span className="text-[9px] font-medium opacity-80">saat</span>
+                    </span>
                   ) : st ? (
                     <span className={`mt-1 text-[10px] font-medium ${st.text}`}>{st.short}</span>
                   ) : null}
