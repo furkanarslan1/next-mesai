@@ -75,3 +75,35 @@ describe("cihazda saklanan önbellek", () => {
     expect(p.clear).toHaveBeenCalled();
   });
 });
+
+describe("toplam mesai saati", () => {
+  beforeEach(() => { resetStore(); });
+  const client = (rpcError: { code: string } | null) => {
+    const select = vi.fn(() => ({ in: async () => ({ data: [{ hours: 2 }, { hours: 3 }], error: null }) }));
+    return {
+      select,
+      c: { auth: { getSession: async () => ({ data: { session: null } }) }, from: () => ({ select }), rpc: async () => (rpcError ? { data: null, error: rpcError } : { data: 7.5, error: null }) } as never,
+    };
+  };
+  it("sunucudaki toplam kullanılır", async () => {
+    const { c, select } = client(null);
+    configureStore({ client: () => c });
+    await load.totalHours(true);
+    expect(getState().totalHours).toBe(7.5);
+    expect(select).not.toHaveBeenCalled();
+  });
+  it("geçici hata tüm kayıtları indirmeye yol açmaz", async () => {
+    const { c, select } = client({ code: "08006" });
+    configureStore({ client: () => c });
+    await load.totalHours(true);
+    expect(getState().totalHours).toBeNull();
+    expect(select).not.toHaveBeenCalled();
+  });
+  it("fonksiyon sunucuda yoksa eski yönteme düşer", async () => {
+    const { c, select } = client({ code: "PGRST202" });
+    configureStore({ client: () => c });
+    await load.totalHours(true);
+    expect(getState().totalHours).toBe(5);
+    expect(select).toHaveBeenCalled();
+  });
+});
