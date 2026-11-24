@@ -7,7 +7,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
-  configureStore, getState, load, retain, revalidateStale, subscribe,
+  configureStore, getState, hydrateFromDevice, load, retain, revalidateStale, subscribe,
 } from "@mesai/core/store";
 import type { Entry, FinanceItem, Profile } from "@mesai/core/types";
 
@@ -15,6 +15,7 @@ export { DEFAULT_SETTINGS, load, monthKey, mutate, resetStore } from "@mesai/cor
 
 // Profil (ad, rol) bir sonraki açılışta ilk çizimde hazır olsun diye tarayıcıda da tutulur
 const PROFILE_KEY = "mesai.profile";
+const CACHE_KEY = "mesai.cache";
 function readSavedProfile(): Profile | null {
   try {
     const raw = typeof window !== "undefined" ? window.localStorage.getItem(PROFILE_KEY) : null;
@@ -26,9 +27,16 @@ configureStore({
   savedProfile: readSavedProfile(),
   saveProfile: (p) => { try { window.localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch { /* yok say */ } },
   clearProfile: () => { try { window.localStorage.removeItem(PROFILE_KEY); } catch { /* yok say */ } },
+  // Son görülen veri tarayıcıda saklanır: sayfa yeniden açılınca anında görünür, arka planda tazelenir
+  persist: {
+    read: async () => { try { return window.localStorage.getItem(CACHE_KEY); } catch { return null; } },
+    write: (v) => { try { window.localStorage.setItem(CACHE_KEY, v); } catch { /* yer yoksa yok say */ } },
+    clear: () => { try { window.localStorage.removeItem(CACHE_KEY); } catch { /* yok say */ } },
+  },
 });
 
 if (typeof window !== "undefined") {
+  void hydrateFromDevice();
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") revalidateStale(); });
   window.addEventListener("online", revalidateStale);
 }

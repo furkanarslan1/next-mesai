@@ -5,7 +5,7 @@
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  configureStore, getState, hydrateProfile, load, retain, revalidateStale, subscribe,
+  configureStore, getState, hydrateFromDevice, hydrateProfile, load, retain, revalidateStale, subscribe,
 } from "@mesai/core/store";
 import type { Entry, FinanceItem, Profile } from "@mesai/core/types";
 import { useEffect, useSyncExternalStore } from "react";
@@ -15,11 +15,19 @@ import { supabase } from "./supabase";
 export { DEFAULT_SETTINGS, load, monthKey, mutate, resetStore } from "@mesai/core/store";
 
 const PROFILE_KEY = "mesai.profile";
+const CACHE_KEY = "mesai.cache";
 configureStore({
   client: () => supabase,
   saveProfile: (p) => { void AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(p)); },
   clearProfile: () => { void AsyncStorage.removeItem(PROFILE_KEY); },
+  // Son görülen veri telefonda saklanır: açılışta anında görünür, arka planda tazelenir
+  persist: {
+    read: () => AsyncStorage.getItem(CACHE_KEY),
+    write: (v) => { void AsyncStorage.setItem(CACHE_KEY, v).catch(() => {}); },
+    clear: () => { void AsyncStorage.removeItem(CACHE_KEY).catch(() => {}); },
+  },
 });
+void hydrateFromDevice();
 // Profil (ad, rol) bir sonraki açılışta hemen görünsün
 AsyncStorage.getItem(PROFILE_KEY)
   .then((raw) => { if (raw) hydrateProfile(JSON.parse(raw) as Profile); })
