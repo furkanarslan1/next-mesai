@@ -16,6 +16,7 @@ import { confirm, Dialog } from "@/components/dialog";
 import { FormRow, FormSection, NumberRow, Segmented, SwitchRow } from "@/components/form";
 import { GoalHero, MonthSummary } from "@/components/goal-hero";
 import { LevelIcon } from "@/components/level-icon";
+import { ReminderCard } from "@/components/reminder-card";
 import { PageStack, Sheet } from "@/components/sheet";
 import { ShortcutButton } from "@/components/shortcut-button";
 import { StatusIcon } from "@/components/status-icon";
@@ -232,6 +233,8 @@ export default function Home() {
             <Button size="sm" variant="secondary" title="Bugüne dön" onPress={() => setDate(todayStr)} />
           </Card>
         ) : null}
+
+        <ReminderCard todayStr={todayStr} hasRecords={todays.length > 0} isToday={isToday} />
 
         {isToday && settings && realEntries ? (
           <TodayCard settings={settings} entries={todays} holiday={holiday}

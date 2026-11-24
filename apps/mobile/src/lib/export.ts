@@ -24,6 +24,14 @@ export async function shareCsv(name: string, csv: string) {
   await share(writeFile(name, csv), "text/csv", "public.comma-separated-values-text");
 }
 
+/** JSON (tam yedek) */
+export async function shareJson(name: string, json: string) {
+  await share(writeFile(name, json), "application/json", "public.json");
+}
+
+/** Seçilen dosyanın metni (yedekten geri yükleme) */
+export const readText = (uri: string) => new File(uri).text();
+
 /**
  * .xlsx dosyası: web ile aynı `write-excel-file` sayfa verisi. Kütüphanenin evrensel sürümü sonucu `Blob`
  * olarak verir; React Native ikili veriden Blob oluşturamadığı için Blob kurucusu bir anlığına baytları

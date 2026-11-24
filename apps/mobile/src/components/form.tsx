@@ -1,5 +1,7 @@
 import { Children, Fragment, isValidElement, useEffect, useState } from "react";
-import { Animated, Pressable, TextInput, View } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { parseNum } from "@mesai/core/num";
+import { Animated, Platform, Pressable, TextInput, View } from "react-native";
 import { haptic } from "@/lib/haptics";
 import { alpha, radius, useColors, useIsDark } from "@/theme";
 import { Txt } from "./ui";
@@ -104,6 +106,72 @@ export function Segmented<T extends string>({ value, options, onChange }: {
           </Pressable>
         );
       })}
+    </View>
+  );
+}
+
+const PRESETS = [100, 125, 150, 200];
+/** Mesai oranı seçici (web: PercentRow): hazır yüzdeler tek dokunuşla, "Özel" ile istediğin değer. */
+export function PercentRow({ label, hint, value, onChange }: { label: string; hint?: string; value: number; onChange: (v: number) => void }) {
+  const c = useColors();
+  const [custom, setCustom] = useState(!PRESETS.includes(value));
+  const chip = (active: boolean, text: string, onPress: () => void) => (
+    <Pressable key={text} accessibilityRole="button" accessibilityState={{ selected: active }} onPress={onPress}
+      style={({ pressed }) => ({ flex: 1, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center",
+        backgroundColor: active ? c.primary : c.muted, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
+      <Txt style={{ fontSize: 15, fontWeight: "600", fontVariant: ["tabular-nums"], color: active ? c.primaryForeground : c.foreground }}>{text}</Txt>
+    </Pressable>
+  );
+  return (
+    <View style={{ gap: 10, paddingHorizontal: 16, paddingVertical: 12 }} accessibilityLabel={label}>
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+        <Txt style={{ fontSize: 15, lineHeight: 22.5, fontWeight: "500" }}>{label}</Txt>
+        <Txt style={{ fontSize: 15, lineHeight: 22.5, fontWeight: "600", fontVariant: ["tabular-nums"] }}>%{(+value.toFixed(2)).toLocaleString("tr-TR")}</Txt>
+      </View>
+      <View style={{ flexDirection: "row", gap: 6 }}>
+        {PRESETS.map((p) => chip(!custom && value === p, `%${p}`, () => { haptic(); setCustom(false); onChange(p); }))}
+        {chip(custom, "Özel", () => setCustom(true))}
+      </View>
+      {custom ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: radius.pill, backgroundColor: c.muted, paddingHorizontal: 16 }}>
+          <Txt muted>%</Txt>
+          <TextInput value={String(value || "")} placeholder="Örn. 175" placeholderTextColor={alpha(c.mutedForeground, 0.5)} keyboardType="decimal-pad"
+            accessibilityLabel={`${label} özel oran`}
+            onChangeText={(t) => { const n = parseNum(t); onChange(Number.isFinite(n) ? Math.min(500, Math.max(0, n)) : 0); }}
+            style={{ flex: 1, height: 44, fontSize: 17, fontWeight: "600", fontVariant: ["tabular-nums"], color: c.foreground, padding: 0 }} />
+        </View>
+      ) : null}
+      {hint ? <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>{hint}</Txt> : null}
+    </View>
+  );
+}
+
+const toDate = (hm: string) => { const d = new Date(); const [h, m] = (hm || "08:00").split(":").map(Number); d.setHours(h, m, 0, 0); return d; };
+const fromDate = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+/**
+ * Saat satırı (web: type="time" alanı): sağda hap içinde saat; dokununca Android'de saat penceresi,
+ * iPhone'da satırın altında tekerlek açılır.
+ */
+export function TimeRow({ label, value, onChange, tone = "card" }: { label: string; value: string; onChange: (v: string) => void; tone?: "card" | "muted" }) {
+  const c = useColors();
+  const dark = useIsDark();
+  const [open, setOpen] = useState(false);
+  const pillBg = tone === "card" ? c.muted : dark ? c.background : c.card;
+  return (
+    <View>
+      <FormRow label={label} onPress={() => { haptic(); setOpen(!open); }}>
+        <View style={{ height: 44, paddingHorizontal: 16, borderRadius: radius.pill, justifyContent: "center", backgroundColor: pillBg }}>
+          <Txt style={{ fontSize: 17, fontWeight: "600", fontVariant: ["tabular-nums"], color: open ? c.tint : c.foreground }}>{value || "--:--"}</Txt>
+        </View>
+      </FormRow>
+      {open ? (
+        <DateTimePicker mode="time" is24Hour locale="tr-TR" display={Platform.OS === "ios" ? "spinner" : "default"} value={toDate(value)}
+          onChange={(ev, d) => {
+            if (Platform.OS !== "ios") setOpen(false);
+            if (ev.type === "set" && d) onChange(fromDate(d));
+          }} />
+      ) : null}
     </View>
   );
 }

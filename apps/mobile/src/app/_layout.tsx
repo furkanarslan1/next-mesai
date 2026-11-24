@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { ConfirmHost } from "@/components/dialog";
 import { Toaster } from "@/components/toast";
 import { AuthProvider, useSession } from "@/lib/auth";
-import { useColors } from "@/theme";
+import { useColors, useIsDark } from "@/theme";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,9 +28,11 @@ function RootStack() {
 }
 
 export default function RootLayout() {
+  // Ayarlar → Görünüm'de seçilen tema durum çubuğuna da uygulanır
+  const dark = useIsDark();
   return (
     <AuthProvider>
-      <StatusBar style="auto" />
+      <StatusBar style={dark ? "light" : "dark"} />
       <RootStack />
       <ConfirmHost />
       <Toaster />

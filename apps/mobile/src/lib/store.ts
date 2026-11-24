@@ -85,6 +85,14 @@ export function useFinanceMap(keys: string[]) {
   return v;
 }
 
+/** Yönetici bağlantıları (Ayarlar → Yöneticim): profil yüklenince okunur. */
+export function useLinks() {
+  const v = useSyncExternalStore(subscribe, () => getState().links);
+  const ready = useSyncExternalStore(subscribe, () => getState().profile?.id ?? "");
+  useEffect(() => { if (ready) load.links(); }, [ready]);
+  return v;
+}
+
 /** Bordro kayıtları (bordro kontrolü). */
 export function usePayslips() {
   const v = useSyncExternalStore(subscribe, () => getState().payslips);

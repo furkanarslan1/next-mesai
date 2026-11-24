@@ -54,7 +54,7 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
   } else if (!start || !end) {
     title = "Bugün iş günü"; sub = "Giriş/çıkış saatini girersen çıkışa geri sayım burada görünür.";
     action = (
-      <Pressable onPress={() => router.navigate("/profile")} style={{ height: 40, paddingHorizontal: 14, borderRadius: radius.pill, justifyContent: "center", backgroundColor: c.muted }}>
+      <Pressable onPress={() => router.navigate("/profile/work")} style={{ height: 40, paddingHorizontal: 14, borderRadius: radius.pill, justifyContent: "center", backgroundColor: c.muted }}>
         <Txt style={{ fontSize: 14, fontWeight: "600", color: c.tint }}>Ekle</Txt>
       </Pressable>
     );

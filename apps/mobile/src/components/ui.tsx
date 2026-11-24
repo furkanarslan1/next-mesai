@@ -38,11 +38,13 @@ export function Card({ style, size = "xl", ...p }: ViewProps & { size?: "xl" | "
   );
 }
 
-type BtnVariant = "primary" | "secondary" | "navy";
-type BtnSize = "default" | "sm" | "lg" | "xl";
+type BtnVariant = "primary" | "secondary" | "navy" | "destructive";
+type BtnSize = "default" | "sm" | "md" | "lg" | "xl";
 const SIZES: Record<BtnSize, { h: number; fs: number; fw: "500" | "600"; px: number }> = {
   sm: { h: 28, fs: 12.8, fw: "500", px: 10 },
   default: { h: 32, fs: 14, fw: "500", px: 10 },
+  /** Web: varsayılan düğme + h-12 (14px yazı, 48px yükseklik) */
+  md: { h: 48, fs: 14, fw: "500", px: 10 },
   lg: { h: 48, fs: 16, fw: "500", px: 16 },
   xl: { h: 56, fs: 16, fw: "600", px: 10 },
 };
@@ -52,8 +54,9 @@ export function Button({ title, icon, loading, variant = "primary", size = "defa
   Omit<PressableProps, "style"> & { title: string; icon?: React.ReactNode; loading?: boolean; variant?: BtnVariant; size?: BtnSize; style?: StyleProp<ViewStyle> }) {
   const c = useColors();
   const s = SIZES[size];
-  const bg = variant === "secondary" ? c.secondary : c.primary;
-  const fg = variant === "secondary" ? c.secondaryForeground : c.primaryForeground;
+  const bg = variant === "secondary" ? c.secondary : variant === "destructive" ? c.destructive : c.primary;
+  // Kırmızı düğmede yazı her iki temada beyaz (web: bg-destructive text-white)
+  const fg = variant === "secondary" ? c.secondaryForeground : variant === "destructive" ? "#ffffff" : c.primaryForeground;
   return (
     <Pressable
       {...p}
@@ -105,12 +108,14 @@ export function Stat({ label, value, size = 18 }: { label: string; value: string
  * iOS büyük başlıklı sayfa iskeleti (web: components/mesai/page.tsx): üstte küçük satır (eyebrow) ve sağında
  * öğe, büyük başlık ve sağında düğmeler; kaydırınca küçük başlık şeridi; alttan panel açılınca sayfa geri çekilir.
  */
-export function Screen({ title, compactTitle, eyebrow, accessory, actions, back, children, tabs = true, refreshControl }: {
+export function Screen({ title, compactTitle, eyebrow, accessory, actions, back, children, tabs = true, refreshControl, overlay }: {
   title: React.ReactNode; compactTitle?: string; eyebrow?: React.ReactNode; accessory?: React.ReactNode; actions?: React.ReactNode;
   /** Sol üstte "‹ Raporlar" gibi geri bağlantısı (web: back) */
   back?: { label: string; onPress: () => void };
   children: React.ReactNode; tabs?: boolean;
   refreshControl?: React.ComponentProps<typeof ScrollView>["refreshControl"];
+  /** Kaydırılan içeriğin üstünde sabit duran öğe (ör. alttaki "Değişiklikleri kaydet" çubuğu) */
+  overlay?: React.ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   const [compact, setCompact] = useState(false);
@@ -140,6 +145,7 @@ export function Screen({ title, compactTitle, eyebrow, accessory, actions, back,
         {children}
       </ScrollView>
       <CompactBar title={compactTitle ?? (typeof title === "string" ? title : "")} visible={compact} onBack={back?.onPress} />
+      {overlay}
     </PageStack>
   );
 }
