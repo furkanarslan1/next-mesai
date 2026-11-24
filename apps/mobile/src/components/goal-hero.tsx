@@ -13,6 +13,7 @@ import { Dialog } from "./dialog";
 import { Segmented } from "./form";
 import { GoalRing } from "./goal-ring";
 import { toast } from "./toast";
+import { AnimatedNumber } from "./animated-number";
 import { Button, Card, Eyebrow, Stat, Txt } from "./ui";
 
 /** Aylık özet (web'deki MonthSummary): toplam kazanç ve mesai saati / günü / kazancı. */
@@ -25,7 +26,7 @@ export function MonthSummary({ entries, settings }: { entries: Entry[]; settings
     <View style={{ gap: 20 }}>
       <View style={{ alignItems: "center" }}>
         <Txt muted style={{ fontSize: 14, lineHeight: 20 }}>Bu ay toplam kazanç</Txt>
-        <Txt numberOfLines={1} adjustsFontSizeToFit style={{ marginTop: 4, fontSize: 48, lineHeight: 48, fontWeight: "700", letterSpacing: -1.2, fontVariant: ["tabular-nums"] }}>{money(g.income, cur)}</Txt>
+        <AnimatedNumber value={g.income} format={(n) => money(n, cur)} numberOfLines={1} adjustsFontSizeToFit style={{ marginTop: 4, fontSize: 48, lineHeight: 48, fontWeight: "700", letterSpacing: -1.2 }} />
         <Txt muted style={{ marginTop: 8, fontSize: 12, lineHeight: 16, textAlign: "center", fontVariant: ["tabular-nums"] }}>
           Maaş {money(settings.monthly_salary, cur)}{g.deduction > 0 ? ` − kesinti ${money(g.deduction, cur)}` : ""} + mesai {money(g.earned, cur)}
         </Txt>
@@ -56,6 +57,7 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
   const pr = today ? projection(entries, opt, today) : null;
   const cur = opt.currency;
   const fmtHrs = (n: number) => hrs(Math.round(n * 10) / 10);
+  const fmtMoney = (n: number) => money(n, cur);
 
   function openEditor() {
     setMode(opt.goal_mode);
@@ -97,21 +99,21 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
         <>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
             <GoalRing percent={g.percent} size={156}>
-              <Txt style={{ fontSize: 33.6, lineHeight: 33.6, fontWeight: "700", letterSpacing: -0.84 }}>%{Math.round(g.percent)}</Txt>
+              <AnimatedNumber value={g.percent} format={(n) => `%${Math.round(n)}`} style={{ fontSize: 33.6, lineHeight: 33.6, fontWeight: "700", letterSpacing: -0.84 }} />
               <Txt muted style={{ marginTop: 4, fontSize: 11, lineHeight: 16.5, fontWeight: "600", letterSpacing: 0.55, textTransform: "uppercase" }}>{g.percent >= 100 ? "Tamam" : "Hedef"}</Txt>
             </GoalRing>
             <View style={{ flex: 1, minWidth: 0, gap: 12 }}>
               {g.mode === "hours" ? (
                 <>
-                  <HeroStat label="Yapılan mesai" value={fmtHrs(g.done)} />
-                  <HeroStat label="Kalan" value={remainingHours > 0 ? fmtHrs(remainingHours) : "Tamamlandı"} done={remainingHours <= 0} />
-                  <HeroStat label="Toplam kazanç" value={money(g.income, cur)} small />
+                  <HeroStat label="Yapılan mesai" value={g.done} format={fmtHrs} />
+                  <HeroStat label="Kalan" value={remainingHours} format={fmtHrs} done={remainingHours <= 0} />
+                  <HeroStat label="Toplam kazanç" value={g.income} format={fmtMoney} small />
                 </>
               ) : (
                 <>
-                  <HeroStat label="Bu ay kazanç" value={money(g.income, cur)} />
-                  <HeroStat label="Kalan" value={remainingMoney > 0 ? money(remainingMoney, cur) : "Tamamlandı"} done={remainingMoney <= 0} />
-                  <HeroStat label="Gereken toplam mesai" value={fmtHrs(g.hoursNeeded)} small />
+                  <HeroStat label="Bu ay kazanç" value={g.income} format={fmtMoney} />
+                  <HeroStat label="Kalan" value={remainingMoney} format={fmtMoney} done={remainingMoney <= 0} />
+                  <HeroStat label="Gereken toplam mesai" value={g.hoursNeeded} format={fmtHrs} small />
                 </>
               )}
             </View>
@@ -166,14 +168,15 @@ function Tile({ children }: { children: React.ReactNode }) {
   return <View style={{ flex: 1, borderRadius: radius.md, backgroundColor: c.muted, paddingVertical: 12, paddingHorizontal: 12, alignItems: "center" }}>{children}</View>;
 }
 
-function HeroStat({ label, value, small, done }: { label: string; value: string; small?: boolean; done?: boolean }) {
+function HeroStat({ label, value, format, small, done }: { label: string; value: number; format: (n: number) => string; small?: boolean; done?: boolean }) {
   const c = useColors();
+  const style = { fontWeight: "700" as const, fontSize: small ? 15 : 20, lineHeight: small ? 19 : 25, letterSpacing: small ? 0 : -0.5 };
   return (
     <View>
       <Txt muted style={{ fontSize: 12, lineHeight: 18 }}>{label}</Txt>
-      <Txt numberOfLines={1} adjustsFontSizeToFit
-        style={{ fontWeight: "700", fontVariant: ["tabular-nums"], fontSize: small ? 15 : 20, lineHeight: small ? 19 : 25, letterSpacing: small ? 0 : -0.5, color: done ? c.tint : c.foreground }}>{value}</Txt>
+      {/* "Kalan" bitince web'deki gibi sayı yerine "Tamamlandı" yazar */}
+      {done ? <Txt numberOfLines={1} style={[style, { color: c.tint }]}>Tamamlandı</Txt>
+        : <AnimatedNumber value={value} format={format} numberOfLines={1} adjustsFontSizeToFit style={style} />}
     </View>
   );
 }
-

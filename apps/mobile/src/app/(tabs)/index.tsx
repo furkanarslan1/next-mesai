@@ -12,10 +12,12 @@ import { useOptimistic, useState, useTransition } from "react";
 import { Platform, Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CalendarGrid } from "@/components/calendar-grid";
+import { AnimatedNumber } from "@/components/animated-number";
 import { confirm, Dialog } from "@/components/dialog";
 import { FormRow, FormSection, NumberRow, Segmented, SwitchRow } from "@/components/form";
 import { GoalHero, MonthSummary } from "@/components/goal-hero";
 import { LevelIcon } from "@/components/level-icon";
+import { Onboarding } from "@/components/onboarding";
 import { ReminderCard } from "@/components/reminder-card";
 import { PageStack, Sheet } from "@/components/sheet";
 import { ShortcutButton } from "@/components/shortcut-button";
@@ -188,10 +190,10 @@ export default function Home() {
     );
   };
 
-  const smallCard = (label: string, value: string) => (
+  const smallCard = (label: string, value: number) => (
     <Card size="lg" style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 12, alignItems: "center" }}>
       <Txt muted style={{ fontSize: 12, lineHeight: 16, textAlign: "center" }}>{label}</Txt>
-      <Txt style={{ fontSize: 20, lineHeight: 28, fontWeight: "700" }}>{value}</Txt>
+      <AnimatedNumber value={value} format={hrs} style={{ fontSize: 20, lineHeight: 28, fontWeight: "700" }} />
     </Card>
   );
 
@@ -234,6 +236,8 @@ export default function Home() {
           </Card>
         ) : null}
 
+        {profile?.role === "employee" ? <Onboarding /> : null}
+
         <ReminderCard todayStr={todayStr} hasRecords={todays.length > 0} isToday={isToday} />
 
         {isToday && settings && realEntries ? (
@@ -262,8 +266,8 @@ export default function Home() {
         )}
 
         <View style={{ flexDirection: "row", gap: 12 }}>
-          {smallCard(isToday ? "Bugünün mesaisi" : `${dayLabel} mesaisi`, hrs(todayHours))}
-          {smallCard(`${format(parseISO(date), "LLLL", { locale: tr })} toplamı`, hrs(monthHours))}
+          {smallCard(isToday ? "Bugünün mesaisi" : `${dayLabel} mesaisi`, todayHours)}
+          {smallCard(`${format(parseISO(date), "LLLL", { locale: tr })} toplamı`, monthHours)}
         </View>
 
         {/* Mesai kısayolları */}

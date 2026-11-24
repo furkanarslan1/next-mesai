@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, Plus, Repeat } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { CategoryIcon } from "@/components/category-icon";
+import { AnimatedNumber } from "@/components/animated-number";
 import { BudgetSheet, FinanceSheet } from "@/components/finance-sheet";
 import { SwipeRow } from "@/components/swipe-row";
 import { toast } from "@/components/toast";
@@ -85,7 +86,7 @@ export default function FinanceScreen() {
       <Card style={{ padding: 20, gap: 20 }} accessibilityLabel="Aylık özet">
         <View style={{ alignItems: "center" }}>
           <Txt muted style={{ fontSize: 14, lineHeight: 20 }}>Ay sonu kalan</Txt>
-          <Txt numberOfLines={1} adjustsFontSizeToFit style={{ marginTop: 4, fontSize: 48, lineHeight: 48, fontWeight: "700", letterSpacing: -1.2, fontVariant: ["tabular-nums"], color: f.left < 0 ? c.destructive : c.foreground }}>{money(f.left, cur)}</Txt>
+          <AnimatedNumber value={f.left} format={(n) => money(n, cur)} numberOfLines={1} adjustsFontSizeToFit style={{ marginTop: 4, fontSize: 48, lineHeight: 48, fontWeight: "700", letterSpacing: -1.2, color: f.left < 0 ? c.destructive : c.foreground }} />
           <Txt muted style={{ marginTop: 8, fontSize: 12, lineHeight: 16, textAlign: "center", fontVariant: ["tabular-nums"] }}>
             Maaş {money(f.salary, cur)}{f.deduction > 0 ? ` (kesinti ${money(f.deduction, cur)} düşüldü)` : ""} + mesai {money(f.overtime, cur)}{f.extra > 0 ? ` + ek gelir ${money(f.extra, cur)}` : ""} − gider {money(f.expense, cur)}
           </Txt>
