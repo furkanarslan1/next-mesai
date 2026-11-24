@@ -86,7 +86,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
         : !hasData ? <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>Kaydetmek için en az bir satıra değer gir.</Txt> : null}
       <Button title="Kaydet" size="xl" disabled={!valid || busy} onPress={save} />
       {item ? (
-        <Button title="Bordroyu sil" size="lg" disabled={busy} style={{ backgroundColor: c.destructive }} icon={<Trash2 size={16} color="#fff" />}
+        <Button title="Bordroyu sil" size="lg" variant="destructive" disabled={busy} icon={<Trash2 size={16} color="#fff" />}
           onPress={() => setView("delete")} />
       ) : null}
     </>
@@ -104,7 +104,7 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
           </View>
           <View style={{ flexDirection: "row", gap: 12 }}>
             <Button title="Hayır" variant="secondary" size="xl" disabled={busy} style={{ flex: 1, backgroundColor: c.background }} onPress={() => (startInDelete ? onClose() : setView("form"))} />
-            <Button title="Evet, sil" size="xl" disabled={busy} style={{ flex: 1, backgroundColor: c.destructive }} onPress={remove} />
+            <Button title="Evet, sil" size="xl" variant="destructive" disabled={busy} style={{ flex: 1 }} onPress={remove} />
           </View>
         </View>
       ) : view === "month" ? (

@@ -39,7 +39,7 @@ function rowDrag(x: Animated.Value) {
  * (düzenleme) yerine satır kapanır.
  */
 export function SwipeRow({ children, onDelete, onPress, label = "Sil", style, bg }: {
-  children: React.ReactNode; onDelete: () => void; onPress: () => void; label?: string; style?: ViewStyle;
+  children: React.ReactNode; onDelete: () => void; onPress?: () => void; label?: string; style?: ViewStyle;
   /** Satır zemini (varsayılan kart rengi; bordro kontrolünde muted) */
   bg?: string;
 }) {
@@ -56,8 +56,8 @@ export function SwipeRow({ children, onDelete, onPress, label = "Sil", style, bg
         </Pressable>
       </Animated.View>
       <Animated.View {...drag.handlers} style={{ transform: [{ translateX: x }] }}>
-        <Pressable onPress={() => { if (drag.isOpen()) drag.close(); else onPress(); }}
-          style={({ pressed }) => ({ backgroundColor: bg ?? (pressed ? c.muted : c.card), opacity: bg && pressed ? 0.9 : 1 })}>
+        <Pressable onPress={() => { if (drag.isOpen()) drag.close(); else onPress?.(); }}
+          style={({ pressed }) => ({ backgroundColor: bg ?? (pressed && onPress ? c.muted : c.card), opacity: bg && pressed ? 0.9 : 1 })}>
           {children}
         </Pressable>
       </Animated.View>

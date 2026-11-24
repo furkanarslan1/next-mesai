@@ -75,8 +75,10 @@ const styles = StyleSheet.create({
  * Ortada açılan pencere (web'deki shadcn Dialog): kart zemin, 2rem köşe, ince çerçeve, sağ üstte X.
  * `padding`/`gap` web'deki sınıflara göre: varsayılan p-4 gap-4, "Farklı mesai" p-5 gap-5.
  */
-export function Dialog({ open, onClose, title, titleSize = 16, padding = 16, gap = 16, children }: {
-  open: boolean; onClose: () => void; title: string; titleSize?: number; padding?: number; gap?: number; children: React.ReactNode;
+export function Dialog({ open, onClose, title, description, titleSize = 16, padding = 16, gap = 16, showClose = true, children }: {
+  open: boolean; onClose: () => void; title: string; description?: React.ReactNode; titleSize?: number; padding?: number; gap?: number;
+  /** Sağ üstteki X (web: showCloseButton) */
+  showClose?: boolean; children: React.ReactNode;
 }) {
   const c = useColors();
   const dark = useIsDark();
@@ -110,12 +112,19 @@ export function Dialog({ open, onClose, title, titleSize = 16, padding = 16, gap
           padding, gap, backgroundColor: c.card, borderColor: c.dialogBorder, boxShadow: c.shadow.dialog,
           opacity: anim, transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }],
         }]}>
-          <Txt style={{ fontSize: titleSize, lineHeight: titleSize === 16 ? 16 : 28, fontWeight: "500", paddingRight: 28 }}>{title}</Txt>
+          {description ? (
+            <View style={{ gap: 8 }}>
+              <Txt style={{ fontSize: titleSize, lineHeight: titleSize === 16 ? 16 : 28, fontWeight: "500", paddingRight: showClose ? 28 : 0 }}>{title}</Txt>
+              <Txt muted style={{ fontSize: 14, lineHeight: 20 }}>{description}</Txt>
+            </View>
+          ) : (
+            <Txt style={{ fontSize: titleSize, lineHeight: titleSize === 16 ? 16 : 28, fontWeight: "500", paddingRight: showClose ? 28 : 0 }}>{title}</Txt>
+          )}
           {children}
-          <Pressable onPress={onClose} accessibilityLabel="Kapat" hitSlop={8}
+          {showClose ? <Pressable onPress={onClose} accessibilityLabel="Kapat" hitSlop={8}
             style={({ pressed }) => ({ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? c.muted : "transparent" })}>
             <X size={16} color={c.foreground} />
-          </Pressable>
+          </Pressable> : null}
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>

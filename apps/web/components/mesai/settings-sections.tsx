@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Download, FileJson, FileSpreadsheet, LogOut, Plus, Trash2, Upload } from "lucide-react";
 import { errorText } from "@mesai/core/errors";
 import { createClient } from "@/lib/supabase/client";
-import { fetchAll } from "@mesai/core/fetch-all";
+import { backupTables, collectBackup } from "@mesai/core/backup";
 import { download, nextDownload, toCSV } from "@/lib/backup";
 import { restoreBackup } from "@/lib/restore";
 import { haptic } from "@/lib/haptics";
@@ -187,15 +187,10 @@ export function DataSettings() {
   async function backup(format: "json" | "csv") {
     setBusy(true);
     try {
-      const supabase = createClient();
-      const tables = employee ? ["user_settings", "shortcuts", "entries", "finance_items", "payslips"] : ["manager_links"];
-      const data: Record<string, unknown[]> = {};
-      for (const t of tables) {
-        // 1000 satır sınırına takılmadan tüm kayıtlar okunur (eksik yedek sessizce oluşmasın)
-        const rows = await fetchAll<Record<string, unknown>>((a, b) => supabase.from(t).select("*").order("id").range(a, b));
-        if (!rows) { toast.error("Yedek alınamadı, tekrar dene"); return; }
-        data[t] = rows;
-      }
+      const tables = backupTables(employee);
+      // 1000 satır sınırına takılmadan tüm kayıtlar okunur (eksik yedek sessizce oluşmasın)
+      const data = await collectBackup(createClient(), employee);
+      if (!data) { toast.error("Yedek alınamadı, tekrar dene"); return; }
       const stamp = new Date().toISOString().slice(0, 10);
       if (format === "json") download(`mesai-yedek-${stamp}.json`, JSON.stringify(data, null, 2), "application/json");
       else for (const t of tables) if (data[t].length) { download(`mesai-${t}-${stamp}.csv`, toCSV(data[t] as Record<string, unknown>[]), "text/csv"); await nextDownload(); }

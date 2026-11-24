@@ -1,4 +1,5 @@
 import { useColorScheme } from "react-native";
+import { usePrefs } from "@/lib/prefs";
 
 /**
  * Web'deki tema (apps/web/app/globals.css) ile birebir aynı: değerler web'in hesaplanmış CSS
@@ -108,7 +109,12 @@ export function alpha(hex: string, a: number) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
-export function useColors(): Colors {
-  return useColorScheme() === "dark" ? dark : light;
+/** Koyu tema mı: Ayarlar → Görünüm'deki seçim, "Sistem" ise telefonun ayarı. */
+export function useIsDark() {
+  const sys = useColorScheme();
+  const { theme } = usePrefs();
+  return theme === "system" ? sys === "dark" : theme === "dark";
 }
-export const useIsDark = () => useColorScheme() === "dark";
+export function useColors(): Colors {
+  return useIsDark() ? dark : light;
+}
