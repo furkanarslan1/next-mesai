@@ -9,11 +9,13 @@ import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, FileText, Minus, Pl
 import { toast } from "sonner";
 import { useToday } from "@/lib/now";
 import { mutate, useEntriesMap, usePayslips, useProfile, useSettings, useTotalHours } from "@/lib/store";
-import { hrs, levelFor, LEVELS, money, num } from "@mesai/core/calc";
+import { goalProgress, hrs, levelFor, LEVELS, money, num } from "@mesai/core/calc";
 import { Page } from "@/components/mesai/page";
 import { SwipeRow } from "@/components/mesai/swipe-row";
 import { LevelIcon } from "@/components/mesai/level-icon";
-import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck } from "@mesai/core/reports";
+import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck, projection } from "@mesai/core/reports";
+import { periodMonths, periodRange, periodSummary, type Period } from "@mesai/core/period";
+import { AnimatedNumber } from "@/components/mesai/animated-number";
 import { BADGES, earnedBadges, streaks } from "@mesai/core/badges";
 import { download, toCSV } from "@/lib/backup";
 import type { Payslip, Settings } from "@mesai/core/types";
@@ -48,6 +50,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
   const totalHours = useTotalHours() ?? 0;
   const cur = settings.currency;
   const [metric, setMetric] = useState<"hours" | "income">("hours");
+  const [period, setPeriod] = useState<Period>("month");
   const [sheet, setSheet] = useState<{ item: Payslip | null; del?: boolean } | null>(null);
 
   // Grafik için son 6 ay, yıllık özet/izin için yılın tüm ayları, bordrolu aylar
@@ -57,7 +60,9 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
   const slipKeys = (payslips ?? []).map((p) => p.month.slice(0, 7));
   // Yıllık izin için yılın tüm ayları okunur: ileriye planlanmış ücretli izinler de haktan düşsün
   const fullYear = Array.from({ length: 12 }, (_, i) => new Date(year, i, 1));
-  const keys = [...new Set([...six.map(keyOf), ...fullYear.map(keyOf), ...slipKeys])];
+  // Özetteki hafta önceki/sonraki yıla taşabilir: o aylar da okunur
+  const weekMonths = periodMonths(periodRange("week", today));
+  const keys = [...new Set([...six.map(keyOf), ...fullYear.map(keyOf), ...slipKeys, ...weekMonths])];
   const byMonth = useEntriesMap(keys);
   // Kaydı olmayan ay "veri yok" sayılır (uygulama kullanılmadan önceki aylar tam maaş gibi görünmesin)
   const ZERO = { hours: 0, earned: 0, deduction: 0, absentDays: 0, salaryNet: 0, income: 0, workDays: 0 };
@@ -80,6 +85,11 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
   const earned = earnedBadges(byMonth, settings, totalHours, today);
   const st = streaks(Object.values(byMonth).flat(), today);
   const lvl = levelFor(totalHours);
+  // Özet: seçili dönem (hafta pazartesi başlar); hedef yalnızca "Bu ay"da gösterilir
+  const ps = periodSummary(byMonth, settings, periodRange(period, today));
+  const monthEntries = byMonth[keyOf(today)] ?? [];
+  const goal = goalProgress(monthEntries, settings);
+  const pr = projection(monthEntries, settings, today);
 
   async function saveLeave() {
     const n = Math.round(Number(leaveInput));
@@ -100,6 +110,61 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
         <Button size="sm" variant="secondary" onClick={() => window.print()}><FileText className="size-4" />PDF</Button>
       </div>
     }>
+      <Card id="ozet"><CardContent className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-semibold">Özet</h2>
+          <div className="no-print grid grid-cols-3 gap-1 rounded-full bg-muted p-1 text-xs font-semibold" role="radiogroup" aria-label="Dönem">
+            {(["week", "month", "year"] as const).map((p) => (
+              <button key={p} type="button" role="radio" aria-checked={period === p} onClick={() => setPeriod(p)}
+                className={`rounded-full px-3 py-1.5 transition ${period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                {p === "week" ? "Bu hafta" : p === "month" ? "Bu ay" : "Bu yıl"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="r-md bg-muted px-3 py-3 text-center">
+            <p className="text-xs text-muted-foreground">Mesai</p>
+            <AnimatedNumber value={ps.hours} format={hrs} className="block text-xl font-bold" />
+            <p className="text-xs text-muted-foreground">{ps.workDays} gün çalışıldı</p>
+          </div>
+          <div className="r-md bg-muted px-3 py-3 text-center">
+            <p className="text-xs text-muted-foreground">Mesai kazancı</p>
+            <AnimatedNumber value={ps.earned} format={(n) => money(n, cur)} className="block text-xl font-bold" />
+            <p className="text-xs text-muted-foreground">{period === "week" ? "Pazartesi–pazar" : period === "month" ? format(today, "LLLL", { locale: tr }) : year}</p>
+          </div>
+        </div>
+        {period === "month" && (
+          goal.set ? (
+            <div className="r-md bg-muted px-4 py-3 text-sm">
+              <p className="font-semibold">{goal.mode === "hours" ? `Hedef ${hrs(goal.goal)} mesai` : `Hedef ${money(goal.goal, cur)}`}</p>
+              <p className="text-muted-foreground tabular-nums">
+                {goal.mode === "hours" ? `${hrs(goal.done)} yapıldı` : `${money(goal.income, cur)} kazanıldı`}
+                {" · "}
+                {pr.reached ? <span className="font-semibold text-[var(--tint)]">Tamamlandı</span>
+                  : goal.mode === "hours" ? `${hrs(Math.max(0, goal.goal - goal.done))} kaldı` : `${money(Math.max(0, goal.goal - goal.income), cur)} kaldı`}
+              </p>
+              {!pr.reached && pr.neededHours > 0 && (
+                <p className="text-muted-foreground tabular-nums">
+                  Hedef için {hrs(Math.round(pr.neededHours * 10) / 10)} mesai daha{pr.remaining > 0 ? `, günde ~${hrs(Math.round(pr.perDay * 10) / 10)} (kalan ${pr.remaining} gün)` : ""}
+                </p>
+              )}
+            </div>
+          ) : <p className="r-md bg-muted px-4 py-3 text-sm text-muted-foreground">Ana sayfadan aylık hedef belirlersen kaç saat mesai daha gerektiği burada görünür.</p>
+        )}
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          {[
+            ["Ücretli izin", ps.paidLeave], ["Ücretsiz izin", ps.unpaidLeave], ["Raporlu", ps.sick],
+            ["Gelmedi", ps.absent], ["Resmi tatil", ps.holiday], ["Çalışılan gün", ps.workDays],
+          ].map(([k, v]) => (
+            <div key={k} className="flex items-baseline justify-between gap-2">
+              <dt className="text-muted-foreground">{k}</dt>
+              <dd className="font-semibold tabular-nums">{v} gün</dd>
+            </div>
+          ))}
+        </dl>
+      </CardContent></Card>
+
       <Link href="/reports/timesheet" transitionTypes={["nav-forward"]}
         className="no-print settings-row flex items-center gap-3.5 rounded-[var(--r-lg)] bg-card px-4 py-3.5 shadow-[var(--shadow-soft),0_0_0_0.5px_var(--hairline)]">
         <span className="settings-icon" style={{ background: "var(--teal)" }}><Table2 className="size-[18px]" /></span>
