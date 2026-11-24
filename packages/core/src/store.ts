@@ -201,9 +201,15 @@ export const load = {
   totalHours: (force = false) => (!force && state.totalHours !== null && fresh("total", TTL.total) ? Promise.resolve() : once("total", async () => {
     const ep = epoch;
     const supabase = createClient();
-    // Toplam sunucuda hesaplanır (migration 0005). Henüz uygulanmadıysa eski yönteme düşer.
-    let total = await readConsistent(async () => await supabase.rpc("total_overtime_hours"));
-    if (total === null) {
+    // Toplam sunucuda hesaplanır (migration 0005): tek sayı gelir. Yalnızca fonksiyon sunucuda YOKSA eski yönteme
+    // (tüm kayıtların saatini indirip toplama) düşülür; geçici bir ağ hatası tüm geçmişi indirmeye yol açmasın.
+    let missingRpc = false;
+    let total = await readConsistent(async () => {
+      const r = await supabase.rpc("total_overtime_hours");
+      if (r.error && /PGRST202|42883/.test(String((r.error as { code?: string }).code))) missingRpc = true;
+      return r;
+    });
+    if (total === null && missingRpc) {
       const rows = await readConsistent(async () => await supabase.from("entries").select("hours").in("type", ["overtime", "holiday"]));
       if (rows) total = rows.reduce((a, r) => a + Number(r.hours), 0);
     }
