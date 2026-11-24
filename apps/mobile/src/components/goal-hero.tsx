@@ -1,4 +1,4 @@
-import { goalProgress, hrs, money, monthSummary } from "@mesai/core/calc";
+import { goalProgress, hrs, money, monthSummary, saat } from "@mesai/core/calc";
 import { errorText } from "@mesai/core/errors";
 import { parseNum } from "@mesai/core/num";
 import { projection } from "@mesai/core/reports";
@@ -64,7 +64,8 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
   const cur = opt.currency;
   const burst = useRiseBurst(monthLabel, g.set && g.percent >= 100 ? 1 : 0, true);
   const ringPop = usePop(burst);
-  const fmtHrs = (n: number) => hrs(Math.round(n * 10) / 10);
+  // Hedef kartında saatler uzun yazılır: "46,9 saat"
+  const fmtHrs = (n: number) => saat(Math.round(n * 10) / 10);
   const fmtMoney = (n: number) => money(n, cur);
 
   function openEditor() {
@@ -92,7 +93,7 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
       <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
         <View style={{ flex: 1 }}>
           <Eyebrow>{monthLabel} {g.set ? "hedefi" : "özeti"}</Eyebrow>
-          {g.set ? <Txt style={{ marginTop: 2, fontSize: 17, lineHeight: 25.5, fontWeight: "600" }}>{g.mode === "hours" ? `${hrs(g.goal)} mesai` : money(g.goal, cur)}</Txt> : null}
+          {g.set ? <Txt style={{ marginTop: 2, fontSize: 17, lineHeight: 25.5, fontWeight: "600" }}>{g.mode === "hours" ? `${saat(g.goal)} mesai` : money(g.goal, cur)}</Txt> : null}
         </View>
         <Button size="sm" variant="secondary" onPress={openEditor} title={g.set ? "Düzenle" : "Hedef belirle"}
           icon={g.set ? <Pencil size={16} color={c.secondaryForeground} /> : <Target size={16} color={c.secondaryForeground} />} />
@@ -194,7 +195,11 @@ function HeroStat({ label, value, format, small, done, note }: {
       {/* "Kalan" bitince web'deki gibi sayı yerine "Tamamlandı" yazar */}
       {done ? <Txt numberOfLines={1} style={[style, { color: c.tint }]}>Tamamlandı</Txt>
         : <AnimatedNumber value={value} format={format} numberOfLines={1} adjustsFontSizeToFit style={style} />}
-      {note ? <Txt muted numberOfLines={1} style={{ fontSize: 11, lineHeight: 16.5, fontVariant: ["tabular-nums"] }}>{note}</Txt> : null}
+      {note ? (
+        <View style={{ alignSelf: "flex-start", maxWidth: "100%", marginTop: 4, borderRadius: 8, backgroundColor: c.muted, paddingHorizontal: 8, paddingVertical: 2 }}>
+          <Txt muted numberOfLines={1} style={{ fontSize: 11, lineHeight: 16.5, fontVariant: ["tabular-nums"] }}>{note}</Txt>
+        </View>
+      ) : null}
     </View>
   );
 }

@@ -6,7 +6,7 @@ import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Pencil, Target } from "lucide-react";
 import { mutate } from "@/lib/store";
-import { goalProgress, hrs, money } from "@mesai/core/calc";
+import { goalProgress, money, saat } from "@mesai/core/calc";
 import { projection } from "@mesai/core/reports";
 import { MonthSummary } from "@/components/mesai/month-summary";
 import { GoalRing } from "@/components/mesai/goal-ring";
@@ -61,14 +61,15 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
   const remainingMoney = Math.max(0, g.goal - g.income);
   const remainingHours = Math.max(0, g.goal - g.done);
   const fmtMoney = (n: number) => money(n, cur);
-  const fmtHrs = (n: number) => hrs(Math.round(n * 10) / 10);
+  // Hedef kartında saatler uzun yazılır: "46,9 saat"
+  const fmtHrs = (n: number) => saat(Math.round(n * 10) / 10);
 
   return (
     <section className="glass min-h-[15.5rem] w-full space-y-5 p-5 sm:p-6" aria-label="Aylık hedef">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">{monthLabel} {g.set ? "hedefi" : "özeti"}</p>
-          {g.set && <p className="mt-0.5 text-[17px] font-semibold">{g.mode === "hours" ? `${hrs(g.goal)} mesai` : money(g.goal, cur)}</p>}
+          {g.set && <p className="mt-0.5 text-[17px] font-semibold">{g.mode === "hours" ? `${saat(g.goal)} mesai` : money(g.goal, cur)}</p>}
         </div>
         <Button size="sm" variant="secondary" onClick={openEditor}>
           {g.set ? <Pencil className="size-4" /> : <Target className="size-4" />}
@@ -126,7 +127,7 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
         <div className="grid grid-cols-2 gap-2.5">
           <div className="r-md bg-muted px-3 py-3 text-center">
             <p className="text-[11px] text-muted-foreground">Bu tempoyla ay sonu</p>
-            <p className="text-lg font-bold tabular-nums leading-tight">{pr.mode === "hours" ? hrs(Math.round(pr.projectedHours * 10) / 10) : money(pr.projectedIncome, cur)}</p>
+            <p className="text-lg font-bold tabular-nums leading-tight">{pr.mode === "hours" ? fmtHrs(pr.projectedHours) : money(pr.projectedIncome, cur)}</p>
             <p className={`mt-0.5 text-[11px] font-medium ${pr.onTrack ? "text-[var(--tint)]" : "text-muted-foreground"}`}>{pr.onTrack ? "Hedefin üstünde" : "Hedefin altında"}</p>
           </div>
           <div className="r-md bg-muted px-3 py-3 text-center">
@@ -135,7 +136,7 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
               <p className="text-lg font-bold leading-tight text-[var(--tint)]">Tamamlandı</p>
             ) : pr.remaining > 0 ? (
               <>
-                <p className="text-lg font-bold tabular-nums leading-tight">{hrs(Math.round(pr.perDay * 10) / 10)}</p>
+                <p className="text-lg font-bold tabular-nums leading-tight">{fmtHrs(pr.perDay)}</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">kalan {pr.remaining} gün</p>
               </>
             ) : (
@@ -167,7 +168,7 @@ function Stat({ label, small, note, children }: { label: string; small?: boolean
     <div className="min-w-0">
       <dt className="text-[12px] text-muted-foreground">{label}</dt>
       <dd className={`truncate font-bold tabular-nums leading-tight ${small ? "text-[15px]" : "text-[20px] tracking-tight"}`}>{children}</dd>
-      {note && <dd className="truncate text-[11px] tabular-nums text-muted-foreground">{note}</dd>}
+      {note && <dd className="mt-1 w-fit max-w-full truncate rounded-[8px] bg-muted px-2 py-0.5 text-[11px] leading-[16.5px] tabular-nums text-muted-foreground">{note}</dd>}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { goalProgress, hrs, money, monthSummary } from "@mesai/core/calc";
+import { goalProgress, hrs, money, monthSummary, num } from "@mesai/core/calc";
 import { holidayName } from "@mesai/core/holidays";
 import { DEFAULT_SETTINGS } from "@mesai/core/settings";
 import { TYPE_META, type EntryType } from "@mesai/core/types";
@@ -118,7 +118,11 @@ export default function CalendarScreen() {
                     })}>
                     <Txt style={{ fontSize: 14, lineHeight: 14, fontWeight: isToday ? "700" : "400", color: fg }}>{format(d, "d")}</Txt>
                     {worked > 0 ? (
-                      <Txt style={{ marginTop: 4, fontSize: 10, lineHeight: 10, fontWeight: "600", color: fg, fontVariant: ["tabular-nums"] }}>{hrs(worked)}</Txt>
+                      // Hücre dar: sayı ve "saat" alt alta (web ile aynı)
+                      <View style={{ marginTop: 2, alignItems: "center" }}>
+                        <Txt style={{ fontSize: 10, lineHeight: 11, fontWeight: "600", color: fg, fontVariant: ["tabular-nums"] }}>{num(worked)}</Txt>
+                        <Txt style={{ fontSize: 9, lineHeight: 10, fontWeight: "500", color: fg, opacity: 0.8 }}>saat</Txt>
+                      </View>
                     ) : st ? (
                       <Txt style={{ marginTop: 4, fontSize: 10, lineHeight: 10, fontWeight: "500", color: st.text }}>{st.short}</Txt>
                     ) : null}
