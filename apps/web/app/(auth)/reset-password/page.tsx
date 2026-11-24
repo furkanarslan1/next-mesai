@@ -18,12 +18,19 @@ export default function ResetPasswordPage() {
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // E-postadaki bağlantı ?code=... ile gelir; oturuma çevrilince yeni şifre girilebilir
+  // E-postadaki bağlantı ?code=... ile gelir; oturuma çevrilince yeni şifre girilebilir.
+  // Mobil uygulamadan istenen bağlantı ise #access_token=...&refresh_token=... ile gelir (implicit akış).
   useEffect(() => {
     const supabase = createClient();
     const code = new URLSearchParams(window.location.search).get("code");
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const access_token = hash.get("access_token"), refresh_token = hash.get("refresh_token");
     (async () => {
-      if (code) {
+      if (access_token && refresh_token) {
+        const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+        if (error) return setStatus("invalid");
+        window.history.replaceState(null, "", "/reset-password");
+      } else if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) return setStatus("invalid");
         window.history.replaceState(null, "", "/reset-password");

@@ -1,19 +1,11 @@
 "use client";
 
-import { hoursBetween, hrs } from "@mesai/core/calc";
+import { dailyHoursOf, type WorkSchedule } from "@mesai/core/auth";
+import { hrs } from "@mesai/core/calc";
 import { SHIFTS, type ShiftType } from "@mesai/core/types";
 import { FormRow, FormSection, Segmented, SwitchRow } from "@/components/mesai/ios-form";
 
-export interface WorkSchedule {
-  work_start: string; // HH:MM
-  work_end: string;
-  has_shift: boolean;
-  shift_type: ShiftType;
-}
-
-/** Giriş/çıkıştan günlük normal çalışma süresi. */
-export const dailyHoursOf = (w: Pick<WorkSchedule, "work_start" | "work_end">) =>
-  w.work_start && w.work_end ? hoursBetween(w.work_start, w.work_end) : 0;
+export { dailyHoursOf, type WorkSchedule } from "@mesai/core/auth";
 
 /**
  * Normal çalışma saati + isteğe bağlı vardiya (gündüz/akşam/gece).

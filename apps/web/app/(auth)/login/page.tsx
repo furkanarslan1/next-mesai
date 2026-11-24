@@ -1,33 +1,19 @@
 "use client";
 
 import { InstallCard } from "@/components/mesai/install-card";
-import { errorText } from "@mesai/core/errors";
-import { parsePositive } from "@mesai/core/num";
+import { authErrorText as trError, DEFAULT_SCHEDULE, DEFAULT_SHORTCUT_HOURS, DEFAULT_SIGNUP_PAY, signupData, type SignupPay as Pay } from "@mesai/core/auth";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { resetStore } from "@/lib/store";
-import { dailyHoursOf, WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
+import { WorkScheduleFields, type WorkSchedule } from "@/components/mesai/work-schedule";
 import { HoursChips } from "@/components/mesai/hours-chips";
 import { FormSection, NumberRow, PercentRow, SwitchRow } from "@/components/mesai/ios-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-
-/** Supabase'in İngilizce hata mesajlarını Türkçeleştirir. */
-function trError(message: string) {
-  const m = message.toLowerCase();
-  if (m.includes("invalid login credentials")) return "E-posta veya şifre hatalı.";
-  if (m.includes("email not confirmed")) return "E-postan henüz doğrulanmamış. Gelen kutundaki bağlantıya tıkla.";
-  if (m.includes("already registered") || m.includes("already been registered")) return "Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.";
-  if (m.includes("password should be at least")) return "Şifre en az 6 karakter olmalı.";
-  if (m.includes("rate limit") || m.includes("too many")) return "Çok fazla deneme yapıldı, biraz bekleyip tekrar dene.";
-  if (m.includes("invalid email") || m.includes("unable to validate email")) return "Geçerli bir e-posta gir.";
-  if (m.includes("failed to fetch") || m.includes("network")) return "Bağlantı kurulamadı. İnternetini kontrol et.";
-  return errorText({ message }, "İşlem başarısız, tekrar dene");
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,13 +28,9 @@ export default function LoginPage() {
   const [unconfirmed, setUnconfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
-  const [sched, setSched] = useState<WorkSchedule>({
-    work_start: "08:00", work_end: "16:00", has_shift: false, shift_type: "day",
-  });
-  const [pay, setPay] = useState<Pay>({
-    monthly_salary: "", hourly_rate: "", included_overtime_hours: "", weekday_percent: 150, sunday_percent: 100, holiday_percent: 200, sick_leave_unpaid: false,
-  });
-  const [shortcutHours, setShortcutHours] = useState<number[]>([2.5, 6.5]);
+  const [sched, setSched] = useState<WorkSchedule>(DEFAULT_SCHEDULE);
+  const [pay, setPay] = useState<Pay>(DEFAULT_SIGNUP_PAY);
+  const [shortcutHours, setShortcutHours] = useState<number[]>(DEFAULT_SHORTCUT_HOURS);
 
   async function sendReset() {
     setBusy(true); setMsg(""); setInfo("");
@@ -81,20 +63,7 @@ export default function LoginPage() {
         : await supabase.auth.signUp({
             email,
             password,
-            options: {
-              data: {
-                full_name: name, role,
-                ...(role === "employee" && {
-                  daily_hours: dailyHoursOf(sched) || 8, has_shift: sched.has_shift,
-                  shift_type: sched.has_shift ? sched.shift_type : "",
-                  work_start: sched.work_start, work_end: sched.work_end,
-                  shortcut_hours: shortcutHours.join(","),
-                  monthly_salary: parsePositive(pay.monthly_salary), hourly_rate: parsePositive(pay.hourly_rate),
-                  weekday_percent: pay.weekday_percent, sunday_percent: pay.sunday_percent, holiday_percent: pay.holiday_percent,
-                  included_overtime_hours: Math.min(200, parsePositive(pay.included_overtime_hours)), sick_leave_unpaid: pay.sick_leave_unpaid,
-                }),
-              },
-            },
+            options: { data: signupData({ name, role, sched, pay, shortcutHours }) },
           });
     setBusy(false);
     if (error) {
@@ -200,10 +169,6 @@ export default function LoginPage() {
   );
 }
 
-type Pay = {
-  monthly_salary: string; hourly_rate: string; included_overtime_hours: string;
-  weekday_percent: number; sunday_percent: number; holiday_percent: number; sick_leave_unpaid: boolean;
-};
 
 function WorkStep({ sched, setSched, pay, setPay, shortcutHours, setShortcutHours }: {
   sched: WorkSchedule; setSched: (s: WorkSchedule) => void;
