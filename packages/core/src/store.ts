@@ -43,6 +43,11 @@ export interface StoreConfig {
   client: () => SupabaseClient;
   saveProfile?: (p: Profile) => void;
   clearProfile?: () => void;
+  /**
+   * Önbelleğin cihazda saklanması (isteğe bağlı): uygulama kapanıp açılınca son görülen veri anında
+   * gösterilir, arka planda tazelenir. Mobilde AsyncStorage, web'de localStorage.
+   */
+  persist?: { read: () => Promise<string | null>; write: (s: string) => void; clear: () => void };
 }
 let config: StoreConfig | null = null;
 const createClient = () => {
@@ -72,17 +77,79 @@ export const getState = () => state;
 function set(patch: Partial<State>) {
   state = { ...state, ...patch };
   listeners.forEach((l) => l());
+  scheduleSave();
+}
+
+/* ---------- cihazda saklanan önbellek ---------- */
+const SNAPSHOT_VERSION = 1;
+/** Saklanan en fazla ay sayısı (kayıtlar ve gelir-gider ayrı ayrı; en yeni aylar) */
+const KEEP_MONTHS = 24;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+const recent = <T>(m: Record<string, T>) =>
+  Object.fromEntries(Object.keys(m).sort().reverse().slice(0, KEEP_MONTHS).map((k) => [k, m[k]]));
+
+/** Değişikliklerden 1 sn sonra (art arda değişiklikler tek yazma olur) anlık görüntü cihaza yazılır. */
+function scheduleSave() {
+  if (!config?.persist || saveTimer) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    const uid = state.profile?.id;
+    if (!uid || !config?.persist) return;
+    const { profile, settings, shortcuts, totalHours, links, payslips } = state;
+    try {
+      config.persist.write(JSON.stringify({
+        v: SNAPSHOT_VERSION, uid, at: Date.now(),
+        data: { profile, settings, shortcuts, totalHours, links, payslips, entries: recent(state.entries), finance: recent(state.finance) },
+      }));
+    } catch { /* yer yoksa ya da yazılamazsa yok say: önbellek yalnızca hız içindir */ }
+  }, 1000);
+}
+
+/**
+ * Cihazdaki anlık görüntüyü yükler (uygulama açılışında bir kez). Yalnızca giriş yapmış kullanıcıya aitse ve
+ * henüz sunucudan gelmemiş dilimler için kullanılır. Tazelik damgası verilmez: ekranlar açılınca hepsi
+ * "eski" sayılıp arka planda yenilenir (önce anında gösterim, sonra güncel veri).
+ */
+export async function hydrateFromDevice() {
+  if (!config?.persist) return;
+  const ep = epoch;
+  try {
+    const raw = await config.persist.read();
+    if (!raw) return;
+    const snap = JSON.parse(raw) as { v: number; uid: string; data: Partial<State> };
+    const { data: { session } } = await createClient().auth.getSession();
+    if (ep !== epoch || snap.v !== SNAPSHOT_VERSION || !session || session.user.id !== snap.uid) {
+      if (session && snap.uid !== session.user.id) config.persist.clear();
+      return;
+    }
+    const d = snap.data;
+    const patch: Partial<State> = {};
+    if (!state.profile && d.profile) patch.profile = d.profile;
+    if (!state.settings && d.settings) patch.settings = { ...DEFAULT_SETTINGS, ...d.settings };
+    if (!state.shortcuts && d.shortcuts) patch.shortcuts = d.shortcuts;
+    if (state.totalHours === null && typeof d.totalHours === "number") patch.totalHours = d.totalHours;
+    if (!state.links && d.links) patch.links = d.links;
+    if (!state.payslips && d.payslips) patch.payslips = d.payslips;
+    // Ay ay: sunucudan gelmiş ay öncelikli
+    if (d.entries) patch.entries = { ...d.entries, ...state.entries };
+    if (d.finance) patch.finance = { ...d.finance, ...state.finance };
+    state = { ...state, ...patch };
+    listeners.forEach((l) => l());
+  } catch { /* bozuk görüntü: yok say, sunucudan gelir */ }
 }
 export const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
 /** Çıkış/giriş sırasında başka kullanıcının verisi kalmasın. */
 export function resetStore() {
   config?.clearProfile?.();
+  config?.persist?.clear();
   epoch++;
   stamps = {};
   inflight.clear();
   loadingMonths.clear();
   set({ ...EMPTY, entries: {}, finance: {}, payslips: null });
+  // Boş durum için kurulan (ya da önceki kullanıcıdan kalan) kaydetme beklemesi iptal: yeni oturumun ilk değişikliği hemen planlanabilsin
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
 }
 
 export const monthKey = (d: Date) => format(d, "yyyy-MM");
