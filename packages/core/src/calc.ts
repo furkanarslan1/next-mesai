@@ -62,6 +62,7 @@ export function goalProgress(entries: Entry[], s: Settings) {
     return {
       mode: "hours" as const, set: goal > 0, percent: goal > 0 ? Math.min(100, (m.hours / goal) * 100) : 0,
       done: m.hours, goal, income, earned: m.earned, deduction: ded.amount, hoursNeeded: goal,
+      hoursDone: m.hours, hoursLeft: Math.max(0, goal - m.hours),
     };
   }
   const goal = s.monthly_goal_amount;
@@ -71,6 +72,8 @@ export function goalProgress(entries: Entry[], s: Settings) {
   return {
     mode: "amount" as const, set: goal > 0, percent: goal > 0 ? Math.min(100, (income / goal) * 100) : 0,
     done: income, goal, income, earned: m.earned, deduction: ded.amount, hoursNeeded: m.hours + hoursLeft,
+    /** Bu ay yapılan mesai ve hedefe ulaşmak için daha yapılması gereken mesai (saat) */
+    hoursDone: m.hours, hoursLeft,
   };
 }
 

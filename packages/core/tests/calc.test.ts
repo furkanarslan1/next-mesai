@@ -150,3 +150,20 @@ describe("raporlu gün mesaiden düşer (ayar)", () => {
     expect(goalProgress(ents, { ...D, goal_mode: "hours", monthly_goal_hours: 14 }).percent).toBe(50);
   });
 });
+
+describe("hedef için kalan mesai", () => {
+  it("tutar hedefi: kalan tutar ücretli saate çevrilir, dolmamış dahil saatler eklenir", () => {
+    // 10 sa dahil, 9 sa yapılmış (hepsi dahil): 1 sa daha dahil + kalan tutar / saatlik
+    const s = { ...S, included_overtime_hours: 10, monthly_goal_amount: 30500 };
+    const g = goalProgress([E("2026-11-03", "overtime", 9)], s);
+    expect(g.hoursDone).toBe(9);
+    expect(g.hoursLeft).toBeCloseTo(1 + 500 / 100, 6);
+    expect(g.hoursNeeded).toBeCloseTo(9 + g.hoursLeft, 6);
+  });
+  it("saat hedefi ve tamamlanan hedef", () => {
+    const h = { ...S, goal_mode: "hours" as const, monthly_goal_hours: 20 };
+    expect(goalProgress([E("2026-11-03", "overtime", 5)], h).hoursLeft).toBe(15);
+    expect(goalProgress([E("2026-11-03", "overtime", 25)], h).hoursLeft).toBe(0);
+  });
+});
+

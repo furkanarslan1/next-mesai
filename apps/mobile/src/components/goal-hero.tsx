@@ -37,7 +37,11 @@ export function MonthSummary({ entries, settings }: { entries: Entry[]; settings
         <Stat label="Mesai kazancı" value={money(sum.earned, cur)} />
       </View>
       {sum.sickHours > 0 ? <Txt muted style={{ fontSize: 12, lineHeight: 16, textAlign: "center" }}>{sum.sickDays} raporlu gün için {hrs(sum.sickHours)} mesaiden düşüldü ({hrs(sum.grossHours)} girildi)</Txt> : null}
-      {sum.includedHours > 0 ? <Txt muted style={{ fontSize: 12, lineHeight: 16, textAlign: "center" }}>{hrs(sum.includedHours)} maaşa dahil · {hrs(sum.paidHours)} ücretli mesai</Txt> : null}
+      {sum.includedHours > 0 ? (
+        <Txt muted style={{ fontSize: 12, lineHeight: 16, textAlign: "center" }}>
+          {hrs(sum.includedHours)} maaşa dahil · {sum.paidHours === 0 && sum.quotaLeft > 0 ? `${hrs(sum.quotaLeft)} sonra ücretli mesai başlar` : `${hrs(sum.paidHours)} ücretli mesai`}
+        </Txt>
+      ) : null}
     </View>
   );
 }
@@ -113,7 +117,8 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
                 <>
                   <HeroStat label="Bu ay kazanç" value={g.income} format={fmtMoney} />
                   <HeroStat label="Kalan" value={remainingMoney} format={fmtMoney} done={remainingMoney <= 0} />
-                  <HeroStat label="Gereken toplam mesai" value={g.hoursNeeded} format={fmtHrs} small />
+                  <HeroStat label="Kalan mesai" value={g.hoursLeft} format={fmtHrs} small done={remainingMoney <= 0}
+                    note={remainingMoney > 0 ? `toplam ${fmtHrs(g.hoursNeeded)}` : undefined} />
                 </>
               )}
             </View>
@@ -168,7 +173,11 @@ function Tile({ children }: { children: React.ReactNode }) {
   return <View style={{ flex: 1, borderRadius: radius.md, backgroundColor: c.muted, paddingVertical: 12, paddingHorizontal: 12, alignItems: "center" }}>{children}</View>;
 }
 
-function HeroStat({ label, value, format, small, done }: { label: string; value: number; format: (n: number) => string; small?: boolean; done?: boolean }) {
+function HeroStat({ label, value, format, small, done, note }: {
+  label: string; value: number; format: (n: number) => string; small?: boolean; done?: boolean;
+  /** Değerin altında küçük gri not (web: Stat note) */
+  note?: string;
+}) {
   const c = useColors();
   const style = { fontWeight: "700" as const, fontSize: small ? 15 : 20, lineHeight: small ? 19 : 25, letterSpacing: small ? 0 : -0.5 };
   return (
@@ -177,6 +186,7 @@ function HeroStat({ label, value, format, small, done }: { label: string; value:
       {/* "Kalan" bitince web'deki gibi sayı yerine "Tamamlandı" yazar */}
       {done ? <Txt numberOfLines={1} style={[style, { color: c.tint }]}>Tamamlandı</Txt>
         : <AnimatedNumber value={value} format={format} numberOfLines={1} adjustsFontSizeToFit style={style} />}
+      {note ? <Txt muted numberOfLines={1} style={{ fontSize: 11, lineHeight: 16.5, fontVariant: ["tabular-nums"] }}>{note}</Txt> : null}
     </View>
   );
 }
