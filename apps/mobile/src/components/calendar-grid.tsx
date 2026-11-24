@@ -1,7 +1,12 @@
 import { holidayName } from "@mesai/core/holidays";
-import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth } from "date-fns";
-import { tr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { addMonths } from "date-fns/addMonths";
+import { eachDayOfInterval } from "date-fns/eachDayOfInterval";
+import { endOfMonth } from "date-fns/endOfMonth";
+import { format } from "date-fns/format";
+import { getDay } from "date-fns/getDay";
+import { startOfMonth } from "date-fns/startOfMonth";
+import { tr } from "date-fns/locale/tr";
+import { ChevronLeft, ChevronRight } from "@/components/icons";
 import { Pressable, View } from "react-native";
 import { haptic } from "@/lib/haptics";
 import { radius, useColors } from "@/theme";

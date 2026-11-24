@@ -1,4 +1,6 @@
-import { addDays, format, parseISO } from "date-fns";
+import { addDays } from "date-fns/addDays";
+import { format } from "date-fns/format";
+import { parseISO } from "date-fns/parseISO";
 import { goalProgress } from "./calc";
 import { monthStats } from "./reports";
 import type { Entry, Settings } from "./types";

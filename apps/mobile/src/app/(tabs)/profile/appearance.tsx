@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Check, Moon, Sun, SunMoon } from "lucide-react-native";
+import { Check, Moon, Sun, SunMoon } from "@/components/icons";
 import { useState } from "react";
 import { View } from "react-native";
 import { FormRow, FormSection, Segmented, SwitchRow } from "@/components/form";

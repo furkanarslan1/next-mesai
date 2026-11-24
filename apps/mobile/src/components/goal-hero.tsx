@@ -3,7 +3,7 @@ import { errorText } from "@mesai/core/errors";
 import { parseNum } from "@mesai/core/num";
 import { projection } from "@mesai/core/reports";
 import type { Entry, Settings } from "@mesai/core/types";
-import { Pencil, Target } from "lucide-react-native";
+import { Pencil, Target } from "@/components/icons";
 import { useOptimistic, useState, useTransition } from "react";
 import { TextInput, View } from "react-native";
 import { haptic } from "@/lib/haptics";

@@ -1,4 +1,7 @@
-import { addMonths, format, getDaysInMonth, startOfMonth } from "date-fns";
+import { addMonths } from "date-fns/addMonths";
+import { format } from "date-fns/format";
+import { getDaysInMonth } from "date-fns/getDaysInMonth";
+import { startOfMonth } from "date-fns/startOfMonth";
 import { goalProgress, hrs, money, monthSummary, paidHoursByPercent, salaryDeduction } from "./calc";
 import type { Entry, Payslip, Settings } from "./types";
 

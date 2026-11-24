@@ -1,5 +1,5 @@
 import { BlurView } from "expo-blur";
-import { X } from "lucide-react-native";
+import { X } from "@/components/icons";
 import { useEffect, useState } from "react";
 import { Animated, Easing, KeyboardAvoidingView, Modal, Pressable, StyleSheet, View } from "react-native";
 import { haptic } from "@/lib/haptics";

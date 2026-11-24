@@ -1,7 +1,7 @@
 import { errorText } from "@mesai/core/errors";
 import { parseNum } from "@mesai/core/num";
 import { router } from "expo-router";
-import { Plus, Trash2 } from "lucide-react-native";
+import { Plus, Trash2 } from "@/components/icons";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import { SettingsGroup } from "@/components/settings-list";

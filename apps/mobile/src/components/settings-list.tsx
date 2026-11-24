@@ -1,4 +1,4 @@
-import { ChevronRight, type LucideIcon } from "lucide-react-native";
+import { ChevronRight, type LucideIcon } from "@/components/icons";
 import { Children, Fragment, isValidElement } from "react";
 import { Pressable, View } from "react-native";
 import { haptic } from "@/lib/haptics";

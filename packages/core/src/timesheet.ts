@@ -1,5 +1,8 @@
-import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
-import { tr } from "date-fns/locale";
+import { eachDayOfInterval } from "date-fns/eachDayOfInterval";
+import { endOfMonth } from "date-fns/endOfMonth";
+import { format } from "date-fns/format";
+import { startOfMonth } from "date-fns/startOfMonth";
+import { tr } from "date-fns/locale/tr";
 import { holidayName } from "./holidays";
 import { isRestDay } from "./day";
 import { hhmm, monthSummary, paidHoursByPercent, percentFor } from "./calc";

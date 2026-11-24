@@ -2,7 +2,15 @@
  * Dönem özeti (Raporlar → Özet: bu hafta / bu ay / bu yıl): mesai saati, mesai kazancı, çalışılan gün ve
  * gün durumlarının (ücretli/ücretsiz izin, rapor, gelmedi, tatil) gün sayıları.
  */
-import { eachMonthOfInterval, endOfMonth, endOfWeek, endOfYear, format, parseISO, startOfMonth, startOfWeek, startOfYear } from "date-fns";
+import { eachMonthOfInterval } from "date-fns/eachMonthOfInterval";
+import { endOfMonth } from "date-fns/endOfMonth";
+import { endOfWeek } from "date-fns/endOfWeek";
+import { endOfYear } from "date-fns/endOfYear";
+import { format } from "date-fns/format";
+import { parseISO } from "date-fns/parseISO";
+import { startOfMonth } from "date-fns/startOfMonth";
+import { startOfWeek } from "date-fns/startOfWeek";
+import { startOfYear } from "date-fns/startOfYear";
 import { monthSummary } from "./calc";
 import type { Entry, EntryType, Settings } from "./types";
 

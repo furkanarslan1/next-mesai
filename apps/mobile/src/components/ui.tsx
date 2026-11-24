@@ -5,7 +5,7 @@ import {
   type PressableProps, type StyleProp, type TextInputInstance, type TextInputProps, type TextProps, type ViewProps, type ViewStyle, View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft } from "lucide-react-native";
+import { ChevronLeft } from "@/components/icons";
 import { haptic } from "@/lib/haptics";
 import { PageStack } from "./sheet";
 import { radius, space, useColors, useIsDark } from "@/theme";

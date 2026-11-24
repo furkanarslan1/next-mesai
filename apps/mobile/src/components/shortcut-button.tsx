@@ -1,4 +1,4 @@
-import { Check, Undo2 } from "lucide-react-native";
+import { Check, Undo2 } from "@/components/icons";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
 import { alpha, radius, useColors } from "@/theme";

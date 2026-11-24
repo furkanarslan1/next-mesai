@@ -2,7 +2,7 @@ import { dailyHoursOf, type WorkSchedule } from "@mesai/core/auth";
 import { hrs } from "@mesai/core/calc";
 import { parseNum } from "@mesai/core/num";
 import { SHIFTS, type ShiftType } from "@mesai/core/types";
-import { Plus, X } from "lucide-react-native";
+import { Plus, X } from "@/components/icons";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import { radius, useColors } from "@/theme";

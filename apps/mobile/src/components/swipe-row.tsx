@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react-native";
+import { Trash2 } from "@/components/icons";
 import { useState } from "react";
 import { Animated, Easing, PanResponder, Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { haptic } from "@/lib/haptics";

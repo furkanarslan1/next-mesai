@@ -1,5 +1,5 @@
 import { BlurView } from "expo-blur";
-import { CircleCheck, Info, OctagonX } from "lucide-react-native";
+import { CircleCheck, Info, OctagonX } from "@/components/icons";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

@@ -1,7 +1,7 @@
 import { money } from "@mesai/core/calc";
 import { SHIFTS } from "@mesai/core/types";
 import { router, type Href } from "expo-router";
-import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, Palette, UserRound, Users, Zap } from "lucide-react-native";
+import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, Palette, UserRound, Users, Zap } from "@/components/icons";
 import { Pressable, View } from "react-native";
 import { SettingsGroup, SettingsRow } from "@/components/settings-list";
 import { Card, Screen, Txt } from "@/components/ui";

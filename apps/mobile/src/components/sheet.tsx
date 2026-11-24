@@ -1,5 +1,5 @@
 import { BlurView } from "expo-blur";
-import { X } from "lucide-react-native";
+import { X } from "@/components/icons";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   Animated, Easing, KeyboardAvoidingView, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View,
