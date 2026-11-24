@@ -1,10 +1,11 @@
 import { money } from "@mesai/core/calc";
 import { SHIFTS } from "@mesai/core/types";
 import { router, type Href } from "expo-router";
+import { Skeleton } from "@/components/skeleton";
 import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, Palette, UserRound, Users, Zap } from "@/components/icons";
 import { Pressable, View } from "react-native";
 import { SettingsGroup, SettingsRow } from "@/components/settings-list";
-import { Card, Screen, Txt } from "@/components/ui";
+import { Screen, Txt } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
 import { THEME_LABEL, usePrefs } from "@/lib/prefs";
 import { useLinks, useProfile, useSettings, useShortcuts } from "@/lib/store";
@@ -23,7 +24,7 @@ export default function SettingsScreen() {
   const links = useLinks();
   const prefs = usePrefs();
 
-  if (!profile) return <Screen title="Ayarlar"><Card style={{ minHeight: 384, opacity: 0.6 }} /></Screen>;
+  if (!profile) return <Screen title="Ayarlar"><Skeleton style={{ minHeight: 384 }} /></Screen>;
   const employee = profile.role === "employee";
   const pending = (links ?? []).filter((l) => l.status === "pending").length;
   const linked = (links ?? []).filter((l) => l.status === "accepted").length;

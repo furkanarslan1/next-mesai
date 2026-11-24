@@ -3,9 +3,10 @@ import { dailyHoursOf, type WorkSchedule } from "@mesai/core/auth";
 import { SHIFTS, type Settings } from "@mesai/core/types";
 import { router } from "expo-router";
 import { useState } from "react";
+import { Skeleton } from "@/components/skeleton";
 import { FormSection, SwitchRow } from "@/components/form";
 import { toast } from "@/components/toast";
-import { Button, Card, Screen } from "@/components/ui";
+import { Button, Screen } from "@/components/ui";
 import { WorkScheduleFields } from "@/components/work-schedule";
 import { haptic } from "@/lib/haptics";
 import { mutate, useProfile, useSettings } from "@/lib/store";
@@ -17,7 +18,7 @@ const back = { label: "Ayarlar", onPress: () => router.back() };
 export default function WorkScreen() {
   const settings = useSettings();
   const userId = useProfile()?.id;
-  if (!settings || !userId) return <Screen title="Çalışma saati" back={back}><Card style={{ minHeight: 352, opacity: 0.6 }} /></Screen>;
+  if (!settings || !userId) return <Screen title="Çalışma saati" back={back}><Skeleton style={{ minHeight: 352 }} /></Screen>;
   return <WorkForm userId={userId} settings={settings} />;
 }
 

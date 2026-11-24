@@ -7,7 +7,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft } from "@/components/icons";
 import { haptic } from "@/lib/haptics";
+import Reanimated from "react-native-reanimated";
 import { PageStack } from "./sheet";
+import { useTabRise } from "./tab-rise";
 import { radius, space, useColors, useIsDark } from "@/theme";
 
 /** Alt menünün kapladığı alan (web: pb-[calc(7rem+safe-area)]) */
@@ -121,8 +123,11 @@ export function Screen({ title, compactTitle, eyebrow, accessory, actions, back,
 }) {
   const insets = useSafeAreaInsets();
   const [compact, setCompact] = useState(false);
+  // Sekme kök ekranı (geri bağlantısı yok): sekmeye geçince içerik hafifçe yükselir (web: vt-rise)
+  const rise = useTabRise();
   return (
     <PageStack>
+      <Reanimated.View style={[{ flex: 1 }, tabs && !back ? rise : null]}>
       <ScrollView
         style={{ flex: 1 }}
         scrollEventThrottle={16}
@@ -146,6 +151,7 @@ export function Screen({ title, compactTitle, eyebrow, accessory, actions, back,
         </View>
         {children}
       </ScrollView>
+      </Reanimated.View>
       <CompactBar title={compactTitle ?? (typeof title === "string" ? title : "")} visible={compact} onBack={back?.onPress} />
       {overlay}
     </PageStack>

@@ -621,3 +621,17 @@ html { transition: background-color 300ms ease; }
 .ob-bar { transform-box: fill-box; transform-origin: bottom; animation: ob-bar 700ms var(--ease-ios) both; }
 @media (prefers-reduced-motion: reduce) { .ob-draw, .ob-float, .ob-bar { animation: none; } }
 @media print { .compact-bar, .sheet-grabber { display: none !important; } .large-title { font-size: 1.5rem; } }
+
+/* ---------- Kutlama (hedef %100, seviye atlama): parçacık patlaması (pop: celebrate.tsx usePop) ---------- */
+@keyframes celebrate-dot {
+  0% { translate: 0 0; scale: 0.4; opacity: 1; }
+  70% { opacity: 1; }
+  100% { translate: var(--dx) var(--dy); scale: 1; opacity: 0; }
+}
+.celebrate-dot { animation: celebrate-dot 900ms var(--ease-ios) forwards; }
+@media (prefers-reduced-motion: reduce) { .celebrate-dot { display: none; } }
+
+/* ---------- Takvim: ay değişince ızgara geldiği yönden kayarak belirir ---------- */
+@keyframes month-in { from { translate: calc(var(--dir) * 24px) 0; opacity: 0; } }
+.month-slide { animation: month-in 260ms var(--ease-ios); }
+@media (prefers-reduced-motion: reduce) { .month-slide { animation: none; } }

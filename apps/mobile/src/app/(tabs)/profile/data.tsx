@@ -3,12 +3,13 @@ import { toCSV } from "@mesai/core/csv";
 import { errorText } from "@mesai/core/errors";
 import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
+import { Skeleton } from "@/components/skeleton";
 import { Download, FileJson, FileSpreadsheet, Upload } from "@/components/icons";
 import { useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SettingsGroup, SettingsRow } from "@/components/settings-list";
 import { toast } from "@/components/toast";
-import { Card, Screen, Txt } from "@/components/ui";
+import { Screen, Txt } from "@/components/ui";
 import { readText, shareCsv, shareJson } from "@/lib/export";
 import { haptic } from "@/lib/haptics";
 import { mutate, useProfile } from "@/lib/store";
@@ -25,7 +26,7 @@ export default function DataScreen() {
   const c = useColors();
   const profile = useProfile();
   const [busy, setBusy] = useState(false);
-  if (!profile) return <Screen title="Yedekleme" back={back}><Card style={{ minHeight: 192, opacity: 0.6 }} /></Screen>;
+  if (!profile) return <Screen title="Yedekleme" back={back}><Skeleton style={{ minHeight: 192 }} /></Screen>;
   const employee = profile.role === "employee";
 
   async function backup(format: "json" | "csv") {

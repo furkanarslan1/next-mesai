@@ -33,6 +33,9 @@ export default function CalendarPage() {
 
 function CalendarView({ today }: { today: Date }) {
   const [month, setMonth] = useState(today);
+  // Ay değişiminin yönü: ızgara o yönden kayarak gelir (1 ileri, -1 geri)
+  const [dir, setDir] = useState(0);
+  const go = (n: number) => { setDir(n); setMonth(addMonths(month, n)); };
   const [selected, setSelected] = useState<string | null>(null);
   const userId = useProfile()?.id ?? "";
   const { entries, settings } = useMesai(month);
@@ -48,13 +51,14 @@ function CalendarView({ today }: { today: Date }) {
   return (
     <Page eyebrow="Takvim" title={<span className="capitalize">{format(month, "MMMM yyyy", { locale: tr })}</span>} actions={
         <div className="flex gap-2">
-          <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft /></Button>
-          <Button size="icon" variant="secondary" aria-label="Sonraki ay" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight /></Button>
+          <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => go(-1)}><ChevronLeft /></Button>
+          <Button size="icon" variant="secondary" aria-label="Sonraki ay" onClick={() => go(1)}><ChevronRight /></Button>
         </div>
       }>
       <Card>
         <CardContent>
-          <div className="grid grid-cols-7 gap-1.5 text-center text-xs text-muted-foreground">
+          <div key={format(month, "yyyy-MM")} className={`grid grid-cols-7 gap-1.5 text-center text-xs text-muted-foreground ${dir ? "month-slide" : ""}`}
+            style={{ "--dir": dir } as React.CSSProperties}>
             {["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"].map((d) => <div key={d}>{d}</div>)}
             {Array.from({ length: offset }).map((_, i) => <div key={i} />)}
             {days.map((d) => {

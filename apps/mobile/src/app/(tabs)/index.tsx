@@ -9,11 +9,13 @@ import { router } from "expo-router";
 import { format } from "date-fns/format";
 import { parseISO } from "date-fns/parseISO";
 import { tr } from "date-fns/locale/tr";
+import { Skeleton } from "@/components/skeleton";
 import { CalendarDays, Check, ChevronDown, Plus, Sparkles } from "@/components/icons";
 import { useOptimistic, useState, useTransition } from "react";
 import { Platform, Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CalendarGrid } from "@/components/calendar-grid";
+import { Celebrate, usePop, useRiseBurst } from "@/components/celebrate";
 import { AnimatedNumber } from "@/components/animated-number";
 import { confirm, Dialog } from "@/components/dialog";
 import { FormRow, FormSection, NumberRow, Segmented, SwitchRow } from "@/components/form";
@@ -21,6 +23,8 @@ import { GoalHero, MonthSummary } from "@/components/goal-hero";
 import { LevelIcon } from "@/components/level-icon";
 import { Onboarding } from "@/components/onboarding";
 import { ReminderCard } from "@/components/reminder-card";
+import { useTabRise } from "@/components/tab-rise";
+import Reanimated from "react-native-reanimated";
 import { PageStack, Sheet } from "@/components/sheet";
 import { ShortcutButton } from "@/components/shortcut-button";
 import { StatusIcon } from "@/components/status-icon";
@@ -71,6 +75,8 @@ export default function Home() {
   const [, startTransition] = useTransition();
   const [refreshing, setRefreshing] = useState(false);
   const [compact, setCompact] = useState(false);
+  // Sekmeye geçince içerik hafifçe yükselir (web: vt-rise)
+  const rise = useTabRise();
 
   // "Farklı mesai" penceresi
   const [custom, setCustom] = useState(false);
@@ -89,6 +95,8 @@ export default function Home() {
     - (realEntries ?? []).filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
   const totalHours = (realTotal ?? 0) + pendingDelta;
   const lvl = levelFor(totalHours);
+  const lvlBurst = useRiseBurst("level", lvl.level, realTotal !== null);
+  const lvlPop = usePop(lvlBurst);
 
   const todays = entries.filter((e) => e.work_date === date);
   const rules = dayRules(todays, date);
@@ -201,6 +209,7 @@ export default function Home() {
 
   return (
     <PageStack>
+      <Reanimated.View style={[{ flex: 1 }, rise]}>
       <ScrollView
         style={{ flex: 1 }}
         scrollEventThrottle={16}
@@ -264,7 +273,7 @@ export default function Home() {
           <GoalHero userId={userId} settings={settings} entries={entries} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })}
             today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} />
         ) : (
-          <Card style={{ minHeight: 248, opacity: 0.6 }} />
+          <Skeleton style={{ minHeight: 248 }} />
         )}
 
         <View style={{ flexDirection: "row", gap: 12 }}>
@@ -285,7 +294,7 @@ export default function Home() {
           <View style={{ gap: 12 }}>
             {shortcuts === null ? (
               <View style={{ flexDirection: "row", gap: 12 }}>
-                <Card size="lg" style={{ flex: 1, height: 96, opacity: 0.6 }} /><Card size="lg" style={{ flex: 1, height: 96, opacity: 0.6 }} />
+                <Skeleton size="lg" style={{ flex: 1, height: 96 }} /><Skeleton size="lg" style={{ flex: 1, height: 96 }} />
               </View>
             ) : pairs(shortcutItems).map((row, i) => (
               <View key={i} style={{ flexDirection: "row", gap: 12 }}>
@@ -327,7 +336,11 @@ export default function Home() {
         <Card style={{ paddingVertical: 16, paddingHorizontal: 16, gap: 12, opacity: realTotal === null ? 0 : 1 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <LevelIcon level={lvl.level} size={56} />
+              {/* Seviye atlanınca: ikon bir kez "pop" + parçacık patlaması */}
+              <Reanimated.View style={lvlPop}>
+                <LevelIcon level={lvl.level} size={56} />
+                <Celebrate burst={lvlBurst} distance={44} />
+              </Reanimated.View>
               <View>
                 <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>Seviye {lvl.level}</Txt>
                 <Txt style={{ fontSize: 18, lineHeight: 28, fontWeight: "600" }}>{lvl.name}</Txt>
@@ -346,6 +359,7 @@ export default function Home() {
           ) : null}
         </Card>
       </ScrollView>
+      </Reanimated.View>
 
       <CompactBar title={profile?.full_name ? `Merhaba, ${profile.full_name.split(" ")[0]}` : "Merhaba"} visible={compact} />
 

@@ -20,6 +20,7 @@ import { ShortcutButton } from "@/components/mesai/shortcut-button";
 import { DatePicker } from "@/components/mesai/date-picker";
 import { StatusIcon } from "@/components/mesai/status-icon";
 import { LevelIcon } from "@/components/mesai/level-icon";
+import { Celebrate, usePop, useRiseBurst } from "@/components/mesai/celebrate";
 import { FormRow, FormSection, NumberRow, Segmented, SwitchRow } from "@/components/mesai/ios-form";
 import { ReminderCard } from "@/components/mesai/reminder-card";
 import { MonthSummary } from "@/components/mesai/month-summary";
@@ -93,6 +94,8 @@ function HomeView({ today }: { today: Date }) {
     - (realEntries ?? []).filter(isWork).reduce((a, e) => a + Number(e.hours), 0);
   const totalHours = (realTotal ?? 0) + pendingDelta;
   const lvl = levelFor(totalHours);
+  const lvlBurst = useRiseBurst("level", lvl.level, realTotal !== null);
+  const lvlRef = usePop<HTMLSpanElement>(lvlBurst);
 
   function add(type: EntryType, hours: number, start?: string | null, end?: string | null, undo = false, shortcutId?: string) {
     const isWorkRow = type === "overtime" || (type === "holiday" && hours > 0);
@@ -282,7 +285,11 @@ function HomeView({ today }: { today: Date }) {
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <LevelIcon level={lvl.level} className="size-14" />
+                  {/* Seviye atlanınca: ikon bir kez "pop" + parçacık patlaması */}
+                  <span ref={lvlRef} className="relative grid shrink-0 place-items-center">
+                    <Celebrate burst={lvlBurst} distance={44} />
+                    <LevelIcon level={lvl.level} className="size-14" />
+                  </span>
                   <div>
                     <p className="text-xs text-muted-foreground">Seviye {lvl.level}</p>
                     <p className="text-lg font-semibold">{lvl.name}</p>

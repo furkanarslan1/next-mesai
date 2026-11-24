@@ -4,6 +4,7 @@ import { BarChart3, Calculator, CalendarDays, Home, Settings, type LucideIcon } 
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { haptic } from "@/lib/haptics";
+import { markTabSwitch } from "./tab-rise";
 import { radius, useColors, useIsDark } from "@/theme";
 
 const ICONS: Record<string, { label: string; icon: LucideIcon }> = {
@@ -45,7 +46,7 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
                 accessibilityLabel={meta.label}
                 onPress={() => {
                   const e = emitter.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-                  if (!active && !e.defaultPrevented) { haptic(); navigateToTab(route.key); }
+                  if (!active && !e.defaultPrevented) { haptic(); markTabSwitch(); navigateToTab(route.key); }
                 }}
                 style={[styles.item, active && { backgroundColor: c.primary, boxShadow: c.shadow.navActive }]}>
                 <Icon size={22} strokeWidth={active ? 2.4 : 2} color={fg} />

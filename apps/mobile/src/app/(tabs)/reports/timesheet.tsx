@@ -8,12 +8,13 @@ import { format } from "date-fns/format";
 import { startOfMonth } from "date-fns/startOfMonth";
 import { tr } from "date-fns/locale/tr";
 import { router } from "expo-router";
+import { Skeleton } from "@/components/skeleton";
 import { ChevronLeft, ChevronRight, FileSpreadsheet, FileText } from "@/components/icons";
 import { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { FormSection, SwitchRow } from "@/components/form";
 import { toast } from "@/components/toast";
-import { Button, Card, IconButton, Screen, Txt } from "@/components/ui";
+import { Button, IconButton, Screen, Txt } from "@/components/ui";
 import { esc, sharePdf, shareXlsx } from "@/lib/export";
 import { monthKey, useMonthEntries, useProfile, useSettings } from "@/lib/store";
 import { alpha, radius, useColors } from "@/theme";
@@ -56,7 +57,7 @@ export default function TimesheetScreen() {
   const settings = useSettings();
   const entries = useMonthEntries(monthKey(month));
   const back = { label: "Raporlar", onPress: () => router.back() };
-  if (!entries || !settings) return <Screen title="Çalışma çizelgesi" back={back}><Card style={{ minHeight: 448, opacity: 0.6 }} /></Screen>;
+  if (!entries || !settings) return <Screen title="Çalışma çizelgesi" back={back}><Skeleton style={{ minHeight: 448 }} /></Screen>;
 
   const ts = buildTimesheet(month, entries, settings, { assumeWorkdays: assume });
   const monthName = format(month, "LLLL yyyy", { locale: tr });

@@ -12,7 +12,9 @@ import { tr } from "date-fns/locale/tr";
 import { ChevronLeft, ChevronRight } from "@/components/icons";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
+import Reanimated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { DaySheet } from "@/components/day-sheet";
+import { useReduceMotion } from "@/lib/motion";
 import { AnimatedNumber } from "@/components/animated-number";
 import { Card, IconButton, LargeTitle, Screen, Txt } from "@/components/ui";
 import { mixOklch } from "@/lib/color";
@@ -46,6 +48,18 @@ export default function CalendarScreen() {
   const today = useToday();
   const todayStr = format(today, "yyyy-MM-dd");
   const [month, setMonth] = useState(today);
+  // Ay değişince ızgara geldiği yönden 24 px kayarak belirir (web: .month-slide, 260 ms)
+  const reduce = useReduceMotion();
+  const slide = useSharedValue(1);
+  const dir = useSharedValue(0);
+  const go = (n: number) => {
+    setMonth(addMonths(month, n));
+    if (reduce) return;
+    dir.set(n);
+    slide.set(0);
+    slide.set(withTiming(1, { duration: 260, easing: Easing.bezier(0.2, 0.9, 0.3, 1) }));
+  };
+  const slideStyle = useAnimatedStyle(() => ({ opacity: slide.get(), transform: [{ translateX: (1 - slide.get()) * dir.get() * 24 }] }));
   const [selected, setSelected] = useState<string | null>(null);
   const userId = useProfile()?.id ?? "";
   const entries = useMonthEntries(monthKey(month)) ?? [];
@@ -70,12 +84,12 @@ export default function CalendarScreen() {
     <Screen eyebrow="Takvim" title={<LargeTitle>{capTitle}</LargeTitle>} compactTitle={capTitle}
       actions={(
         <>
-          <IconButton label="Önceki ay" onPress={() => setMonth(addMonths(month, -1))}><ChevronLeft size={16} color={c.secondaryForeground} /></IconButton>
-          <IconButton label="Sonraki ay" onPress={() => setMonth(addMonths(month, 1))}><ChevronRight size={16} color={c.secondaryForeground} /></IconButton>
+          <IconButton label="Önceki ay" onPress={() => go(-1)}><ChevronLeft size={16} color={c.secondaryForeground} /></IconButton>
+          <IconButton label="Sonraki ay" onPress={() => go(1)}><ChevronRight size={16} color={c.secondaryForeground} /></IconButton>
         </>
       )}>
       <Card style={{ paddingVertical: 16, paddingHorizontal: 16 }}>
-        <View style={{ gap: 6 }}>
+        <Reanimated.View style={[{ gap: 6 }, slideStyle]}>
           <View style={{ flexDirection: "row", gap: 6 }}>
             {DAYS.map((d) => <Txt key={d} muted style={{ flex: 1, textAlign: "center", fontSize: 12, lineHeight: 16 }}>{d}</Txt>)}
           </View>
@@ -114,7 +128,7 @@ export default function CalendarScreen() {
               })}
             </View>
           ))}
-        </View>
+        </Reanimated.View>
         <Txt muted style={{ marginTop: 12, textAlign: "center", fontSize: 12, lineHeight: 16 }}>Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil.</Txt>
       </Card>
 

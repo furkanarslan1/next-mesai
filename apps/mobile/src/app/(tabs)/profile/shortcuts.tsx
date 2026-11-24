@@ -1,6 +1,7 @@
 import { errorText } from "@mesai/core/errors";
 import { parseNum } from "@mesai/core/num";
 import { router } from "expo-router";
+import { Skeleton } from "@/components/skeleton";
 import { Plus, Trash2 } from "@/components/icons";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
@@ -45,7 +46,7 @@ export default function ShortcutsScreen() {
     <Screen title="Kısayollar" back={back}>
       <View style={{ gap: 24 }}>
         <SettingsGroup title="Kısayollar" footer="Ana sayfada tek dokunuşla o güne mesai ekler. Silmek için satırı sola kaydır. En fazla 8 kısayol.">
-          {shortcuts === null ? <View style={{ height: 52, opacity: 0.5 }} /> : null}
+          {shortcuts === null ? <Skeleton bare style={{ height: 52 }} /> : null}
           {shortcuts?.length === 0 ? <Txt muted style={{ paddingHorizontal: 16, paddingVertical: 16, fontSize: 15, lineHeight: 22.5 }}>Henüz kısayol yok.</Txt> : null}
           {list.map((s) => (
             <SwipeRow key={s.id} onDelete={() => remove(s.id)}>

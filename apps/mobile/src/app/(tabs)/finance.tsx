@@ -9,6 +9,7 @@ import { format } from "date-fns/format";
 import { parseISO } from "date-fns/parseISO";
 import { startOfMonth } from "date-fns/startOfMonth";
 import { tr } from "date-fns/locale/tr";
+import { Skeleton } from "@/components/skeleton";
 import { ChevronLeft, ChevronRight, Plus, Repeat } from "@/components/icons";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -61,7 +62,7 @@ export default function FinanceScreen() {
       </>
     ),
   };
-  if (!items) return <Screen {...header}><Card style={{ minHeight: 448, opacity: 0.6 }} /></Screen>;
+  if (!items) return <Screen {...header}><Skeleton style={{ minHeight: 448 }} /></Screen>;
 
   async function removeItem(i: FinanceItem) {
     try { await mutate.finance.remove(key, i.id); toast.success(`${i.category} silindi`); }
