@@ -4,6 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   Animated, Easing, KeyboardAvoidingView, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View,
 } from "react-native";
+import Reanimated, { Easing as REasing, interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { radius, useColors, useIsDark } from "@/theme";
 import { Txt } from "./ui";
@@ -15,6 +16,7 @@ const setDepth = (d: number) => { depth = Math.max(0, d); subs.forEach((f) => f(
 const useDepth = () => useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f); }; }, () => depth);
 
 const EASE = Easing.bezier(0.2, 0.9, 0.3, 1);
+const REASE = REasing.bezier(0.2, 0.9, 0.3, 1);
 
 /** Panel sürükleme işleyicisi: içerik en üstteyken aşağı çekilirse panel izler; yeterince çekilince (ya da hızlı) kapanır. */
 function sheetDrag(y: Animated.Value) {
@@ -38,20 +40,25 @@ function sheetDrag(y: Animated.Value) {
 export function PageStack({ children }: { children: React.ReactNode }) {
   const c = useColors();
   const d = useDepth();
-  const [v] = useState(() => new Animated.Value(0));
-  useEffect(() => { Animated.timing(v, { toValue: d > 0 ? 1 : 0, duration: 420, easing: EASE, useNativeDriver: false }).start(); }, [d, v]);
+  // UI iş parçacığında (Reanimated): panel açılırken JS meşgul olsa da sayfa akıcı küçülür
+  const v = useSharedValue(0);
+  useEffect(() => { v.set(withTiming(d > 0 ? 1 : 0, { duration: 420, easing: REASE })); }, [d, v]);
+  const bg = c.background;
+  const outer = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(v.get(), [0, 1], [bg, "#000000"]) }));
+  const inner = useAnimatedStyle(() => ({
+    // Web'deki gibi panel açıkken sayfa zemini saydamlaşır, arkadaki siyah görünür (yalnızca kartlar kalır)
+    backgroundColor: interpolateColor(v.get(), [0, 1], [bg, "rgba(0, 0, 0, 0)"]),
+    borderRadius: v.get() * 22.4,
+    transform: [{ scale: 1 - v.get() * 0.07 }],
+  }));
+  const dim = useAnimatedStyle(() => ({ opacity: v.get() * 0.18 }));
   return (
-    <Animated.View style={{ flex: 1, backgroundColor: v.interpolate({ inputRange: [0, 1], outputRange: [c.background, "#000000"] }) }}>
-      <Animated.View style={{
-        // Web'deki gibi panel açıkken sayfa zemini saydamlaşır, arkadaki siyah görünür (yalnızca kartlar kalır)
-        flex: 1, overflow: "hidden", backgroundColor: v.interpolate({ inputRange: [0, 1], outputRange: [c.background, "rgba(0, 0, 0, 0)"] }),
-        borderRadius: v.interpolate({ inputRange: [0, 1], outputRange: [0, 22.4] }),
-        transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.93] }) }],
-      }}>
+    <Reanimated.View style={[{ flex: 1 }, outer]}>
+      <Reanimated.View style={[{ flex: 1, overflow: "hidden" }, inner]}>
         {children}
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: "#000", opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0, 0.18] }) }]} />
-      </Animated.View>
-    </Animated.View>
+        <Reanimated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: "#000" }, dim]} />
+      </Reanimated.View>
+    </Reanimated.View>
   );
 }
 

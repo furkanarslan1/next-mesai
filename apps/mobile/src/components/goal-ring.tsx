@@ -1,5 +1,6 @@
-import { useEffect, useId, useState } from "react";
-import { Animated, Easing, View } from "react-native";
+import { useEffect, useId } from "react";
+import { View } from "react-native";
+import Animated, { Easing, useAnimatedProps, useSharedValue, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Defs, FeGaussianBlur, Filter, G, LinearGradient, Stop } from "react-native-svg";
 import { useColors } from "@/theme";
 
@@ -18,12 +19,12 @@ export function GoalRing({ percent, size = 156, stroke = 14, children }: {
   const c = useColors();
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const p = Math.max(0, Math.min(100, percent)) / 100;
-  const [anim] = useState(() => new Animated.Value(0));
-  useEffect(() => {
-    Animated.timing(anim, { toValue: p, duration: 1200, easing: Easing.bezier(0.2, 0.9, 0.3, 1), useNativeDriver: false }).start();
-  }, [p, anim]);
-  const offset = anim.interpolate({ inputRange: [0, 1], outputRange: [C, 0] });
-  const rot = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 360] });
+  // UI iş parçacığında (Reanimated): halka dolarken JS meşgul olsa da takılmaz
+  const anim = useSharedValue(0);
+  useEffect(() => { anim.set(withTiming(p, { duration: 1200, easing: Easing.bezier(0.2, 0.9, 0.3, 1) })); }, [p, anim]);
+  const glow = useAnimatedProps(() => ({ strokeDashoffset: C * (1 - anim.get()) }));
+  const arc = useAnimatedProps(() => ({ strokeDashoffset: C * (1 - anim.get()) }));
+  const tip = useAnimatedProps(() => ({ rotation: anim.get() * 360 }));
 
   return (
     <View style={{ width: size, height: size }} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(percent) }}>
@@ -41,11 +42,11 @@ export function GoalRing({ percent, size = 156, stroke = 14, children }: {
         {p > 0 ? (
           <>
             <AnimatedCircle cx="60" cy="60" r={R} fill="none" stroke={`url(#g${id})`} strokeWidth={stroke} opacity={0.55} filter={`url(#b${id})`}
-              strokeLinecap="round" strokeDasharray={`${C} ${C}`} strokeDashoffset={offset} />
+              strokeLinecap="round" strokeDasharray={`${C} ${C}`} animatedProps={glow} />
             <AnimatedCircle cx="60" cy="60" r={R} fill="none" stroke={`url(#g${id})`} strokeWidth={stroke}
-              strokeLinecap="round" strokeDasharray={`${C} ${C}`} strokeDashoffset={offset} />
+              strokeLinecap="round" strokeDasharray={`${C} ${C}`} animatedProps={arc} />
             {/* Uç: yayla aynı sürede dönen grup, böylece yay boyunca ilerler */}
-            <AnimatedG rotation={rot} origin="60, 60">
+            <AnimatedG animatedProps={tip} origin="60, 60">
               <Circle cx="110" cy="60" r={stroke * 0.32} fill={c.ringTip} />
             </AnimatedG>
           </>

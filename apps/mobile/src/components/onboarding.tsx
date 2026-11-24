@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
+import Reanimated, { Easing as REasing, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop, Text as SvgText } from "react-native-svg";
 import { haptic } from "@/lib/haptics";
@@ -11,9 +12,9 @@ import { Button, Txt } from "./ui";
 const KEY = "mesai.onboarded";
 const MINT = "#cfeae0";
 const NAVY = "#131b2b";
-const EASE = Easing.bezier(0.2, 0.9, 0.3, 1);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const AnimatedCircle = Reanimated.createAnimatedComponent(Circle);
+const AnimatedRect = Reanimated.createAnimatedComponent(Rect);
+const REASE = REasing.bezier(0.2, 0.9, 0.3, 1);
 
 /** Yukarı aşağı süzülme (web: ob-float, 3 sn, 6px): ayrı bir katmanda aynı viewBox ile çizilir */
 function useFloat(reduce: boolean) {
@@ -29,14 +30,12 @@ function useFloat(reduce: boolean) {
   }, [v, reduce]);
   return v.interpolate({ inputRange: [0, 1], outputRange: [0, -6] });
 }
-/** 0 → 1 tek seferlik giriş animasyonu (halka çizimi, çubuklar) */
+/** 0 → 1 tek seferlik giriş animasyonu (halka çizimi, çubuklar); UI iş parçacığında (Reanimated) */
 function useEnter(duration: number, delay = 0, reduce = false) {
-  const [v] = useState(() => new Animated.Value(reduce ? 1 : 0));
+  const v = useSharedValue(reduce ? 1 : 0);
   useEffect(() => {
-    if (reduce) { v.setValue(1); return; }
-    const a = Animated.timing(v, { toValue: 1, duration, delay, easing: EASE, useNativeDriver: false });
-    a.start();
-    return () => a.stop();
+    if (reduce) { v.set(1); return; }
+    v.set(withDelay(delay, withTiming(1, { duration, easing: REASE })));
   }, [v, duration, delay, reduce]);
   return v;
 }
@@ -58,6 +57,7 @@ function RingArt({ reduce }: { reduce: boolean }) {
   const c = useColors();
   const r = 62, len = 2 * Math.PI * r * 0.7, circ = 2 * Math.PI * r;
   const p = useEnter(1200, 0, reduce);
+  const draw = useAnimatedProps(() => ({ strokeDashoffset: len * (1 - p.get()) }));
   return (
     <Scene reduce={reduce}
       base={<>
@@ -65,7 +65,7 @@ function RingArt({ reduce }: { reduce: boolean }) {
         <Circle cx="120" cy="100" r="92" fill={c.teal} opacity={0.08} />
         <Circle cx="120" cy="100" r={r} fill="none" stroke={c.teal} strokeOpacity={0.2} strokeWidth={18} />
         <AnimatedCircle cx="120" cy="100" r={r} fill="none" stroke="url(#ob1)" strokeWidth={18} strokeLinecap="round"
-          strokeDasharray={`${len} ${circ}`} strokeDashoffset={p.interpolate({ inputRange: [0, 1], outputRange: [len, 0] })} transform="rotate(-90 120 100)" />
+          strokeDasharray={`${len} ${circ}`} animatedProps={draw} transform="rotate(-90 120 100)" />
         <SvgText x="120" y="108" textAnchor="middle" fontSize="30" fontWeight="700" fill={c.foreground}>%70</SvgText>
       </>}
       float={<G><Rect x="176" y="22" width="56" height="26" rx="13" fill={c.card} /><SvgText x="204" y="40" textAnchor="middle" fontSize="12" fontWeight="700" fill={c.teal}>+₺850</SvgText></G>} />
@@ -91,8 +91,8 @@ const BARS = [38, 56, 44, 72, 60, 90];
 function Bar({ i, h, reduce }: { i: number; h: number; reduce: boolean }) {
   const c = useColors();
   const p = useEnter(700, i * 70, reduce);
-  return <AnimatedRect x={48 + i * 25} y={p.interpolate({ inputRange: [0, 1], outputRange: [150, 150 - h] })} width="16"
-    height={p.interpolate({ inputRange: [0, 1], outputRange: [0, h] })} rx="6" fill={c.teal} opacity={i === 5 ? 1 : 0.35} />;
+  const grow = useAnimatedProps(() => ({ y: 150 - h * p.get(), height: h * p.get() }));
+  return <AnimatedRect x={48 + i * 25} width="16" animatedProps={grow} rx="6" fill={c.teal} opacity={i === 5 ? 1 : 0.35} />;
 }
 function ReportArt({ reduce }: { reduce: boolean }) {
   const c = useColors();
@@ -120,9 +120,10 @@ const SLIDES = [
 /** Sayfa noktası: seçili olan 24px genişler (web: 300 ms geçiş) */
 function Dot({ on }: { on: boolean }) {
   const c = useColors();
-  const [w] = useState(() => new Animated.Value(on ? 24 : 8));
-  useEffect(() => { Animated.timing(w, { toValue: on ? 24 : 8, duration: 300, easing: EASE, useNativeDriver: false }).start(); }, [on, w]);
-  return <Animated.View style={{ height: 8, width: w, borderRadius: 4, backgroundColor: on ? c.tint : alpha(c.mutedForeground, 0.3) }} />;
+  const w = useSharedValue(on ? 24 : 8);
+  useEffect(() => { w.set(withTiming(on ? 24 : 8, { duration: 300, easing: REASE })); }, [on, w]);
+  const style = useAnimatedStyle(() => ({ width: w.get() }));
+  return <Reanimated.View style={[{ height: 8, borderRadius: 4, backgroundColor: on ? c.tint : alpha(c.mutedForeground, 0.3) }, style]} />;
 }
 
 /** İlk açılışta bir kez gösterilen 3 sayfalık tanıtım (web: Onboarding). Kaydırarak ya da düğmeyle ilerlenir. */
