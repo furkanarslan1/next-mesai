@@ -18,6 +18,7 @@ import { toast } from "@/components/toast";
 import { Button, Card, Screen, Txt } from "@/components/ui";
 import { esc, shareCsv, sharePdf } from "@/lib/export";
 import { haptic } from "@/lib/haptics";
+import { useToday } from "@/lib/now";
 import { mutate, useEntriesMap, usePayslips, useProfile, useSettings, useTotalHours } from "@/lib/store";
 import { alpha, radius, useColors } from "@/theme";
 
@@ -55,7 +56,7 @@ export default function ReportsScreen() {
 /** Raporlar: web'deki app/(app)/reports/page.tsx'in birebir aynısı. */
 function ReportsView({ settings }: { settings: Settings }) {
   const c = useColors();
-  const today = new Date();
+  const today = useToday();
   const profile = useProfile();
   const userId = profile?.id ?? "";
   const payslips = usePayslips();

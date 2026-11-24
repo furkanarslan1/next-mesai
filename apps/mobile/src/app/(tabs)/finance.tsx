@@ -13,6 +13,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import { BudgetSheet, FinanceSheet } from "@/components/finance-sheet";
 import { SwipeRow } from "@/components/swipe-row";
 import { toast } from "@/components/toast";
+import { useToday } from "@/lib/now";
 import { Button, Card, IconButton, LargeTitle, Screen, Stat, Txt } from "@/components/ui";
 import { monthKey, mutate, useEntriesMap, useFinance, useFinanceMap, useMonthEntries, useProfile, useSettings } from "@/lib/store";
 import { radius, useColors, useIsDark } from "@/theme";
@@ -27,7 +28,7 @@ const h2Out = { fontSize: 16, lineHeight: 24, fontWeight: "600" as const };
 export default function FinanceScreen() {
   const c = useColors();
   const dark = useIsDark();
-  const today = new Date();
+  const today = useToday();
   const todayStr = format(today, "yyyy-MM-dd");
   const [month, setMonth] = useState(startOfMonth(today));
   const [sheet, setSheet] = useState<SheetState>(null);

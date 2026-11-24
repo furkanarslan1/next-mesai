@@ -1,6 +1,6 @@
 import { errorText } from "@mesai/core/errors";
 import { useRef, useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, type TextInputInstance, View } from "react-native";
+import { Alert, KeyboardAvoidingView, type TextInputInstance, View } from "react-native";
 import { Button, Card, Field, Screen, Txt } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
 
@@ -21,7 +21,7 @@ export default function Login() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <Screen title="Mesai" eyebrow="Hoş geldin" tabs={false}>
         <Txt muted>Mesaini, hedef maaşını ve gelir-giderini takip et.</Txt>
         <Card style={{ gap: 16 }}>

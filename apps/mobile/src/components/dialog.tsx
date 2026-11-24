@@ -1,7 +1,7 @@
 import { BlurView } from "expo-blur";
 import { X } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Animated, Easing, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from "react-native";
+import { Animated, Easing, KeyboardAvoidingView, Modal, Pressable, StyleSheet, View } from "react-native";
 import { haptic } from "@/lib/haptics";
 import { radius, useColors, useIsDark } from "@/theme";
 import { Button, Txt } from "./ui";
@@ -105,7 +105,7 @@ export function Dialog({ open, onClose, title, titleSize = 16, padding = 16, gap
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: anim }]}>
         <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.10)" }]} onPress={onClose} accessibilityLabel="Kapat" />
       </Animated.View>
-      <KeyboardAvoidingView pointerEvents="box-none" style={styles.center} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoidingView pointerEvents="box-none" style={styles.center} behavior="padding">
         <Animated.View accessibilityViewIsModal style={[styles.card, {
           padding, gap, backgroundColor: c.card, borderColor: c.dialogBorder, boxShadow: c.shadow.dialog,
           opacity: anim, transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }],
