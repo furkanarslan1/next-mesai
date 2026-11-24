@@ -11,6 +11,7 @@ import { DaySheet } from "@/components/day-sheet";
 import { Card, IconButton, LargeTitle, Screen, Txt } from "@/components/ui";
 import { mixOklch } from "@/lib/color";
 import { haptic } from "@/lib/haptics";
+import { useToday } from "@/lib/now";
 import { monthKey, useMonthEntries, useProfile, useSettings } from "@/lib/store";
 import { radius, useColors, useIsDark } from "@/theme";
 
@@ -36,7 +37,7 @@ const isWork = (t: string) => t === "overtime" || t === "holiday";
 export default function CalendarScreen() {
   const c = useColors();
   const dark = useIsDark();
-  const today = new Date();
+  const today = useToday();
   const todayStr = format(today, "yyyy-MM-dd");
   const [month, setMonth] = useState(today);
   const [selected, setSelected] = useState<string | null>(null);
@@ -126,6 +127,8 @@ export default function CalendarScreen() {
       </View>
       {holidays.length ? (
         <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>
+          {/* Web: başta sarı halkalı nokta (takvimdeki tatil çerçevesinin açıklaması) */}
+          <View style={{ width: 8, height: 8, borderRadius: 4, borderWidth: 2, borderColor: "#fbbf24", marginRight: 4 }} />
           {holidays.map((d) => `${format(d, "d")} ${holidayName(format(d, "yyyy-MM-dd"))}`).join(" · ")}
         </Txt>
       ) : null}

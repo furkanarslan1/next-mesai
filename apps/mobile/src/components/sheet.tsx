@@ -2,7 +2,7 @@ import { BlurView } from "expo-blur";
 import { X } from "lucide-react-native";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
-  Animated, Easing, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, View,
+  Animated, Easing, KeyboardAvoidingView, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { radius, useColors, useIsDark } from "@/theme";
@@ -106,7 +106,7 @@ export function Sheet({ open, onClose, title, description, showClose = false, ga
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: fade }]}>
         <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.10)" }]} onPress={onClose} accessibilityLabel="Kapat" />
       </Animated.View>
-      <KeyboardAvoidingView pointerEvents="box-none" style={{ flex: 1, justifyContent: "flex-end" }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoidingView pointerEvents="box-none" style={{ flex: 1, justifyContent: "flex-end" }} behavior="padding">
         <Animated.View {...drag.handlers} style={[styles.panel, { borderColor: c.dialogBorder, transform: [{ translateY: y }] }]}>
           <BlurView intensity={100} tint={dark ? "dark" : "light"} style={[StyleSheet.absoluteFill, styles.topRound]} />
           <View style={[StyleSheet.absoluteFill, styles.topRound, { backgroundColor: c.sheetBg }]} />

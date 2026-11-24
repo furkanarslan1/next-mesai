@@ -23,6 +23,7 @@ import { toast } from "@/components/toast";
 import { TodayCard } from "@/components/today-card";
 import { Button, Card, COMPACT_AT, CompactBar, Eyebrow, TAB_BAR_SPACE, Txt } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
+import { useToday } from "@/lib/now";
 import { monthKey, mutate, useMonthEntries, useProfile, useSettings, useShortcuts, useTotalHours } from "@/lib/store";
 import { alpha, radius, space, useColors } from "@/theme";
 
@@ -41,7 +42,7 @@ const pairs = <T,>(list: T[]) => Array.from({ length: Math.ceil(list.length / 2)
 export default function Home() {
   const c = useColors();
   const insets = useSafeAreaInsets();
-  const today = new Date();
+  const today = useToday();
   const todayStr = format(today, "yyyy-MM-dd");
   const profile = useProfile();
   const userId = profile?.id ?? "";
