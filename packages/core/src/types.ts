@@ -4,7 +4,8 @@ export type ShiftType = "day" | "evening" | "night";
 
 export interface Entry {
   id: string;
-  user_id: string;
+  /** Eklerken gönderilir; önbellekteki (okunan) kayıtlarda yoktur, hep giriş yapan kullanıcıdır */
+  user_id?: string;
   work_date: string; // YYYY-MM-DD
   type: EntryType;
   hours: number;
@@ -73,7 +74,8 @@ export interface ManagerLink { id: string; status: string; manager_id: string; e
 
 export interface FinanceItem {
   id: string;
-  user_id: string;
+  /** Eklerken gönderilir; önbellekteki (okunan) kalemlerde yoktur */
+  user_id?: string;
   month: string; // ayın ilk günü, YYYY-MM-01 (tekrarlayanlarda başladığı ay)
   kind: "income" | "expense";
   category: string;

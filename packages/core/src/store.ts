@@ -28,6 +28,17 @@ interface State {
   payslips: Payslip[] | null;
 }
 
+/**
+ * İstenen sütunlar: büyüyen tablolarda yalnızca uygulamanın kullandıkları (user_id her zaman giriş yapan kullanıcı,
+ * created_at yalnızca sıralamada gerekir). Ayarlar tek satır olduğundan "*" kalır (yeni ayar sütunu unutulmasın).
+ */
+const COLS = {
+  entries: "id,work_date,type,hours,note,start_time,end_time,shortcut_id",
+  finance: "id,month,kind,category,amount,spent_on,recurring,ends_month",
+  profile: "id,full_name,role,invite_code",
+  shortcuts: "id,label,hours,sort,start_time,end_time",
+} as const;
+
 const EMPTY: State = { profile: null, settings: null, shortcuts: null, totalHours: null, entries: {}, links: null, finance: {}, payslips: null };
 
 /** Dilim tazelik süreleri (ms). Kayıtlar en sık değişen veridir, ayarlar/profil nadiren. */
@@ -181,7 +192,7 @@ export const load = {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-    const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
+    const { data } = await supabase.from("profiles").select(COLS.profile).eq("id", session.user.id).single();
     if (ep === epoch && data) {
       touch("profile");
       set({ profile: data as Profile });
@@ -195,7 +206,7 @@ export const load = {
   })),
   shortcuts: (force = false) => (!force && state.shortcuts && fresh("shortcuts", TTL.shortcuts) ? Promise.resolve() : once("shortcuts", async () => {
     const ep = epoch;
-    const { data, error } = await createClient().from("shortcuts").select("*").order("sort");
+    const { data, error } = await createClient().from("shortcuts").select(COLS.shortcuts).order("sort");
     if (ep === epoch && !error) { touch("shortcuts"); set({ shortcuts: (data ?? []) as Shortcut[] }); }
   })),
   totalHours: (force = false) => (!force && state.totalHours !== null && fresh("total", TTL.total) ? Promise.resolve() : once("total", async () => {
@@ -232,7 +243,7 @@ export const load = {
       const to = format(endOfMonth(new Date(`${span[span.length - 1]}-01T00:00:00`)), "yyyy-MM-dd");
       const supabase = createClient();
       const rows = await readConsistent(async () => {
-        const all = await fetchAll<Entry>((a, b) => supabase.from("entries").select("*").gte("work_date", from).lte("work_date", to)
+        const all = await fetchAll<Entry>((a, b) => supabase.from("entries").select(COLS.entries).gte("work_date", from).lte("work_date", to)
           .order("work_date").order("created_at").order("id").range(a, b));
         return { data: all, error: all === null };
       });
@@ -261,7 +272,7 @@ export const load = {
         let legacy = false; // 0006 migration'ı uygulanmadıysa yalnızca aralıktaki kalemler
         const all = await fetchAll<Record<string, unknown>>(async (x, y) => {
           if (!legacy) {
-            const r = await supabase.from("finance_items").select("*").or(`and(month.gte.${a},month.lte.${b}),and(recurring.eq.true,month.lte.${b})`).order("id").range(x, y);
+            const r = await supabase.from("finance_items").select(COLS.finance).or(`and(month.gte.${a},month.lte.${b}),and(recurring.eq.true,month.lte.${b})`).order("id").range(x, y);
             if (!r.error) return r;
             legacy = true;
           }
