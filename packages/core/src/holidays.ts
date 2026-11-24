@@ -1,4 +1,4 @@
-// Türkiye resmi tatilleri. Dini bayram tarihleri yıllık değişir; yeni yıllar eklenmeli.
+// Türkiye resmi tatilleri. Dini bayram tarihleri yıllık değişir; yeni yıllar Diyanet'in "Dini Günler" listesinden eklenmeli.
 const FIXED: [string, string][] = [
   ["01-01", "Yılbaşı"], ["04-23", "Ulusal Egemenlik ve Çocuk Bayramı"], ["05-01", "Emek ve Dayanışma Günü"],
   ["05-19", "Atatürk'ü Anma, Gençlik ve Spor Bayramı"], ["07-15", "Demokrasi ve Milli Birlik Günü"],
@@ -9,7 +9,13 @@ const RELIGIOUS: Record<string, string> = {
   "2026-05-27": "Kurban Bayramı 1. gün", "2026-05-28": "Kurban Bayramı 2. gün", "2026-05-29": "Kurban Bayramı 3. gün", "2026-05-30": "Kurban Bayramı 4. gün",
   "2027-03-09": "Ramazan Bayramı 1. gün", "2027-03-10": "Ramazan Bayramı 2. gün", "2027-03-11": "Ramazan Bayramı 3. gün",
   "2027-05-16": "Kurban Bayramı 1. gün", "2027-05-17": "Kurban Bayramı 2. gün", "2027-05-18": "Kurban Bayramı 3. gün", "2027-05-19": "Kurban Bayramı 4. gün",
+  // 2028: Diyanet "2028 Dini Günler Listesi" (vakithesaplama.diyanet.gov.tr/icerik.php?icerik=185)
+  "2028-02-26": "Ramazan Bayramı 1. gün", "2028-02-27": "Ramazan Bayramı 2. gün", "2028-02-28": "Ramazan Bayramı 3. gün",
+  "2028-05-05": "Kurban Bayramı 1. gün", "2028-05-06": "Kurban Bayramı 2. gün", "2028-05-07": "Kurban Bayramı 3. gün", "2028-05-08": "Kurban Bayramı 4. gün",
 };
+
+/** Dini bayram tarihleri girilmiş yıllar (yeni yıl eklenmesi gerektiğini testler hatırlatır). */
+export const religiousYears = () => [...new Set(Object.keys(RELIGIOUS).map((d) => Number(d.slice(0, 4))))];
 
 /** "YYYY-MM-DD" için tatil adı, yoksa null. */
 export function holidayName(date: string): string | null {
