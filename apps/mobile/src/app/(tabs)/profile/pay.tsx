@@ -100,9 +100,9 @@ function PayForm({ settings }: { settings: Settings }) {
 
   return (
     <Screen title="Ücret ve hedef" back={back} overlay={overlay}>
-      <FormSection title="Maaş" footer="Bordrondaki sicil (net) maaşın.">
+      <FormSection title="Maaş" footer="Bordrondaki sicil (net) maaşın. Maaşa dahil mesai yoksa boş bırak; örneğin maaşın 10,5 saat mesai içeriyorsa 10,5 yaz.">
         <NumberRow label="Aylık net maaş" suffix="₺" value={f.monthly_salary} onChange={(v) => set("monthly_salary", v)} />
-        <NumberRow label="Maaşa dahil mesai" suffix="saat" placeholder="10.5" hint="Maaşın bu kadar saat mesai içeriyorsa"
+        <NumberRow label="Maaşa dahil mesai" suffix="saat" hint="Maaşın içerdiği mesai saati"
           value={f.included_overtime_hours} onChange={(v) => set("included_overtime_hours", v)} />
         <SwitchRow label="Raporlu günler maaştan düşer" hint="Bordroda “Raporlu (Ücretsiz)” varsa aç" value={f.sick_leave_unpaid} onChange={(v) => set("sick_leave_unpaid", v)} />
         <SwitchRow label="Raporlu günler mesaiden düşer" hint={`Her raporlu gün için ${hrs(settings.daily_hours)} mesaiden düşülür`}
@@ -111,7 +111,7 @@ function PayForm({ settings }: { settings: Settings }) {
 
       <FormSection title="Mesai ücreti"
         footer={`Hafta içi ${rateText(f.weekday_percent)} · Pazar ${rateText(f.sunday_percent)} · Resmi tatil ${rateText(f.holiday_percent)}. Maaşa dahil saatlerin üstü bu ücretlerle eklenir.`}>
-        <NumberRow label="Saatlik ücret (%100)" suffix="₺" hint="Bordroda “Ek. Mes. %100” saatlik net ücret"
+        <NumberRow label="Saatlik ücret (%100)" suffix="₺" hint="Bordrodaki “Ek. Mes. %100” ücreti"
           value={f.base_hourly_rate} onChange={(v) => set("base_hourly_rate", v)} />
         <PercentRow label="Hafta içi mesai" value={f.weekday_percent} onChange={(v) => set("weekday_percent", v)} />
         <PercentRow label="Pazar mesaisi" value={f.sunday_percent} onChange={(v) => set("sunday_percent", v)} />
