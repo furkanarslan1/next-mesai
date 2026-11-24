@@ -13,7 +13,9 @@ import { Dialog } from "./dialog";
 import { Segmented } from "./form";
 import { GoalRing } from "./goal-ring";
 import { toast } from "./toast";
+import Reanimated from "react-native-reanimated";
 import { AnimatedNumber } from "./animated-number";
+import { Celebrate, usePop, useRiseBurst } from "./celebrate";
 import { Button, Card, Eyebrow, Stat, Txt } from "./ui";
 
 /** Aylık özet (web'deki MonthSummary): toplam kazanç ve mesai saati / günü / kazancı. */
@@ -60,6 +62,8 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
   const g = goalProgress(entries, opt);
   const pr = today ? projection(entries, opt, today) : null;
   const cur = opt.currency;
+  const burst = useRiseBurst(monthLabel, g.set && g.percent >= 100 ? 1 : 0, true);
+  const ringPop = usePop(burst);
   const fmtHrs = (n: number) => hrs(Math.round(n * 10) / 10);
   const fmtMoney = (n: number) => money(n, cur);
 
@@ -102,10 +106,14 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
       ) : (
         <>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
+            {/* Bu ayın hedefi %100'e ulaştığı anda: halka bir kez "pop" + parçacık patlaması */}
+            <Reanimated.View style={ringPop}>
             <GoalRing percent={g.percent} size={156}>
               <AnimatedNumber value={g.percent} format={(n) => `%${Math.round(n)}`} style={{ fontSize: 33.6, lineHeight: 33.6, fontWeight: "700", letterSpacing: -0.84 }} />
               <Txt muted style={{ marginTop: 4, fontSize: 11, lineHeight: 16.5, fontWeight: "600", letterSpacing: 0.55, textTransform: "uppercase" }}>{g.percent >= 100 ? "Tamam" : "Hedef"}</Txt>
             </GoalRing>
+            <Celebrate burst={burst} distance={92} />
+            </Reanimated.View>
             <View style={{ flex: 1, minWidth: 0, gap: 12 }}>
               {g.mode === "hours" ? (
                 <>

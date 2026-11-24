@@ -2,9 +2,10 @@ import { errorText } from "@mesai/core/errors";
 import * as Clipboard from "expo-clipboard";
 import { router } from "expo-router";
 import { Pressable, View } from "react-native";
+import { Skeleton } from "@/components/skeleton";
 import { SettingsGroup } from "@/components/settings-list";
 import { toast } from "@/components/toast";
-import { Button, Card, Screen, Txt } from "@/components/ui";
+import { Button, Screen, Txt } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
 import { mutate, useLinks, useProfile } from "@/lib/store";
 import { useColors } from "@/theme";
@@ -16,7 +17,7 @@ export default function ManagerScreen() {
   const c = useColors();
   const profile = useProfile();
   const links = useLinks();
-  if (!profile) return <Screen title="Yöneticim" back={back}><Card style={{ minHeight: 192, opacity: 0.6 }} /></Screen>;
+  if (!profile) return <Screen title="Yöneticim" back={back}><Skeleton style={{ minHeight: 192 }} /></Screen>;
 
   async function respond(id: string, status: "accepted" | "revoked") {
     try { await mutate.respondLink(id, status); haptic(); toast.success(status === "accepted" ? "Onaylandı" : "Erişim kaldırıldı"); }
@@ -39,7 +40,7 @@ export default function ManagerScreen() {
           </Pressable>
         </SettingsGroup>
         <SettingsGroup title="Yöneticiler">
-          {links === null ? <View style={{ height: 52, opacity: 0.5 }} /> : null}
+          {links === null ? <Skeleton bare style={{ height: 52 }} /> : null}
           {links !== null && visible.length === 0 ? <Txt muted style={{ paddingHorizontal: 16, paddingVertical: 16, fontSize: 15, lineHeight: 22.5 }}>Bağlı yöneticin yok. Tek başına da kullanabilirsin.</Txt> : null}
           {visible.map((l) => (
             <View key={l.id} style={{ minHeight: 52, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, paddingHorizontal: 16, paddingVertical: 8 }}>

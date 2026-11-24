@@ -10,6 +10,7 @@ import { goalProgress, hrs, money } from "@mesai/core/calc";
 import { projection } from "@mesai/core/reports";
 import { MonthSummary } from "@/components/mesai/month-summary";
 import { GoalRing } from "@/components/mesai/goal-ring";
+import { Celebrate, usePop, useRiseBurst } from "@/components/mesai/celebrate";
 import { AnimatedNumber } from "@/components/mesai/animated-number";
 import { Segmented } from "@/components/mesai/ios-form";
 import { haptic } from "@/lib/haptics";
@@ -34,6 +35,8 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
   const g = goalProgress(entries, opt);
   const pr = today ? projection(entries, opt, today) : null;
   const cur = opt.currency;
+  const burst = useRiseBurst(monthLabel, g.set && g.percent >= 100 ? 1 : 0, true);
+  const ringRef = usePop<HTMLDivElement>(burst);
 
   function openEditor() {
     setMode(opt.goal_mode);
@@ -82,12 +85,16 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
 
       {g.set && (
         <div className="flex items-center gap-5 sm:gap-7">
+          {/* Bu ayın hedefi %100'e ulaştığı anda: halka bir kez "pop" + parçacık patlaması */}
+          <div ref={ringRef} className="relative shrink-0">
+          <Celebrate burst={burst} distance={92} />
           <GoalRing percent={g.percent} size={156}>
             <div>
               <AnimatedNumber value={g.percent} format={(n) => `%${Math.round(n)}`} className="block text-[2.1rem] font-bold leading-none tracking-tight" />
               <span className="mt-1 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{g.percent >= 100 ? "Tamam" : "Hedef"}</span>
             </div>
           </GoalRing>
+          </div>
           <dl className="min-w-0 flex-1 space-y-3">
             {g.mode === "hours" ? (
               <>

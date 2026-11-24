@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Animated, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Skeleton } from "@/components/skeleton";
 import { FormSection, NumberRow, PercentRow, Segmented, SwitchRow } from "@/components/form";
 import { toast } from "@/components/toast";
 import { Button, Card, Screen, Txt } from "@/components/ui";
@@ -32,7 +33,7 @@ const back = { label: "Ayarlar", onPress: () => router.back() };
 /** Ücret ve hedef: web'deki app/(app)/profile/pay/page.tsx'in aynısı. */
 export default function PayScreen() {
   const settings = useSettings();
-  if (!settings) return <Screen title="Ücret ve hedef" back={back}><Card style={{ minHeight: 640, opacity: 0.6 }} /></Screen>;
+  if (!settings) return <Screen title="Ücret ve hedef" back={back}><Skeleton style={{ minHeight: 640 }} /></Screen>;
   return <PayForm settings={settings} />;
 }
 

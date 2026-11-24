@@ -1,6 +1,7 @@
 import { useEffect, useId } from "react";
 import { View } from "react-native";
-import Animated, { Easing, useAnimatedProps, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { Easing, useAnimatedProps, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import { useReduceMotion } from "@/lib/motion";
 import Svg, { Circle, Defs, FeGaussianBlur, Filter, G, LinearGradient, Stop } from "react-native-svg";
 import { useColors } from "@/theme";
 
@@ -25,6 +26,15 @@ export function GoalRing({ percent, size = 156, stroke = 14, children }: {
   const glow = useAnimatedProps(() => ({ strokeDashoffset: C * (1 - anim.get()) }));
   const arc = useAnimatedProps(() => ({ strokeDashoffset: C * (1 - anim.get()) }));
   const tip = useAnimatedProps(() => ({ rotation: anim.get() * 360 }));
+  // Uçtaki parıltı (web: goal-glow 2,2 sn): yavaşça %20 büyüyüp parlar; "Hareketi azalt" açıksa durur
+  const reduce = useReduceMotion();
+  const glowT = useSharedValue(0);
+  useEffect(() => {
+    glowT.set(0);
+    if (!reduce) glowT.set(withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.ease) }), -1, true));
+  }, [reduce, glowT]);
+  const tipR = stroke * 0.32;
+  const pulse = useAnimatedProps(() => ({ r: tipR * (1 + 0.2 * glowT.get()), opacity: 0.85 + 0.15 * glowT.get() }));
 
   return (
     <View style={{ width: size, height: size }} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(percent) }}>
@@ -47,7 +57,7 @@ export function GoalRing({ percent, size = 156, stroke = 14, children }: {
               strokeLinecap="round" strokeDasharray={`${C} ${C}`} animatedProps={arc} />
             {/* Uç: yayla aynı sürede dönen grup, böylece yay boyunca ilerler */}
             <AnimatedG animatedProps={tip} origin="60, 60">
-              <Circle cx="110" cy="60" r={stroke * 0.32} fill={c.ringTip} />
+              <AnimatedCircle cx="110" cy="60" fill={c.ringTip} animatedProps={pulse} />
             </AnimatedG>
           </>
         ) : null}

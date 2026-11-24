@@ -1,12 +1,13 @@
 import { errorText } from "@mesai/core/errors";
 import { router } from "expo-router";
+import { Skeleton } from "@/components/skeleton";
 import { LogOut } from "@/components/icons";
 import { useState } from "react";
 import { TextInput, View } from "react-native";
 import { Dialog } from "@/components/dialog";
 import { SettingsGroup, SettingsRow } from "@/components/settings-list";
 import { toast } from "@/components/toast";
-import { Button, Card, Screen, Txt } from "@/components/ui";
+import { Button, Screen, Txt } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
 import { load, resetStore, useProfile } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
@@ -22,7 +23,7 @@ export default function AccountScreen() {
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [typed, setTyped] = useState("");
-  if (!profile) return <Screen title="Hesap" back={back}><Card style={{ minHeight: 192, opacity: 0.6 }} /></Screen>;
+  if (!profile) return <Screen title="Hesap" back={back}><Skeleton style={{ minHeight: 192 }} /></Screen>;
   const name = profile.full_name;
   const current = value ?? name;
   const trimmed = current.trim();

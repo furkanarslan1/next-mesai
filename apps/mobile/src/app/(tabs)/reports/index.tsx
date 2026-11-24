@@ -11,6 +11,7 @@ import { parseISO } from "date-fns/parseISO";
 import { startOfMonth } from "date-fns/startOfMonth";
 import { tr } from "date-fns/locale/tr";
 import { router } from "expo-router";
+import { Skeleton } from "@/components/skeleton";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Check, FileText, Minus, Plus, Table2 } from "@/components/icons";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
@@ -54,7 +55,7 @@ function Progress({ value }: { value: number }) {
 
 export default function ReportsScreen() {
   const settings = useSettings();
-  if (!settings) return <Screen title="Raporlar"><Card style={{ minHeight: 448, opacity: 0.6 }} /></Screen>;
+  if (!settings) return <Screen title="Raporlar"><Skeleton style={{ minHeight: 448 }} /></Screen>;
   return <ReportsView settings={settings} />;
 }
 
@@ -326,7 +327,7 @@ function ReportsView({ settings }: { settings: Settings }) {
           </View>
           <Button title="Ekle" size="sm" disabled={!userId} icon={<Plus size={16} color={c.primaryForeground} />} onPress={() => setSheet({ item: null })} />
         </View>
-        {payslips === null ? <Card size="lg" style={{ height: 64, opacity: 0.6 }} /> : null}
+        {payslips === null ? <Skeleton size="lg" style={{ height: 64 }} /> : null}
         {payslips?.length === 0 ? (
           <View style={{ borderRadius: radius.lg, backgroundColor: c.muted, paddingHorizontal: 16, paddingVertical: 16 }}>
             <Txt muted style={{ fontSize: 14, lineHeight: 20, textAlign: "center" }}>Henüz bordro eklemedin.</Txt>
