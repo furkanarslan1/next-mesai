@@ -1,20 +1,47 @@
 import { describe, expect, it } from "vitest";
-import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck, projection } from "../src/reports";
+import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck, projection, remainingLabel } from "../src/reports";
 import { SETTINGS as S, day, entry as E } from "./helpers";
 
 describe("ay sonu tahmini", () => {
+  // Kasım 2026: 1'i pazar; cumartesi tatil → 21 iş günü (2-6, 9-13, 16-20, 23-27, 30)
   const ents = [E("2026-11-03", "overtime", 4), E("2026-11-10", "overtime", 6)];
   const H = { ...S, goal_mode: "hours" as const, monthly_goal_hours: 40 };
-  it("geçen/kalan gün ve tahmini saat", () => {
+  it("tempo iş günüyle: geçen 15 iş gününde 10 saat → 21 iş gününde 14 saat", () => {
     const p = projection(ents, H, day("2026-11-21"));
-    expect([p.elapsed, p.remaining]).toEqual([21, 9]);
-    expect(p.projectedHours).toBeCloseTo((10 * 30) / 21, 5);
+    expect([p.workdaysTotal, p.workdaysPast, p.remaining, p.byWorkdays]).toEqual([21, 15, 6, true]);
+    expect(p.projectedHours).toBeCloseTo(14, 5);
   });
-  it("hedef için kalan saat ve günlük gereken", () => {
+  it("hedef için kalan saat kalan iş günlerine bölünür", () => {
     const p = projection(ents, H, day("2026-11-21"));
     expect(p.neededHours).toBe(30);
-    expect(p.perDay).toBeCloseTo(30 / 9, 5);
+    expect(p.perDay).toBeCloseTo(5, 5);
     expect(p.onTrack).toBe(false);
+  });
+  it("bugünün mesaisi girilmediyse bugün kalan günlere dahil, girildiyse geçmiş sayılır", () => {
+    expect(projection(ents, H, day("2026-11-23")).remaining).toBe(6);
+    const done = [...ents, E("2026-11-23", "overtime", 2)];
+    const p = projection(done, H, day("2026-11-23"));
+    expect([p.remaining, p.workdaysPast]).toEqual([5, 16]);
+  });
+  it("ayın son günü 'ay bitti' değil: bugün hâlâ mesai yapılabilir", () => {
+    const last = projection(ents, H, day("2026-11-30"));
+    expect([last.remaining, last.perDay]).toEqual([1, 30]);
+  });
+  it("izin, rapor ve resmi tatil (işaretli) günleri iş günü sayılmaz", () => {
+    const p = projection([...ents, E("2026-11-24", "paid_leave"), E("2026-11-25", "sick"), E("2026-11-26", "holiday")], H, day("2026-11-21"));
+    expect([p.workdaysTotal, p.remaining]).toEqual([18, 3]);
+  });
+  it("listedeki resmi tatil iş günü sayılmaz (29 Ekim)", () => {
+    expect(projection([], H, day("2026-10-15")).workdaysTotal).toBe(21); // Ekim 2026: 22 hafta içi − 29 Ekim
+  });
+  it("iş günü kalmadıysa kalan takvim günlerine bölünür", () => {
+    // Ekim 2026 31'i cumartesi; 30 Ekim'in mesaisi girildi → iş günü yok, kalan 1 gün (31)
+    const p = projection([E("2026-10-30", "overtime", 2)], { ...H, monthly_goal_hours: 10 }, day("2026-10-31"));
+    expect([p.byWorkdays, p.remaining, p.perDay]).toEqual([false, 1, 8]);
+  });
+  it("ilk iş günlerinde tahmin 'henüz erken'", () => {
+    expect(projection([E("2026-11-02", "overtime", 3)], H, day("2026-11-03")).early).toBe(true);
+    expect(projection(ents, H, day("2026-11-21")).early).toBe(false);
   });
   it("hedef tamamlandıysa", () => {
     const p = projection(ents, { ...H, monthly_goal_hours: 10 }, day("2026-11-21"));
@@ -24,14 +51,18 @@ describe("ay sonu tahmini", () => {
     const p = projection(ents, { ...S, monthly_goal_amount: 32000 }, day("2026-11-21"));
     expect(p.neededHours).toBeCloseTo(10, 5);
   });
-  it("ayın ilk günü ve son günü güvenli", () => {
-    expect(Number.isFinite(projection([], S, day("2026-11-01")).projectedIncome)).toBe(true);
-    const last = projection(ents, H, day("2026-11-30"));
-    expect([last.remaining, last.perDay]).toEqual([0, 30]);
+  it("ayın ilk günü güvenli", () => {
+    const p = projection([], S, day("2026-11-01"));
+    expect(Number.isFinite(p.projectedIncome)).toBe(true);
+    expect(p.projectedHours).toBe(0);
   });
   it("maaşa dahil saatler tahmini kazancı düşürür", () => {
     const p = projection([E("2026-11-03", "overtime", 14)], { ...S, included_overtime_hours: 10 }, day("2026-11-21"));
-    expect(Math.round(p.projectedEarned)).toBe(Math.round(((14 * 30) / 21 - 10) * 100));
+    expect(Math.round(p.projectedEarned)).toBe(Math.round(((14 / 15) * 21 - 10) * 100));
+  });
+  it("kalan gün yazısı", () => {
+    expect(remainingLabel({ remaining: 6, byWorkdays: true })).toBe("kalan 6 iş günü");
+    expect(remainingLabel({ remaining: 1, byWorkdays: false })).toBe("kalan 1 gün");
   });
 });
 

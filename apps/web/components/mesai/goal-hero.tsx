@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Pencil, Target } from "lucide-react";
 import { mutate } from "@/lib/store";
 import { goalProgress, money, saat } from "@mesai/core/calc";
-import { projection } from "@mesai/core/reports";
+import { projection, remainingLabel } from "@mesai/core/reports";
 import { MonthSummary } from "@/components/mesai/month-summary";
 import { GoalRing } from "@/components/mesai/goal-ring";
 import { Celebrate, usePop, useRiseBurst } from "@/components/mesai/celebrate";
@@ -127,20 +127,27 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
         <div className="grid grid-cols-2 gap-2.5">
           <div className="r-md bg-muted px-3 py-3 text-center">
             <p className="text-[11px] text-muted-foreground">Bu tempoyla ay sonu</p>
-            <p className="text-lg font-bold tabular-nums leading-tight">{pr.mode === "hours" ? fmtHrs(pr.projectedHours) : money(pr.projectedIncome, cur)}</p>
-            <p className={`mt-0.5 text-[11px] font-medium ${pr.onTrack ? "text-[var(--tint)]" : "text-muted-foreground"}`}>{pr.onTrack ? "Hedefin üstünde" : "Hedefin altında"}</p>
+            {pr.early ? (
+              <>
+                <p className="text-lg font-bold leading-tight text-muted-foreground">Henüz erken</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">birkaç iş günü sonra</p>
+              </>
+            ) : (
+              <>
+                <p className="text-lg font-bold tabular-nums leading-tight">{pr.mode === "hours" ? fmtHrs(pr.projectedHours) : money(pr.projectedIncome, cur)}</p>
+                <p className={`mt-0.5 text-[11px] font-medium ${pr.onTrack ? "text-[var(--tint)]" : "text-muted-foreground"}`}>{pr.onTrack ? "Hedefin üstünde" : "Hedefin altında"}</p>
+              </>
+            )}
           </div>
           <div className="r-md bg-muted px-3 py-3 text-center">
             <p className="text-[11px] text-muted-foreground">Hedef için günlük</p>
             {pr.reached ? (
               <p className="text-lg font-bold leading-tight text-[var(--tint)]">Tamamlandı</p>
-            ) : pr.remaining > 0 ? (
+            ) : (
               <>
                 <p className="text-lg font-bold tabular-nums leading-tight">{fmtHrs(pr.perDay)}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">kalan {pr.remaining} gün</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{remainingLabel(pr)}</p>
               </>
-            ) : (
-              <p className="text-lg font-bold leading-tight text-muted-foreground">Ay bitti</p>
             )}
           </div>
         </div>

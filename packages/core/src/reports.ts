@@ -1,8 +1,11 @@
+import { addDays } from "date-fns/addDays";
 import { addMonths } from "date-fns/addMonths";
 import { format } from "date-fns/format";
 import { getDaysInMonth } from "date-fns/getDaysInMonth";
 import { startOfMonth } from "date-fns/startOfMonth";
 import { goalProgress, hrs, money, monthSummary, paidHoursByPercent, salaryDeduction } from "./calc";
+import { OFF_TYPES, isRestDay } from "./day";
+import { holidayName } from "./holidays";
 import type { Entry, Payslip, Settings } from "./types";
 
 const isWork = (e: Entry) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0;
@@ -36,18 +39,49 @@ export function change(cur: number, prev: number) {
   return { delta, pct: prev > 0 ? (delta / prev) * 100 : null };
 }
 
+/** Ayın bir günü mesai için "iş günü" mü: hafta tatili, resmi tatil (listede ya da işaretli) ve izin/rapor/gelmedim günleri değil. */
+function workdayChecker(entries: Entry[], s: Settings) {
+  const off = new Set(entries.filter((e) => OFF_TYPES.includes(e.type) || (e.type === "holiday" && Number(e.hours) === 0)).map((e) => e.work_date));
+  return (d: Date) => {
+    const key = format(d, "yyyy-MM-dd");
+    return !isRestDay(d, s) && !holidayName(key) && !off.has(key);
+  };
+}
+
+/** Tahmin ilk birkaç iş gününde çok oynak olur ("1. gün 3 saat → ay sonu 90 saat"); bu kadar iş günü geçmeden "henüz erken" denir. */
+export const EARLY_WORKDAYS = 3;
+
 /**
  * Ay sonu tahmini ve hedef için günlük gereken mesai (yalnızca içinde bulunulan ay için anlamlı).
- * Tempo: şimdiye kadarki mesai / geçen gün sayısı. `remaining` bugünden sonra kalan gün sayısı.
+ * - Tempo iş günüyle ölçülür: şimdiye kadarki mesai / geçen iş günü × ayın iş günü. Bugün, mesaisi girildiyse
+ *   geçmiş sayılır; girilmediyse henüz mesai yapılabilecek gün sayılır.
+ * - Günlük gereken: kalan mesai / kalan iş günü (bugün dahil, mesaisi girilmediyse). Hiç iş günü kalmadıysa
+ *   (ör. ay hafta sonuyla bitiyor) bugünden ay sonuna kalan takvim günlerine bölünür.
  */
 export function projection(entries: Entry[], s: Settings, today: Date) {
   const total = getDaysInMonth(today);
   const elapsed = today.getDate();
-  const remaining = total - elapsed;
+  const isWorkday = workdayChecker(entries, s);
+  const todayKey = format(today, "yyyy-MM-dd");
+  const todayDone = entries.some((e) => e.work_date === todayKey && (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0);
+  const first = startOfMonth(today);
+  let workdaysTotal = 0, workdaysPast = 0, workdaysLeft = 0;
+  for (let i = 0; i < total; i++) {
+    const d = addDays(first, i);
+    if (!isWorkday(d)) continue;
+    workdaysTotal++;
+    const dayNo = i + 1;
+    if (dayNo < elapsed || (dayNo === elapsed && todayDone)) workdaysPast++;
+    else workdaysLeft++;
+  }
+  // Bugün dahil ay sonuna kalan takvim günü (bugünün mesaisi girildiyse bugün hariç)
+  const daysLeft = total - elapsed + (todayDone ? 0 : 1);
+  const byWorkdays = workdaysLeft > 0;
+  const remaining = byWorkdays ? workdaysLeft : daysLeft;
+
   const m = monthSummary(entries, s);
   const ded = salaryDeduction(entries, s);
-  const pace = elapsed > 0 ? total / elapsed : 1;
-  const projectedHours = m.hours * pace;
+  const projectedHours = workdaysPast > 0 ? (m.hours / workdaysPast) * workdaysTotal : m.hours;
   // Dahil saatler (maaşın içindeki) ücret getirmez: tahmini ücretli saat = tahmini toplam − dahil saat
   const projectedEarned = Math.max(0, projectedHours - Math.max(0, s.included_overtime_hours ?? 0)) * m.paidRate;
   const projectedIncome = Math.max(0, s.monthly_salary - ded.amount) + projectedEarned;
@@ -56,17 +90,23 @@ export function projection(entries: Entry[], s: Settings, today: Date) {
   if (g.set) {
     if (g.mode === "hours") neededHours = Math.max(0, g.goal - m.hours);
     else {
-      const remaining = Math.max(0, g.goal - g.income);
-      neededHours = remaining > 0 && m.paidRate > 0 ? remaining / m.paidRate + m.quotaLeft : 0;
+      const left = Math.max(0, g.goal - g.income);
+      neededHours = left > 0 && m.paidRate > 0 ? left / m.paidRate + m.quotaLeft : 0;
     }
   }
   const onTrack = g.set && (g.mode === "hours" ? projectedHours >= g.goal : projectedIncome >= g.goal);
   return {
-    elapsed, remaining, projectedHours, projectedEarned, projectedIncome,
+    elapsed, remaining, byWorkdays, workdaysTotal, workdaysPast,
+    /** İlk iş günlerinde tahmin güvenilir değil */
+    early: workdaysPast < EARLY_WORKDAYS,
+    projectedHours, projectedEarned, projectedIncome,
     neededHours, perDay: remaining > 0 ? neededHours / remaining : neededHours,
     goalSet: g.set, mode: g.mode, goal: g.goal, onTrack, reached: g.set && neededHours <= 0,
   };
 }
+
+/** "kalan 12 iş günü" / "kalan 2 gün" */
+export const remainingLabel = (p: { remaining: number; byWorkdays: boolean }) => `kalan ${p.remaining} ${p.byWorkdays ? "iş günü" : "gün"}`;
 
 /** Yıllık izin: yılın ücretli izin günleri (aynı gün tek sayılır), hakka göre kalan. */
 export function annualLeave(entriesByMonth: Record<string, Entry[]>, year: number, entitlement: number) {

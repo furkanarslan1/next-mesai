@@ -104,7 +104,7 @@ export function DaySheet({ date, entries, userId, onClose }: {
     if (existing) return askRemove(existing);
     if (status) return;
     setPending({
-      title: `${TYPE_META[t].label} olarak işaretlensin mi?`, desc: `${label} günü "${TYPE_META[t].label}" olarak kaydedilecek. Bir gün için tek durum seçilebilir.`, yes: "Evet, işaretle",
+      title: `${TYPE_META[t].label} olarak işaretlensin mi?`, desc: `${label} günü "${TYPE_META[t].label}" olarak kaydedilecek.${t === "holiday" && hasWork ? " Bu günün mesaisi resmi tatil oranıyla hesaplanacak." : ""} Bir gün için tek durum seçilebilir.`, yes: "Evet, işaretle",
       run: async () => { await mutate.addEntry(row(t, 0)); toast.success(`${TYPE_META[t].label} eklendi`); },
     });
   }

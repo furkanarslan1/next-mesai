@@ -134,7 +134,7 @@ export default function Home() {
   function askStatus(t: EntryType) {
     const existing = todays.find((e) => e.type === t && isStatusRow(e));
     if (existing) confirm({ title: `${TYPE_META[t].label} geri alınsın mı?`, desc: `${dayLabel} tarihindeki "${TYPE_META[t].label}" kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(existing) });
-    else if (!activeStatus) confirm({ title: `${TYPE_META[t].label} olarak işaretlensin mi?`, desc: `${dayLabel} günü "${TYPE_META[t].label}" olarak kaydedilecek. Bir gün için tek durum seçilebilir.`, yes: "Evet, işaretle", run: () => add(t, 0) });
+    else if (!activeStatus) confirm({ title: `${TYPE_META[t].label} olarak işaretlensin mi?`, desc: `${dayLabel} günü "${TYPE_META[t].label}" olarak kaydedilecek.${t === "holiday" && rules.work ? " Bu günün mesaisi resmi tatil oranıyla hesaplanacak." : ""} Bir gün için tek durum seçilebilir.`, yes: "Evet, işaretle", run: () => add(t, 0) });
   }
   const askRemoveWork = (e: Entry) => confirm({ title: "Mesai geri alınsın mı?", desc: `${dayLabel} gününün ${hrs(Number(e.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(e) });
 

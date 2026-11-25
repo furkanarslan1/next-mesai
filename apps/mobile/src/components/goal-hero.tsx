@@ -1,7 +1,7 @@
 import { goalProgress, hrs, money, monthSummary, saat } from "@mesai/core/calc";
 import { errorText } from "@mesai/core/errors";
 import { parseNum } from "@mesai/core/num";
-import { projection } from "@mesai/core/reports";
+import { projection, remainingLabel } from "@mesai/core/reports";
 import type { Entry, Settings } from "@mesai/core/types";
 import { Pencil, Target } from "@/components/icons";
 import { useOptimistic, useState, useTransition } from "react";
@@ -139,18 +139,27 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
             <View style={{ flexDirection: "row", gap: 10 }}>
               <Tile>
                 <Txt muted style={styles.tileLabel}>Bu tempoyla ay sonu</Txt>
-                <Txt numberOfLines={1} adjustsFontSizeToFit style={styles.tileValue}>{pr.mode === "hours" ? fmtHrs(pr.projectedHours) : money(pr.projectedIncome, cur)}</Txt>
-                <Txt style={[styles.tileLabel, { marginTop: 2, fontWeight: "500", color: pr.onTrack ? c.tint : c.mutedForeground }]}>{pr.onTrack ? "Hedefin üstünde" : "Hedefin altında"}</Txt>
+                {pr.early ? (
+                  <>
+                    <Txt muted numberOfLines={1} adjustsFontSizeToFit style={styles.tileValue}>Henüz erken</Txt>
+                    <Txt muted style={[styles.tileLabel, { marginTop: 2 }]}>birkaç iş günü sonra</Txt>
+                  </>
+                ) : (
+                  <>
+                    <Txt numberOfLines={1} adjustsFontSizeToFit style={styles.tileValue}>{pr.mode === "hours" ? fmtHrs(pr.projectedHours) : money(pr.projectedIncome, cur)}</Txt>
+                    <Txt style={[styles.tileLabel, { marginTop: 2, fontWeight: "500", color: pr.onTrack ? c.tint : c.mutedForeground }]}>{pr.onTrack ? "Hedefin üstünde" : "Hedefin altında"}</Txt>
+                  </>
+                )}
               </Tile>
               <Tile>
                 <Txt muted style={styles.tileLabel}>Hedef için günlük</Txt>
                 {pr.reached ? <Txt style={[styles.tileValue, { color: c.tint }]}>Tamamlandı</Txt>
-                  : pr.remaining > 0 ? (
+                  : (
                     <>
                       <Txt style={styles.tileValue}>{fmtHrs(pr.perDay)}</Txt>
-                      <Txt muted style={[styles.tileLabel, { marginTop: 2 }]}>kalan {pr.remaining} gün</Txt>
+                      <Txt muted style={[styles.tileLabel, { marginTop: 2 }]}>{remainingLabel(pr)}</Txt>
                     </>
-                  ) : <Txt muted style={styles.tileValue}>Ay bitti</Txt>}
+                  )}
               </Tile>
             </View>
           ) : null}

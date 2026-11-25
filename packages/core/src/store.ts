@@ -14,7 +14,8 @@ import { format } from "date-fns/format";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchAll, monthSpan } from "./fetch-all";
 import { DEFAULT_SETTINGS } from "./settings";
-import type { Entry, FinanceItem, ManagerLink, Payslip, Profile, Settings, Shortcut } from "./types";
+import { holidayName } from "./holidays";
+import type { Entry, EntryType, FinanceItem, ManagerLink, Payslip, Profile, Settings, Shortcut } from "./types";
 
 export { DEFAULT_SETTINGS };
 
@@ -345,6 +346,27 @@ export function revalidateStale() {
 }
 /* ---------- yazma işlemleri: sunucu onayından sonra yalnızca ilgili dilimi günceller ---------- */
 const counts = (e: { type: string }) => e.type === "overtime" || e.type === "holiday";
+/** "Resmi tatil" işareti: saatsiz tatil kaydı (saatli olan çalışılan tatildir) */
+const isHolidayMark = (e: { type: string; hours: number }) => e.type === "holiday" && Number(e.hours) === 0;
+
+/**
+ * Bir günün mesai kaydının türünü değiştirir (normal mesai ↔ resmi tatil mesaisi). Tatil işareti mesaiden
+ * sonra eklenirse mesai tatil oranıyla hesaplansın, işaret kaldırılınca (listede tatil değilse) geri dönsün.
+ * Yazma hatası işareti geri almaz: işaret kaydedildi, tür yalnızca bir sonraki yüklemede düzelmeyebilir.
+ */
+async function retypeDayWork(date: string, from: EntryType, to: EntryType) {
+  writes++;
+  const { data, error } = await createClient().from("entries").update({ type: to })
+    .eq("work_date", date).eq("type", from).gt("hours", 0).select();
+  writes++;
+  if (error) throw error;
+  const rows = (data ?? []) as Entry[];
+  const key = date.slice(0, 7);
+  if (rows.length && state.entries[key]) {
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    set({ entries: { ...state.entries, [key]: state.entries[key].map((x) => byId.get(x.id) ?? x) } });
+  }
+}
 
 export const mutate = {
   patchSettings(patch: Partial<Settings>) {
@@ -365,6 +387,7 @@ export const mutate = {
     // Yüklenmemiş ay dilimine tek kayıt yazmayalım (eksik liste olur)
     if (state.entries[key]) set({ entries: { ...state.entries, [key]: [...state.entries[key], e] } });
     if (state.totalHours !== null && counts(e)) set({ totalHours: state.totalHours + Number(e.hours) });
+    if (isHolidayMark(e)) await retypeDayWork(e.work_date, "overtime", "holiday");
     return e;
   },
   async removeEntry(e: Entry) {
@@ -375,6 +398,8 @@ export const mutate = {
     const key = e.work_date.slice(0, 7);
     if (state.entries[key]) set({ entries: { ...state.entries, [key]: state.entries[key].filter((x) => x.id !== e.id) } });
     if (state.totalHours !== null && counts(e)) set({ totalHours: Math.max(0, state.totalHours - Number(e.hours)) });
+    // İşaret kaldırıldı ve gün resmi tatil listesinde değilse o günün mesaisi normal mesaiye döner
+    if (isHolidayMark(e) && !holidayName(e.work_date)) await retypeDayWork(e.work_date, "holiday", "overtime");
   },
   /** Bir kaydın saatini/saat aralığını değiştirir; toplam saat farkı kadar güncellenir. */
   async updateEntry(e: Entry, patch: Partial<Pick<Entry, "hours" | "start_time" | "end_time" | "note">>) {
