@@ -11,7 +11,7 @@ import { startOfMonth } from "date-fns/startOfMonth";
 import { tr } from "date-fns/locale/tr";
 import { ChevronLeft, ChevronRight } from "@/components/icons";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { PanResponder, Pressable, View } from "react-native";
 import Reanimated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { DaySheet } from "@/components/day-sheet";
 import { useReduceMotion } from "@/lib/motion";
@@ -59,7 +59,19 @@ export default function CalendarScreen() {
     slide.set(0);
     slide.set(withTiming(1, { duration: 260, easing: Easing.bezier(0.2, 0.9, 0.3, 1) }));
   };
-  const slideStyle = useAnimatedStyle(() => ({ opacity: slide.get(), transform: [{ translateX: (1 - slide.get()) * dir.get() * 24 }] }));
+  // Sağa/sola kaydırarak ay değiştirme: ızgara parmağı biraz (dirençli) izler, eşik geçilince ay değişir
+  const drag = useSharedValue(0);
+  const swipe = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+    onPanResponderMove: (_, g) => { if (!reduce) drag.set(g.dx * 0.35); },
+    onPanResponderRelease: (_, g) => {
+      drag.set(withTiming(0, { duration: 180 }));
+      if (g.dx < -50 || g.vx < -0.5) { haptic(); go(1); }
+      else if (g.dx > 50 || g.vx > 0.5) { haptic(); go(-1); }
+    },
+    onPanResponderTerminate: () => drag.set(withTiming(0, { duration: 180 })),
+  });
+  const slideStyle = useAnimatedStyle(() => ({ opacity: slide.get(), transform: [{ translateX: (1 - slide.get()) * dir.get() * 24 + drag.get() }] }));
   const [selected, setSelected] = useState<string | null>(null);
   const userId = useProfile()?.id ?? "";
   const entries = useMonthEntries(monthKey(month)) ?? [];
@@ -89,7 +101,7 @@ export default function CalendarScreen() {
         </>
       )}>
       <Card style={{ paddingVertical: 16, paddingHorizontal: 16 }}>
-        <Reanimated.View style={[{ gap: 6 }, slideStyle]}>
+        <Reanimated.View style={[{ gap: 6 }, slideStyle]} {...swipe.panHandlers}>
           <View style={{ flexDirection: "row", gap: 6 }}>
             {DAYS.map((d) => <Txt key={d} muted style={{ flex: 1, textAlign: "center", fontSize: 12, lineHeight: 16 }}>{d}</Txt>)}
           </View>
@@ -133,7 +145,7 @@ export default function CalendarScreen() {
             </View>
           ))}
         </Reanimated.View>
-        <Txt muted style={{ marginTop: 12, textAlign: "center", fontSize: 12, lineHeight: 16 }}>Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil.</Txt>
+        <Txt muted style={{ marginTop: 12, textAlign: "center", fontSize: 12, lineHeight: 16 }}>Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil. Ay değiştirmek için sağa sola kaydır.</Txt>
       </Card>
 
       {/* Renk açıklaması */}
