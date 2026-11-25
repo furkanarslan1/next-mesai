@@ -186,7 +186,7 @@ function HomeView({ today }: { today: Date }) {
       )}
 
       {settings && realEntries && userId ? (
-        <GoalHero userId={userId} settings={settings} entries={entries} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} />
+        <GoalHero userId={userId} settings={settings} entries={entries} month={key} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} />
       ) : (
         <div className="glass min-h-[15.5rem] w-full animate-pulse" aria-busy />
       )}
@@ -276,7 +276,7 @@ function HomeView({ today }: { today: Date }) {
           </div>
           {/* Hedef belirlenmişse özet burada; hedef yokken hedef kartının içinde görünür */}
           {settings && realEntries && goalProgress(entries, settings).set && (
-            <div className="glass mt-2 p-5 sm:p-6"><MonthSummary entries={entries} settings={settings} /></div>
+            <div className="glass mt-2 p-5 sm:p-6"><MonthSummary entries={entries} settings={settings} month={key} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} /></div>
           )}
         </section>
 

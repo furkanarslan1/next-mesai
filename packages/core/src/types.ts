@@ -49,6 +49,8 @@ export interface Settings {
   annual_leave_days: number;
   /** Cumartesi hafta tatili mi (false: cumartesi iş günü) */
   saturday_off: boolean;
+  /** Maaşın yattığı gün (1-31); boşsa geri sayım gösterilmez */
+  payday?: number | null;
   /** Gider kategorisi (CategoryKey) -> aylık limit */
   budgets: Record<string, number>;
 }

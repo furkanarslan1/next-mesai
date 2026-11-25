@@ -270,7 +270,7 @@ export default function Home() {
         ) : null}
 
         {settings && realEntries && userId ? (
-          <GoalHero userId={userId} settings={settings} entries={entries} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })}
+          <GoalHero userId={userId} settings={settings} entries={entries} month={monthKey(parseISO(date))} monthLabel={format(parseISO(date), "LLLL yyyy", { locale: tr })}
             today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} />
         ) : (
           <Skeleton style={{ minHeight: 248 }} />
@@ -328,7 +328,7 @@ export default function Home() {
           ))}
           {/* Hedef belirlenmişse özet burada; hedef yokken hedef kartının içinde görünür */}
           {settings && realEntries && goalProgress(entries, settings).set ? (
-            <Card style={{ marginTop: 8, padding: 20 }}><MonthSummary entries={entries} settings={settings} /></Card>
+            <Card style={{ marginTop: 8, padding: 20 }}><MonthSummary entries={entries} settings={settings} month={monthKey(parseISO(date))} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} /></Card>
           ) : null}
         </View>
 
