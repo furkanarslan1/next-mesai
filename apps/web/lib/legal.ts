@@ -9,6 +9,6 @@ export const LEGAL = {
   email: "[destek e-postası]",
   site: "https://next-mesai.vercel.app",
   /** Veritabanı ve kimlik doğrulama sunucusunun bölgesi (Supabase) */
-  dataRegion: "Singapur (AWS ap-southeast-1)",
+  dataRegion: "Frankfurt, Almanya (AWS eu-central-1)",
   updated: "25 Kasım 2026",
 };

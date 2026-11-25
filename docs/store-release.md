@@ -109,12 +109,8 @@ mesai,fazla mesai,puantaj,maaş,bordro,izin,vardiya,brüt net,çalışma saati,h
 
 ## 6. Açık riskler
 
-1. **Veritabanı Singapur'da (Supabase ap-southeast-1).** Kullanıcılar Türkiye'de olduğundan:
-   - Gecikme: her istek Singapur'a gidip gelir (Frankfurt'a göre kabaca 3-4 kat uzak). Önbellek bunu büyük
-     ölçüde gizliyor ama kayıt ekleme ve ilk açılış daha yavaş.
-   - KVKK m. 9: yurt dışına aktarım için standart sözleşme ve Kurul'a bildirim gibi şartlar var; bölge AB
-     olsa da aktarım yine yurt dışıdır, fark yalnızca gecikmede.
-   - Bölge sonradan değiştirilemez; yeni projeye taşımak gerekir. Bunu **kullanıcılar gelmeden** yapmak en ucuzu.
+1. **Veritabanı bölgesi:** canlı proje Frankfurt'ta (eu-central-1) yeni Supabase hesabında açılacak; eski
+   Singapur projesi yalnızca denemeydi. KVKK m. 9: AB de yurt dışı sayılır, aktarım şartları geçerli.
 2. **KVKK yükümlülükleri** (VERBİS kaydı, yurt dışı aktarım bildirimi) işin büyüklüğüne ve yapısına göre
    değişir; bir hukukçuya danışılması önerilir. Yasal metinler taslaktır, hukuki görüş değildir.
 3. **Play kapalı testi**: 12 kişi, 14 gün. Erken başlamak takvimi kısaltır (arkadaş, iş yeri çevresi).
