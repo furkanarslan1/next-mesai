@@ -13,7 +13,7 @@ import { goalProgress, hrs, levelFor, LEVELS, money, num } from "@mesai/core/cal
 import { Page } from "@/components/mesai/page";
 import { SwipeRow } from "@/components/mesai/swipe-row";
 import { LevelIcon } from "@/components/mesai/level-icon";
-import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck, projection } from "@mesai/core/reports";
+import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck, projection, remainingLabel } from "@mesai/core/reports";
 import { periodMonths, periodRange, periodSummary, type Period } from "@mesai/core/period";
 import { AnimatedNumber } from "@/components/mesai/animated-number";
 import { BADGES, earnedBadges, streaks } from "@mesai/core/badges";
@@ -146,7 +146,7 @@ function ReportsView({ today, settings }: { today: Date; settings: Settings }) {
               </p>
               {!pr.reached && pr.neededHours > 0 && (
                 <p className="text-muted-foreground tabular-nums">
-                  Hedef için {hrs(Math.round(pr.neededHours * 10) / 10)} mesai daha{pr.remaining > 0 ? `, günde ~${hrs(Math.round(pr.perDay * 10) / 10)} (kalan ${pr.remaining} gün)` : ""}
+                  Hedef için {hrs(Math.round(pr.neededHours * 10) / 10)} mesai daha{pr.remaining > 0 ? `, günde ~${hrs(Math.round(pr.perDay * 10) / 10)} (${remainingLabel(pr)})` : ""}
                 </p>
               )}
             </div>

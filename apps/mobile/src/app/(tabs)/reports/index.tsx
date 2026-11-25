@@ -2,7 +2,7 @@ import { BADGES, earnedBadges, streaks } from "@mesai/core/badges";
 import { goalProgress, hrs, levelFor, LEVELS, money, num } from "@mesai/core/calc";
 import { toCSV } from "@mesai/core/csv";
 import { errorText } from "@mesai/core/errors";
-import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck, projection } from "@mesai/core/reports";
+import { annualLeave, change, keyOf, lastMonths, leaveByTenure, monthStats, payslipCheck, projection, remainingLabel } from "@mesai/core/reports";
 import { periodMonths, periodRange, periodSummary, type Period } from "@mesai/core/period";
 import type { Payslip, Settings } from "@mesai/core/types";
 import { addMonths } from "date-fns/addMonths";
@@ -193,7 +193,7 @@ function ReportsView({ settings }: { settings: Settings }) {
               </Txt>
               {!pr.reached && pr.neededHours > 0 ? (
                 <Txt muted style={{ fontSize: 14, lineHeight: 20, fontVariant: ["tabular-nums"] }}>
-                  Hedef için {hrs(Math.round(pr.neededHours * 10) / 10)} mesai daha{pr.remaining > 0 ? `, günde ~${hrs(Math.round(pr.perDay * 10) / 10)} (kalan ${pr.remaining} gün)` : ""}
+                  Hedef için {hrs(Math.round(pr.neededHours * 10) / 10)} mesai daha{pr.remaining > 0 ? `, günde ~${hrs(Math.round(pr.perDay * 10) / 10)} (${remainingLabel(pr)})` : ""}
                 </Txt>
               ) : null}
             </View>
