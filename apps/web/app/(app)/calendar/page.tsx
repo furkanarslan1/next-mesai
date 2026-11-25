@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -36,6 +36,19 @@ function CalendarView({ today }: { today: Date }) {
   // Ay değişiminin yönü: ızgara o yönden kayarak gelir (1 ileri, -1 geri)
   const [dir, setDir] = useState(0);
   const go = (n: number) => { setDir(n); setMonth(addMonths(month, n)); };
+  // Dokunmatikte sağa/sola kaydırınca ay değişir (dikey kaydırma sayfayı kaydırmaya devam eder)
+  const touch = useRef<{ x: number; y: number; t: number } | null>(null);
+  const swipe = {
+    onTouchStart: (e: React.TouchEvent) => { const p = e.touches[0]; touch.current = { x: p.clientX, y: p.clientY, t: e.timeStamp }; },
+    onTouchEnd: (e: React.TouchEvent) => {
+      const s = touch.current; touch.current = null;
+      if (!s) return;
+      const p = e.changedTouches[0];
+      const dx = p.clientX - s.x, dy = p.clientY - s.y;
+      const fast = Math.abs(dx) / Math.max(1, e.timeStamp - s.t) > 0.5;
+      if (Math.abs(dx) > Math.abs(dy) * 1.5 && (Math.abs(dx) > 50 || (fast && Math.abs(dx) > 25))) go(dx < 0 ? 1 : -1);
+    },
+  };
   const [selected, setSelected] = useState<string | null>(null);
   const userId = useProfile()?.id ?? "";
   const { entries, settings } = useMesai(month);
@@ -58,7 +71,7 @@ function CalendarView({ today }: { today: Date }) {
       <Card>
         <CardContent>
           <div key={format(month, "yyyy-MM")} className={`grid grid-cols-7 gap-1.5 text-center text-xs text-muted-foreground ${dir ? "month-slide" : ""}`}
-            style={{ "--dir": dir } as React.CSSProperties}>
+            style={{ "--dir": dir, touchAction: "pan-y" } as React.CSSProperties} {...swipe}>
             {["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"].map((d) => <div key={d}>{d}</div>)}
             {Array.from({ length: offset }).map((_, i) => <div key={i} />)}
             {days.map((d) => {
@@ -88,7 +101,7 @@ function CalendarView({ today }: { today: Date }) {
               );
             })}
           </div>
-          <p className="mt-3 text-center text-xs text-muted-foreground">Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil.</p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil. Ay değiştirmek için sağa sola kaydır.</p>
         </CardContent>
       </Card>
       <div className="flex flex-wrap gap-3 text-xs">
