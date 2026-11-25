@@ -80,6 +80,7 @@ export default function Home() {
 
   // "Farklı mesai" penceresi
   const [custom, setCustom] = useState(false);
+  const [absenceOpen, setAbsenceOpen] = useState(false);
   const [customHours, setCustomHours] = useState("");
   const [byExit, setByExit] = useState(false);
   const [exitTime, setExitTime] = useState("");
@@ -316,16 +317,28 @@ export default function Home() {
 
         {/* İşe gitmedin mi? */}
         <View style={{ gap: 12 }}>
-          <View>
-            <Txt style={{ fontSize: 16, lineHeight: 24, fontWeight: "600" }}>{isToday ? "Bugün" : dayLabel} işe gitmedin mi?</Txt>
-            <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>Nedenini seç, takvimine işlensin. Tekrar dokunursan geri alınır.</Txt>
-          </View>
-          {pairs(STATUS).map((row, i) => (
+          {/* Ayda birkaç kez kullanılır: tek satır, dokununca seçenekler açılır (web ile aynı) */}
+          <Pressable onPress={() => { haptic(); setAbsenceOpen((o) => !o); }} accessibilityRole="button" accessibilityState={{ expanded: absenceOpen }}
+            style={({ pressed }) => ({
+              flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderRadius: radius.lg, borderWidth: 1,
+              backgroundColor: activeStatus ? alpha(c.primary, 0.15) : c.card, borderColor: activeStatus ? alpha(c.primary, 0.6) : c.cardBorder,
+              boxShadow: c.shadow.card, transform: [{ scale: pressed ? 0.99 : 1 }],
+            })}>
+            <View style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: radius.md, backgroundColor: activeStatus ? c.primary : "transparent" }}>
+              {activeStatus ? <Check size={24} color={c.primaryForeground} /> : <StatusIcon type="absent" size={40} />}
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Txt style={{ fontSize: 16, lineHeight: 20, fontWeight: "600" }}>{activeStatus ? `${TYPE_META[activeStatus.type].label} işaretli` : `${isToday ? "Bugün" : dayLabel} işe gitmedim`}</Txt>
+              <Txt muted style={{ marginTop: 2, fontSize: 12, lineHeight: 15 }}>{activeStatus ? "Geri almak için aç ve tekrar dokun" : "İzin, rapor, gelmedim ya da resmi tatil"}</Txt>
+            </View>
+            <View style={{ transform: [{ rotate: absenceOpen ? "180deg" : "0deg" }] }}><ChevronDown size={20} color={c.mutedForeground} /></View>
+          </Pressable>
+          {absenceOpen ? pairs(STATUS).map((row, i) => (
             <View key={i} style={{ flexDirection: "row", gap: 12 }}>
               {row.map((t) => <View key={t} style={{ flex: 1 }}>{statusCard(t)}</View>)}
               {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
             </View>
-          ))}
+          )) : null}
           {/* Hedef belirlenmişse özet burada; hedef yokken hedef kartının içinde görünür */}
           {settings && realEntries && goalProgress(entries, settings).set ? (
             <Card style={{ marginTop: 8, padding: 20 }}><MonthSummary entries={entries} settings={settings} month={monthKey(parseISO(date))} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} /></Card>
