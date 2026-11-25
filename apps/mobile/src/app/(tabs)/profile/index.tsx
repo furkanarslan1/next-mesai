@@ -69,8 +69,8 @@ export default function SettingsScreen() {
         <SettingsGroup title="Uygulama">
           <SettingsRow icon={Palette} color="#d86a9a" label="Görünüm" chevron onPress={() => go("/profile/appearance")} value={THEME_LABEL[prefs.theme]} />
           {employee ? (
-            <SettingsRow icon={Bell} color="#e0603c" label="Hatırlatıcı" chevron onPress={() => go("/profile/appearance")}
-              value={prefs.reminderOn ? `${String(prefs.reminderHour).padStart(2, "0")}:00` : "Kapalı"} />
+            <SettingsRow icon={Bell} color="#e0603c" label="Bildirimler" chevron onPress={() => go("/profile/appearance")}
+              value={[prefs.reminderOn && `${String(prefs.reminderHour).padStart(2, "0")}:00`, prefs.exitReminderOn && "Çıkış"].filter(Boolean).join(" · ") || "Kapalı"} />
           ) : null}
           <SettingsRow icon={DatabaseBackup} color="#4a5d78" label="Yedekle ve geri yükle" chevron onPress={() => go("/profile/data")} />
         </SettingsGroup>

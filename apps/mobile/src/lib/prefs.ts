@@ -7,12 +7,14 @@ import { useSyncExternalStore } from "react";
 import { Appearance } from "react-native";
 
 export type ThemePref = "light" | "dark" | "system";
-export interface Prefs { theme: ThemePref; reminderOn: boolean; reminderHour: number; reminderDismissed: string }
+export interface Prefs { theme: ThemePref; reminderOn: boolean; reminderHour: number; reminderDismissed: string; exitReminderOn: boolean }
 
 const KEY = "mesai.prefs";
-const DEFAULTS: Prefs = { theme: "system", reminderOn: false, reminderHour: 20, reminderDismissed: "" };
+const DEFAULTS: Prefs = { theme: "system", reminderOn: false, reminderHour: 20, reminderDismissed: "", exitReminderOn: false };
 const listeners = new Set<() => void>();
 let cache: Prefs = DEFAULTS;
+/** Kayıtlı tercihler okundu mu (okunmadan bildirimler "kapalı" sanılıp silinmesin) */
+let ready = false;
 
 /** Seçilen temayı telefonun yerel parçalarına da (saat seçici, klavye, bulanıklık) uygular. */
 function applyTheme(theme: ThemePref) {
@@ -26,9 +28,9 @@ AsyncStorage.getItem(KEY)
     if (!raw) return;
     cache = { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Prefs>) };
     applyTheme(cache.theme);
-    emit();
   })
-  .catch(() => {});
+  .catch(() => {})
+  .finally(() => { ready = true; emit(); });
 
 export function setPrefs(patch: Partial<Prefs>) {
   cache = { ...cache, ...patch };
@@ -41,6 +43,10 @@ const subscribe = (cb: () => void) => { listeners.add(cb); return () => { listen
 
 export function usePrefs(): Prefs {
   return useSyncExternalStore(subscribe, () => cache);
+}
+
+export function usePrefsReady(): boolean {
+  return useSyncExternalStore(subscribe, () => ready);
 }
 
 export const THEME_LABEL: Record<ThemePref, string> = { light: "Açık", dark: "Koyu", system: "Sistem" };
