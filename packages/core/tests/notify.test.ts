@@ -37,4 +37,11 @@ describe("bildirim planı", () => {
     expect(p.length).toBe(14 + 10); // 14 akşam + 10 iş günü (25.11–08.12)
     expect(p.every((x, i) => i === 0 || p[i - 1].at <= x.at)).toBe(true);
   });
+  it("akşam vardiyası (16–00) çıkışı gece yarısı; döngüde o haftanın vardiyası", () => {
+    const ev = { ...S, work_start: "16:00", work_end: "00:00" };
+    expect(planReminders(now, { ...O, evening: false }, ev, [], 1)[0].at).toEqual(new Date(2026, 10, 26, 0, 0));
+    const rot = { ...S, shift_rotation: { start: "2026-11-23", weeks: 1, steps: [{ type: "day" as const, start: "08:00", end: "16:00" }, { type: "evening" as const, start: "16:00", end: "00:00" }] } };
+    const p = planReminders(new Date(2026, 10, 30, 9, 0), { ...O, evening: false }, rot, [], 1);
+    expect(p[0].at).toEqual(new Date(2026, 11, 1, 0, 0));
+  });
 });

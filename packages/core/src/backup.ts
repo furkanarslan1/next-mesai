@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchAll } from "./fetch-all";
+import { validRotation } from "./shift";
 
 const ENTRY_TYPES = ["overtime", "paid_leave", "unpaid_leave", "sick", "absent", "holiday"];
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object";
@@ -56,6 +57,7 @@ export async function restoreBackup(supabase: SupabaseClient, text: string) {
     if (has("sick_leave_unpaid")) patch.sick_leave_unpaid = s.sick_leave_unpaid === true;
     if (has("sick_deducts_overtime")) patch.sick_deducts_overtime = s.sick_deducts_overtime === true;
     if (has("saturday_off")) patch.saturday_off = s.saturday_off !== false;
+    if (has("shift_rotation")) patch.shift_rotation = validRotation(s.shift_rotation);
     if (has("payday")) patch.payday = num(s.payday) >= 1 && num(s.payday) <= 31 ? Math.round(num(s.payday)) : null;
     if (has("annual_leave_days")) patch.annual_leave_days = Math.min(60, Math.round(num(s.annual_leave_days)));
     if (isObj(s.budgets)) {
