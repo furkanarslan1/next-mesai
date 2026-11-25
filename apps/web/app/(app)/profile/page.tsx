@@ -2,7 +2,7 @@
 
 import { rotationLabel, validRotation } from "@mesai/core/shift";
 import Link from "next/link";
-import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, Palette, UserRound, Users, Zap } from "lucide-react";
+import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, FileText, Palette, UserRound, Users, Zap } from "lucide-react";
 import { useLinks, useProfile, useSettings, useShortcuts } from "@/lib/store";
 import { usePrefs } from "@/lib/prefs";
 import { money } from "@mesai/core/calc";
@@ -72,6 +72,11 @@ export default function SettingsPage() {
 
         <SettingsGroup>
           <SettingsRow href="/profile/account" icon={employee ? UserRound : Briefcase} color="#7f8f9c" label="Hesap" />
+        </SettingsGroup>
+
+        <SettingsGroup>
+          <SettingsRow href="/privacy" icon={FileText} color="#6b7d8f" label="Gizlilik politikası" />
+          <SettingsRow href="/terms" icon={FileText} color="#6b7d8f" label="Kullanım koşulları" />
         </SettingsGroup>
 
         <p className="pb-2 text-center text-[13px] text-muted-foreground">Mesai · verilerin yalnızca senin hesabında saklanır</p>

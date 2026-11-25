@@ -3,7 +3,8 @@ import { rotationLabel, validRotation } from "@mesai/core/shift";
 import { SHIFTS } from "@mesai/core/types";
 import { router, type Href } from "expo-router";
 import { Skeleton } from "@/components/skeleton";
-import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, Palette, UserRound, Users, Zap } from "@/components/icons";
+import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, FileText, Palette, UserRound, Users, Zap } from "@/components/icons";
+import { openLegal } from "@/lib/legal";
 import { Pressable, View } from "react-native";
 import { SettingsGroup, SettingsRow } from "@/components/settings-list";
 import { Screen, Txt } from "@/components/ui";
@@ -78,6 +79,11 @@ export default function SettingsScreen() {
 
         <SettingsGroup>
           <SettingsRow icon={employee ? UserRound : Briefcase} color="#7f8f9c" label="Hesap" chevron onPress={() => go("/profile/account")} />
+        </SettingsGroup>
+
+        <SettingsGroup>
+          <SettingsRow icon={FileText} color="#6b7d8f" label="Gizlilik politikası" chevron onPress={() => openLegal("privacy")} />
+          <SettingsRow icon={FileText} color="#6b7d8f" label="Kullanım koşulları" chevron onPress={() => openLegal("terms")} />
         </SettingsGroup>
 
         <Txt muted style={{ paddingBottom: 8, textAlign: "center", fontSize: 13 }}>Mesai · verilerin yalnızca senin hesabında saklanır</Txt>
