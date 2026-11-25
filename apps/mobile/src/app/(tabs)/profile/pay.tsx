@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Animated, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Skeleton } from "@/components/skeleton";
+import { GrossNetDialog } from "@/components/gross-net";
 import { FormSection, NumberRow, PercentRow, Segmented, SwitchRow } from "@/components/form";
 import { toast } from "@/components/toast";
 import { Button, Card, Screen, Txt } from "@/components/ui";
@@ -49,6 +50,7 @@ function PayForm({ settings }: { settings: Settings }) {
   const [f, setF] = useState<Form>(() => toForm(settings));
   const [busy, setBusy] = useState(false);
   const [fixedOpen, setFixedOpen] = useState(false);
+  const [grossOpen, setGrossOpen] = useState(false);
   const n = (v: string) => Math.max(0, parseNum(v) || 0);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((cur) => ({ ...cur, [k]: v }));
 
@@ -110,6 +112,11 @@ function PayForm({ settings }: { settings: Settings }) {
     <Screen title="Ücret ve hedef" back={back} overlay={overlay}>
       <FormSection title="Maaş" footer="Bordrondaki sicil (net) maaşın. Maaşa dahil mesai yoksa boş bırak; örneğin maaşın 10,5 saat mesai içeriyorsa 10,5 yaz.">
         <NumberRow label="Aylık net maaş" suffix="₺" value={f.monthly_salary} onChange={(v) => set("monthly_salary", v)} />
+        <Pressable onPress={() => { haptic(); setGrossOpen(true); }} accessibilityRole="button"
+          style={{ minHeight: 52, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16 }}>
+          <Txt style={{ fontSize: 15, fontWeight: "500", color: c.tint }}>Brütten nete hesapla</Txt>
+          <Txt muted style={{ fontSize: 17 }}>›</Txt>
+        </Pressable>
         <NumberRow label="Maaş günü" hint="Ayın kaçında yatıyor (özette geri sayım)" placeholder="Örn. 15"
           value={f.payday} onChange={(v) => set("payday", v.replace(/[^0-9]/g, "").slice(0, 2))} />
         <NumberRow label="Maaşa dahil mesai" suffix="saat" hint="Maaşın içerdiği mesai saati"
@@ -170,6 +177,8 @@ function PayForm({ settings }: { settings: Settings }) {
           Maaş {money(live.monthly_salary, live.currency)}{g.deduction > 0 ? ` − kesinti ${money(g.deduction, live.currency)}` : ""} + mesai {money(g.earned, live.currency)} = <Txt style={{ fontSize: 14, fontWeight: "700" }}>{money(g.income, live.currency)}</Txt>
         </Txt>
       </Card>
+      <GrossNetDialog open={grossOpen} onClose={() => setGrossOpen(false)} today={today}
+        onApply={(net) => { set("monthly_salary", String(net).replace(".", ",")); toast.success("Net maaş yazıldı, kaydetmeyi unutma"); }} />
     </Screen>
   );
 }

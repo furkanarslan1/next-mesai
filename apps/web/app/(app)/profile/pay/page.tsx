@@ -14,6 +14,7 @@ import { FormSection, NumberRow, PercentRow, Segmented, SwitchRow } from "@/comp
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { GrossNetDialog } from "@/components/mesai/gross-net";
 
 type Form = {
   monthly_salary: string; base_hourly_rate: string; sunday_rate: string; holiday_rate: string; included_overtime_hours: string;
@@ -44,6 +45,7 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
   const userId = useProfile()?.id ?? "";
   const [f, setF] = useState<Form>(() => toForm(settings));
   const [busy, setBusy] = useState(false);
+  const [grossOpen, setGrossOpen] = useState(false);
   const n = (v: string) => Math.max(0, parseNum(v) || 0);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((cur) => ({ ...cur, [k]: v }));
 
@@ -96,6 +98,10 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
         <div className="space-y-5">
           <FormSection title="Maaş" footer="Bordrondaki sicil (net) maaşın. Maaşa dahil mesai yoksa boş bırak; örneğin maaşın 10,5 saat mesai içeriyorsa 10,5 yaz.">
             <NumberRow label="Aylık net maaş" suffix="₺" value={f.monthly_salary} onChange={(v) => set("monthly_salary", v)} />
+            <button type="button" onClick={() => setGrossOpen(true)} className="flex min-h-[3.25rem] w-full items-center justify-between gap-3 px-4 text-left text-[15px] font-medium text-[var(--tint)]">
+              Brütten nete hesapla
+              <span className="text-muted-foreground" aria-hidden>›</span>
+            </button>
         <NumberRow label="Maaş günü" hint="Ayın kaçında yatıyor (özette geri sayım)" placeholder="Örn. 15" inputMode="numeric"
           value={f.payday} onChange={(v) => set("payday", v.replace(/[^0-9]/g, "").slice(0, 2))} />
             <NumberRow label="Maaşa dahil mesai" suffix="saat" hint="Maaşın içerdiği mesai saati"
@@ -161,6 +167,8 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
         <Button className="h-14 w-full text-base font-semibold shadow-lg" onClick={save} disabled={busy || !dirty} tabIndex={dirty ? 0 : -1}>Değişiklikleri kaydet</Button>
       </div>
     </div>
+      <GrossNetDialog open={grossOpen} onOpenChange={setGrossOpen} today={today}
+        onApply={(net) => { set("monthly_salary", String(net).replace(".", ",")); toast.success("Net maaş yazıldı, kaydetmeyi unutma"); }} />
     </Page>
   );
 }
