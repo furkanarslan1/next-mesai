@@ -1,4 +1,8 @@
-import { goalProgress, hrs, money, monthSummary, saat } from "@mesai/core/calc";
+import { goalProgress, hrs, money, monthSummary, num, saat } from "@mesai/core/calc";
+import { daysToPayday, summaryDetails } from "@mesai/core/summary";
+import { addMonths } from "date-fns/addMonths";
+import { format } from "date-fns/format";
+import { parseISO } from "date-fns/parseISO";
 import { errorText } from "@mesai/core/errors";
 import { parseNum } from "@mesai/core/num";
 import { projection, remainingLabel } from "@mesai/core/reports";
@@ -7,7 +11,7 @@ import { Pencil, Target } from "@/components/icons";
 import { useOptimistic, useState, useTransition } from "react";
 import { TextInput, View } from "react-native";
 import { haptic } from "@/lib/haptics";
-import { mutate } from "@/lib/store";
+import { mutate, useFinance, useMonthEntries } from "@/lib/store";
 import { radius, useColors } from "@/theme";
 import { Dialog } from "./dialog";
 import { Segmented } from "./form";
@@ -19,7 +23,13 @@ import { Celebrate, usePop, useRiseBurst } from "./celebrate";
 import { Button, Card, Eyebrow, Stat, Txt } from "./ui";
 
 /** Aylık özet (web'deki MonthSummary): toplam kazanç ve mesai saati / günü / kazancı. */
-export function MonthSummary({ entries, settings }: { entries: Entry[]; settings: Settings }) {
+export function MonthSummary({ entries, settings, month, today }: {
+  entries: Entry[]; settings: Settings;
+  /** Özetin ayı (yyyy-MM): geçen ay farkı ve gelir-gider için */
+  month: string;
+  /** Verilirse (içinde bulunulan ay) maaş günü geri sayımı gösterilir */
+  today?: Date;
+}) {
   const g = goalProgress(entries, settings);
   const sum = monthSummary(entries, settings);
   const cur = settings.currency;
@@ -39,6 +49,7 @@ export function MonthSummary({ entries, settings }: { entries: Entry[]; settings
         <Stat label="Mesai kazancı" value={money(sum.earned, cur)} />
       </View>
       {sum.sickHours > 0 ? <Txt muted style={{ fontSize: 12, lineHeight: 16, textAlign: "center" }}>{sum.sickDays} raporlu gün için {hrs(sum.sickHours)} mesaiden düşüldü ({hrs(sum.grossHours)} girildi)</Txt> : null}
+      <SummaryDetails entries={entries} settings={settings} month={month} today={today} />
       {sum.includedHours > 0 ? (
         <Txt muted style={{ fontSize: 12, lineHeight: 16, textAlign: "center" }}>
           {hrs(sum.includedHours)} maaşa dahil · {sum.paidHours === 0 && sum.quotaLeft > 0 ? `${hrs(sum.quotaLeft)} sonra ücretli mesai başlar` : `${hrs(sum.paidHours)} ücretli mesai`}
@@ -48,9 +59,77 @@ export function MonthSummary({ entries, settings }: { entries: Entry[]; settings
   );
 }
 
+const signed = (n: number, f: (x: number) => string) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${f(Math.abs(n))}`;
+
+/** Özetin ayrıntıları (web: SummaryDetails): türe göre mesai, kesinti, geçen aya göre fark, gelir-gider ve maaş günü. */
+function SummaryDetails({ entries, settings, month, today }: { entries: Entry[]; settings: Settings; month: string; today?: Date }) {
+  const c = useColors();
+  const prevKey = format(addMonths(parseISO(`${month}-01`), -1), "yyyy-MM");
+  const prev = useMonthEntries(prevKey);
+  const items = useFinance(month);
+  const cur = settings.currency;
+  const d = summaryDetails(entries, settings, prev, items);
+  const payIn = today ? daysToPayday(today, settings.payday) : null;
+  const showPrev = d.vsPrev && prev && prev.length > 0;
+  const ded = d.deduction;
+  const dedParts = [ded.unpaid && `${ded.unpaid} gün ücretsiz izin`, ded.absent && `${ded.absent} gün gelmedi`, ded.sick && `${ded.sick} gün rapor`].filter(Boolean).join(", ");
+  const rows: { label: string; hint?: string; value: string; tone?: "good" | "bad" }[] = [];
+  if (d.byKind.length > 1 || d.byKind.some((k) => k.kind !== "weekday")) {
+    d.byKind.forEach((k) => rows.push({ label: `${k.label} mesaisi`, hint: hrs(k.hours), value: money(k.amount, cur) }));
+  }
+  if (ded.days > 0) rows.push({ label: "Maaş kesintisi", hint: dedParts, value: `−${money(ded.amount, cur)}`, tone: "bad" });
+  if (d.finance) {
+    if (d.finance.extra > 0) rows.push({ label: "Ek gelir", value: `+${money(d.finance.extra, cur)}`, tone: "good" });
+    rows.push({ label: "Harcamalar", value: `−${money(d.finance.expense, cur)}` });
+    rows.push({ label: "Cebinde kalan", value: money(d.finance.left, cur), tone: d.finance.left < 0 ? "bad" : "good" });
+  }
+  if (!rows.length && !showPrev && payIn === null) return null;
+  const toneColor = (t?: "good" | "bad") => (t === "good" ? c.tint : t === "bad" ? c.destructive : c.foreground);
+  const chip = { borderRadius: 999, backgroundColor: c.muted, paddingHorizontal: 12, paddingVertical: 4 };
+  const small = { fontSize: 12, lineHeight: 16, fontVariant: ["tabular-nums" as const] };
+
+  return (
+    <View style={{ gap: 12 }}>
+      {showPrev || payIn !== null ? (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
+          {showPrev && d.vsPrev ? (
+            <View style={chip}>
+              <Txt muted style={small}>
+                Geçen aya göre{" "}
+                <Txt style={[small, { fontWeight: "700", color: d.vsPrev.income > 0 ? c.tint : d.vsPrev.income < 0 ? c.destructive : c.foreground }]}>{signed(d.vsPrev.income, (x) => money(x, cur))}</Txt>
+                {" · "}{signed(d.vsPrev.hours, (x) => `${num(Math.round(x * 10) / 10)} saat`)}
+              </Txt>
+            </View>
+          ) : null}
+          {payIn !== null ? (
+            <View style={chip}>
+              {payIn === 0
+                ? <Txt style={[small, { fontWeight: "700", color: c.tint }]}>Maaş bugün</Txt>
+                : <Txt muted style={small}>Maaşa <Txt style={[small, { fontWeight: "700", color: c.foreground }]}>{payIn} gün</Txt></Txt>}
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+      {rows.length ? (
+        <View style={{ borderRadius: radius.md, backgroundColor: c.muted, paddingHorizontal: 12 }}>
+          {rows.map((r, i) => (
+            <View key={r.label} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}>
+              <View style={{ flexShrink: 1 }}>
+                <Txt style={{ fontSize: 14, lineHeight: 18 }}>{r.label}</Txt>
+                {r.hint ? <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>{r.hint}</Txt> : null}
+              </View>
+              <Txt style={{ fontSize: 14, lineHeight: 18, fontWeight: "600", fontVariant: ["tabular-nums"], color: toneColor(r.tone) }}>{r.value}</Txt>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 /** Hedef kartı (web'deki GoalHero): halka, kalan, ay sonu tahmini ve hedefi düzenleme penceresi. */
-export function GoalHero({ userId, settings, entries, monthLabel, today }: {
-  userId: string; settings: Settings; entries: Entry[]; monthLabel: string; today?: Date;
+export function GoalHero({ userId, settings, entries, month, monthLabel, today }: {
+  userId: string; settings: Settings; entries: Entry[]; month: string; monthLabel: string; today?: Date;
 }) {
   const c = useColors();
   const [opt, patchOpt] = useOptimistic(settings, (s, patch: Partial<Settings>) => ({ ...s, ...patch }));
@@ -101,7 +180,7 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
 
       {!g.set ? (
         <View style={{ gap: 20 }}>
-          <MonthSummary entries={entries} settings={opt} />
+          <MonthSummary entries={entries} settings={opt} month={month} today={today} />
           <Txt muted style={{ fontSize: 12, lineHeight: 16, textAlign: "center" }}>Hedef belirlersen burada ilerleme halkası görünür.</Txt>
         </View>
       ) : (

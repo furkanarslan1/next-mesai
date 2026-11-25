@@ -21,8 +21,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
-export function GoalHero({ userId, settings, entries, monthLabel, today }: {
+export function GoalHero({ userId, settings, entries, month, monthLabel, today }: {
   userId: string; settings: Settings; entries: Entry[]; monthLabel: string;
+  /** Ay anahtarı (yyyy-MM) */
+  month: string;
   /** Verilirse (içinde bulunulan ay) ay sonu tahmini ve günlük gereken mesai gösterilir */
   today?: Date;
 }) {
@@ -79,7 +81,7 @@ export function GoalHero({ userId, settings, entries, monthLabel, today }: {
 
       {!g.set && (
         <div className="space-y-5">
-          <MonthSummary entries={entries} settings={opt} />
+          <MonthSummary entries={entries} settings={opt} month={month} today={today} />
           <p className="text-center text-xs text-muted-foreground">Hedef belirlersen burada ilerleme halkası görünür.</p>
         </div>
       )}

@@ -18,8 +18,10 @@ import { Progress } from "@/components/ui/progress";
 type Form = {
   monthly_salary: string; base_hourly_rate: string; sunday_rate: string; holiday_rate: string; included_overtime_hours: string;
   weekday_percent: number; sunday_percent: number; holiday_percent: number; sick_leave_unpaid: boolean; sick_deducts_overtime: boolean;
-  goal_mode: Settings["goal_mode"]; monthly_goal_amount: string; monthly_goal_hours: string;
+  goal_mode: Settings["goal_mode"]; monthly_goal_amount: string; monthly_goal_hours: string; payday: string;
 };
+/** Maaş günü 1-31 arası tam sayı; değilse boş (null) */
+const paydayOf = (v: string) => { const d = Math.round(Number(v.replace(",", "."))); return d >= 1 && d <= 31 ? d : null; };
 const str = (n: number) => (n > 0 ? String(n) : "");
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const toForm = (s: Settings): Form => ({
@@ -27,6 +29,7 @@ const toForm = (s: Settings): Form => ({
   sunday_rate: str(s.sunday_rate), holiday_rate: str(s.holiday_rate), included_overtime_hours: str(s.included_overtime_hours),
   weekday_percent: s.weekday_percent, sunday_percent: s.sunday_percent, holiday_percent: s.holiday_percent, sick_leave_unpaid: s.sick_leave_unpaid, sick_deducts_overtime: s.sick_deducts_overtime,
   goal_mode: s.goal_mode, monthly_goal_amount: str(s.monthly_goal_amount), monthly_goal_hours: str(s.monthly_goal_hours),
+  payday: s.payday ? String(s.payday) : "",
 });
 
 export default function PayPage() {
@@ -54,6 +57,7 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
     included_overtime_hours: Math.min(200, n(f.included_overtime_hours)), sick_leave_unpaid: f.sick_leave_unpaid,
     sick_deducts_overtime: f.sick_deducts_overtime,
     goal_mode: f.goal_mode, monthly_goal_amount: n(f.monthly_goal_amount), monthly_goal_hours: n(f.monthly_goal_hours),
+    payday: paydayOf(f.payday),
   };
   // Karşılaştırma, kayıtlı ayarın aynı alanlara göre görünümüyle yapılır (eski kayıtta taban ücret türetilir)
   const current = toForm(settings);
@@ -62,6 +66,7 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
     hourly_rate: settings.hourly_rate, weekday_percent: settings.weekday_percent, sunday_percent: settings.sunday_percent, holiday_percent: settings.holiday_percent,
     sunday_rate: settings.sunday_rate, holiday_rate: settings.holiday_rate, included_overtime_hours: settings.included_overtime_hours,
     sick_leave_unpaid: settings.sick_leave_unpaid, sick_deducts_overtime: settings.sick_deducts_overtime, goal_mode: settings.goal_mode, monthly_goal_amount: settings.monthly_goal_amount, monthly_goal_hours: settings.monthly_goal_hours,
+    payday: settings.payday ?? null,
   };
   const dirty = (Object.keys(next) as (keyof Settings)[]).some((k) => k !== "hourly_rate" && next[k] !== saved[k]);
   // Kaydetmeden de özet canlı güncellensin
@@ -73,7 +78,9 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
     setBusy(true);
     try {
       if (!userId) throw new Error("Hesap bilgileri yükleniyor, birkaç saniye sonra tekrar dene");
-      await mutate.saveSettings(userId, next);
+      // Maaş günü yalnızca değiştiyse gönderilir (sütun eklenmeden önceki sürümlerle de kayıt çalışsın)
+      const { payday, ...rest } = next;
+      await mutate.saveSettings(userId, payday !== saved.payday ? next : rest);
       haptic("success");
       toast.success("Kaydedildi");
     } catch (e) {
@@ -89,6 +96,8 @@ function GoalView({ settings, today }: { settings: Settings; today: Date }) {
         <div className="space-y-5">
           <FormSection title="Maaş" footer="Bordrondaki sicil (net) maaşın. Maaşa dahil mesai yoksa boş bırak; örneğin maaşın 10,5 saat mesai içeriyorsa 10,5 yaz.">
             <NumberRow label="Aylık net maaş" suffix="₺" value={f.monthly_salary} onChange={(v) => set("monthly_salary", v)} />
+        <NumberRow label="Maaş günü" hint="Ayın kaçında yatıyor (özette geri sayım)" placeholder="Örn. 15" inputMode="numeric"
+          value={f.payday} onChange={(v) => set("payday", v.replace(/[^0-9]/g, "").slice(0, 2))} />
             <NumberRow label="Maaşa dahil mesai" suffix="saat" hint="Maaşın içerdiği mesai saati"
               value={f.included_overtime_hours} onChange={(v) => set("included_overtime_hours", v)} />
             <SwitchRow label="Raporlu günler maaştan düşer" hint="Bordroda “Raporlu (Ücretsiz)” varsa aç" checked={f.sick_leave_unpaid} onChange={(v) => set("sick_leave_unpaid", v)} />
