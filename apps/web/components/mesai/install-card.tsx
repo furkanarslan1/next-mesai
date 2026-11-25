@@ -6,8 +6,13 @@ import { useInstall } from "@/lib/install";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-/** Android uygulamasının (APK) indirme adresi; boşsa APK düğmesi gösterilmez (EAS Build çıktısı) */
-const APK_URL = process.env.NEXT_PUBLIC_ANDROID_APK_URL ?? "";
+/**
+ * Android uygulamasının (APK) indirme adresi (EAS preview derlemesi). Ortam değişkeni varsa o kullanılır,
+ * "none" ise APK düğmesi gizlenir. Kod güncellemeleri EAS Update ile geldiği için yalnızca yeni derlemede değişir.
+ */
+const DEFAULT_APK_URL = "https://expo.dev/artifacts/eas/zDiCwXX4hVeDcaJyY5CNDa37JBZIrJvFJtsJslyUNbA.apk";
+const envApk = process.env.NEXT_PUBLIC_ANDROID_APK_URL;
+const APK_URL = envApk === "none" ? "" : envApk || DEFAULT_APK_URL;
 const noop = () => () => {};
 const isAndroid = () => /Android/i.test(navigator.userAgent);
 
@@ -19,7 +24,9 @@ const isAndroid = () => /Android/i.test(navigator.userAgent);
 export function InstallCard({ className }: { className?: string }) {
   const { state, install } = useInstall();
   const android = useSyncExternalStore(noop, isAndroid, () => false);
-  if (state === "unknown" || state === "installed") return null;
+  const apk = android && !!APK_URL;
+  // Web sürümü ana ekrana kurulu olsa da Android'de yerel uygulamayı indirme düğmesi kalsın
+  if (state === "unknown" || (state === "installed" && !apk)) return null;
 
   return (
     <Card className={className}>
@@ -30,10 +37,10 @@ export function InstallCard({ className }: { className?: string }) {
           </span>
           <div>
             <p className="font-semibold leading-tight">Uygulamayı indir</p>
-            <p className="text-xs text-muted-foreground">Ana ekranına ekle, tam ekran ve daha hızlı aç.</p>
+            <p className="text-xs text-muted-foreground">{apk ? "Android uygulamasını kur ya da web sürümünü ana ekrana ekle." : "Ana ekranına ekle, tam ekran ve daha hızlı aç."}</p>
           </div>
         </div>
-        {android && APK_URL && (
+        {apk && (
           <div className="space-y-1.5">
             <a href={APK_URL} download className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground">
               <Smartphone className="size-4" />Android uygulamasını indir (APK)
@@ -41,7 +48,7 @@ export function InstallCard({ className }: { className?: string }) {
             <p className="text-xs text-muted-foreground">İndirince dosyayı aç; telefon sorarsa &quot;bu kaynaktan yüklemeye izin ver&quot;i onayla.</p>
           </div>
         )}
-        {state === "prompt" && <Button className="w-full" variant={android && APK_URL ? "secondary" : "default"} onClick={install}><Download className="size-4" />{android && APK_URL ? "Ya da web sürümünü yükle" : "Yükle"}</Button>}
+        {state === "prompt" && <Button className="w-full" variant={apk ? "secondary" : "default"} onClick={install}><Download className="size-4" />{apk ? "Ya da web sürümünü yükle" : "Yükle"}</Button>}
         {state === "ios" && (
           <ol className="space-y-2 text-sm">
             <li className="flex items-center gap-2"><Share className="size-4 shrink-0 text-primary" />Safari&apos;de alttaki <b>Paylaş</b> düğmesine dokun</li>
