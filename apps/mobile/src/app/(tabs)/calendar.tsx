@@ -16,11 +16,16 @@ import Reanimated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from
 import { DaySheet } from "@/components/day-sheet";
 import { useReduceMotion } from "@/lib/motion";
 import { AnimatedNumber } from "@/components/animated-number";
-import { Card, IconButton, LargeTitle, Screen, Txt } from "@/components/ui";
+import { Button, Card, IconButton, LargeTitle, Screen, Txt } from "@/components/ui";
 import { mixOklch } from "@/lib/color";
 import { haptic } from "@/lib/haptics";
 import { useToday } from "@/lib/now";
-import { monthKey, useMonthEntries, useProfile, useSettings } from "@/lib/store";
+import { monthKey, mutate, useMonthEntries, useProfile, useSettings } from "@/lib/store";
+import { bulkPlan, SKIP_LABEL, type BulkType } from "@mesai/core/day";
+import { errorText } from "@mesai/core/errors";
+import { parseISO } from "date-fns/parseISO";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { toast } from "@/components/toast";
 import { radius, useColors, useIsDark } from "@/theme";
 
 /**
@@ -51,9 +56,19 @@ export default function CalendarScreen() {
   // Ay değişince ızgara geldiği yönden 24 px kayarak belirir (web: .month-slide, 260 ms)
   const reduce = useReduceMotion();
   const slide = useSharedValue(1);
+  // Toplu işaretleme (web ile aynı): "Seç" ya da bir güne uzun basınca seçim modu
+  const insets = useSafeAreaInsets();
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [bulkType, setBulkType] = useState<BulkType>("paid_leave");
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const togglePick = (k: string) => { haptic(); setConfirming(false); setPicked((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k])); };
+  const stopPicking = () => { setPicking(false); setPicked([]); setConfirming(false); };
   const dir = useSharedValue(0);
   const go = (n: number) => {
     setMonth(addMonths(month, n));
+    setPicked([]); setConfirming(false);
     if (reduce) return;
     dir.set(n);
     slide.set(0);
@@ -92,10 +107,54 @@ export default function CalendarScreen() {
   const title = format(month, "MMMM yyyy", { locale: tr });
   const capTitle = title.charAt(0).toLocaleUpperCase("tr") + title.slice(1);
 
+  const plan = confirming ? bulkPlan(picked, bulkType, entries, settings) : null;
+  async function saveBulk() {
+    if (!plan?.add.length) return;
+    setBusy(true);
+    try {
+      await mutate.addEntries(plan.add.map((work_date) => ({ user_id: userId, work_date, type: bulkType, hours: 0, note: null, start_time: null, end_time: null })));
+      haptic("success");
+      toast.success(`${plan.add.length} gün işaretlendi`);
+      stopPicking();
+    } catch (e) { toast.error(errorText(e, "Kaydedilemedi")); }
+    finally { setBusy(false); }
+  }
+  const overlay = picking ? (
+    <View pointerEvents="box-none" style={{ position: "absolute", left: 16, right: 16, bottom: 100 + insets.bottom }}>
+      <Card style={{ padding: 16, gap: 12, boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.25)" }}>
+        {plan ? (
+          <>
+            <Txt style={{ fontSize: 14, lineHeight: 20 }}>
+              <Txt style={{ fontSize: 14, fontWeight: "700" }}>{plan.add.length} gün</Txt> “{TYPE_META[bulkType].label}” olarak işaretlenecek.
+              {plan.skipped.length ? <Txt muted style={{ fontSize: 14 }}> Atlanacak: {plan.skipped.map((x) => `${format(parseISO(x.date), "d MMM", { locale: tr })} (${SKIP_LABEL[x.reason]})`).join(", ")}.</Txt> : null}
+            </Txt>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Button title="Hayır" size="md" variant="secondary" disabled={busy} onPress={() => setConfirming(false)} style={{ flex: 1 }} />
+              <Button title="Evet, işaretle" size="md" disabled={busy || !plan.add.length} onPress={() => { void saveBulk(); }} style={{ flex: 1 }} />
+            </View>
+          </>
+        ) : (
+          <>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+              {(["paid_leave", "unpaid_leave", "sick", "absent", "holiday"] as BulkType[]).map((t) => (
+                <Pressable key={t} onPress={() => { haptic(); setBulkType(t); }} accessibilityState={{ selected: bulkType === t }}
+                  style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: bulkType === t ? c.primary : c.muted }}>
+                  <Txt style={{ fontSize: 12, fontWeight: "500", color: bulkType === t ? c.primaryForeground : c.foreground }}>{TYPE_META[t].label}</Txt>
+                </Pressable>
+              ))}
+            </View>
+            <Button title={picked.length ? `${picked.length} günü işaretle` : "Gün seç"} size="md" disabled={!picked.length} onPress={() => setConfirming(true)} />
+          </>
+        )}
+      </Card>
+    </View>
+  ) : null;
+
   return (
-    <Screen eyebrow="Takvim" title={<LargeTitle>{capTitle}</LargeTitle>} compactTitle={capTitle}
+    <Screen eyebrow="Takvim" title={<LargeTitle>{capTitle}</LargeTitle>} compactTitle={capTitle} overlay={overlay}
       actions={(
         <>
+          <Button title={picking ? "Bitti" : "Seç"} size="default" variant={picking ? "primary" : "secondary"} onPress={() => { haptic(); if (picking) stopPicking(); else setPicking(true); }} />
           <IconButton label="Önceki ay" onPress={() => go(-1)}><ChevronLeft size={16} color={c.secondaryForeground} /></IconButton>
           <IconButton label="Sonraki ay" onPress={() => go(1)}><ChevronRight size={16} color={c.secondaryForeground} /></IconButton>
         </>
@@ -121,11 +180,15 @@ export default function CalendarScreen() {
                 const bg = worked > 0 ? mixOklch(c.teal, c.fill, Math.round(a * 100) / 100) : st ? (dark ? st.dark : st.light) : c.muted;
                 const fg = worked > 0 || st ? (strong ? c.ink : "#fcfcfc") : c.foreground;
                 return (
-                  <Pressable key={key} onPress={() => { haptic(); setSelected(key); }}
-                    accessibilityLabel={`${format(d, "d MMMM", { locale: tr })} kayıtlarını aç`}
+                  <Pressable key={key} onPress={() => { if (picking) togglePick(key); else { haptic(); setSelected(key); } }}
+                    onLongPress={() => { if (!picking) { setPicking(true); togglePick(key); } }}
+                    accessibilityLabel={picking ? `${format(d, "d MMMM", { locale: tr })} seç` : `${format(d, "d MMMM", { locale: tr })} kayıtlarını aç`}
+                    accessibilityState={picking ? { selected: picked.includes(key) } : undefined}
                     style={({ pressed }) => ({
                       flex: 1, aspectRatio: 1, borderRadius: radius.md, alignItems: "center", justifyContent: "center", backgroundColor: bg,
-                      outlineStyle: "solid", outlineWidth: hol || isToday ? 2 : 0, outlineColor: hol ? "#fbbf24" : c.teal, outlineOffset: !hol && isToday ? 2 : 0,
+                      ...(picking && picked.includes(key)
+                        ? { outlineStyle: "solid" as const, outlineWidth: 3, outlineColor: c.primary, outlineOffset: 2 }
+                        : { outlineStyle: "solid" as const, outlineWidth: hol || isToday ? 2 : 0, outlineColor: hol ? "#fbbf24" : c.teal, outlineOffset: !hol && isToday ? 2 : 0 }),
                       transform: [{ scale: pressed ? 0.95 : 1 }],
                     })}>
                     <Txt style={{ fontSize: 14, lineHeight: 14, fontWeight: isToday ? "700" : "400", color: fg }}>{format(d, "d")}</Txt>
@@ -145,7 +208,7 @@ export default function CalendarScreen() {
             </View>
           ))}
         </Reanimated.View>
-        <Txt muted style={{ marginTop: 12, textAlign: "center", fontSize: 12, lineHeight: 16 }}>Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil. Ay değiştirmek için sağa sola kaydır.</Txt>
+        <Txt muted style={{ marginTop: 12, textAlign: "center", fontSize: 12, lineHeight: 16 }}>{picking ? "İzin/rapor işaretlemek istediğin günlere dokun." : "Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil. Ay değiştirmek için sağa sola kaydır. Birden çok güne izin için “Seç” ya da güne uzun bas."}</Txt>
       </Card>
 
       {/* Renk açıklaması */}

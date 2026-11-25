@@ -1,11 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth } from "date-fns";
+import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, parseISO, startOfMonth } from "date-fns";
 import { tr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMesai } from "@/lib/use-data";
-import { useProfile } from "@/lib/store";
+import { mutate, useProfile } from "@/lib/store";
+import { toast } from "sonner";
+import { errorText } from "@mesai/core/errors";
+import { bulkPlan, SKIP_LABEL, type BulkType } from "@mesai/core/day";
+import { haptic } from "@/lib/haptics";
 import { DaySheet } from "@/components/mesai/day-sheet";
 import { useToday } from "@/lib/now";
 import { holidayName } from "@mesai/core/holidays";
@@ -35,7 +39,15 @@ function CalendarView({ today }: { today: Date }) {
   const [month, setMonth] = useState(today);
   // Ay değişiminin yönü: ızgara o yönden kayarak gelir (1 ileri, -1 geri)
   const [dir, setDir] = useState(0);
-  const go = (n: number) => { setDir(n); setMonth(addMonths(month, n)); };
+  const go = (n: number) => { setDir(n); setMonth(addMonths(month, n)); setPicked([]); setConfirming(false); };
+  // Toplu işaretleme (ör. 5 günlük yıllık izin): "Seç" ile günler seçilir, tek seferde kaydedilir
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [bulkType, setBulkType] = useState<BulkType>("paid_leave");
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const togglePick = (k: string) => { setConfirming(false); setPicked((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k])); };
+  const stopPicking = () => { setPicking(false); setPicked([]); setConfirming(false); };
   // Dokunmatikte sağa/sola kaydırınca ay değişir (dikey kaydırma sayfayı kaydırmaya devam eder)
   const touch = useRef<{ x: number; y: number; t: number } | null>(null);
   const swipe = {
@@ -64,6 +76,7 @@ function CalendarView({ today }: { today: Date }) {
   return (
     <Page eyebrow="Takvim" title={<span className="capitalize">{format(month, "MMMM yyyy", { locale: tr })}</span>} actions={
         <div className="flex gap-2">
+          <Button size="sm" variant={picking ? "default" : "secondary"} onClick={() => (picking ? stopPicking() : setPicking(true))}>{picking ? "Bitti" : "Seç"}</Button>
           <Button size="icon" variant="secondary" aria-label="Önceki ay" onClick={() => go(-1)}><ChevronLeft /></Button>
           <Button size="icon" variant="secondary" aria-label="Sonraki ay" onClick={() => go(1)}><ChevronRight /></Button>
         </div>
@@ -84,8 +97,9 @@ function CalendarView({ today }: { today: Date }) {
               const isToday = key === format(today, "yyyy-MM-dd");
               const st = status ? STATUS_CELL[status.type] : null;
               return (
-                <button key={key} type="button" onClick={() => setSelected(key)} aria-label={`${format(d, "d MMMM", { locale: tr })} kayıtlarını aç`} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
-                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none transition active:scale-95 ${holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-[var(--teal)] ring-offset-2 ring-offset-card" : ""}`}
+                <button key={key} type="button" onClick={() => (picking ? togglePick(key) : setSelected(key))} aria-pressed={picking ? picked.includes(key) : undefined}
+                  aria-label={picking ? `${format(d, "d MMMM", { locale: tr })} seç` : `${format(d, "d MMMM", { locale: tr })} kayıtlarını aç`} title={[holidayName(key), ...list.map((e) => TYPE_META[e.type].label)].filter(Boolean).join(", ")}
+                  className={`relative flex aspect-square flex-col items-center justify-center r-md text-sm leading-none transition active:scale-95 ${picking && picked.includes(key) ? "ring-[3px] ring-primary ring-offset-2 ring-offset-card" : holidayName(key) ? "ring-2 ring-amber-400" : isToday ? "ring-2 ring-[var(--teal)] ring-offset-2 ring-offset-card" : ""}`}
                   style={{ background: worked > 0 ? `color-mix(in oklch, var(--teal) ${Math.round(alpha * 100)}%, var(--fill))` : st ? st.bg : "var(--muted)", color: worked > 0 || st ? (strong ? "var(--ink)" : "oklch(0.99 0 0)") : "var(--foreground)" }}>
                   <span className={isToday ? "font-bold" : ""}>{format(d, "d")}</span>
                   {worked > 0 ? (
@@ -101,7 +115,7 @@ function CalendarView({ today }: { today: Date }) {
               );
             })}
           </div>
-          <p className="mt-3 text-center text-xs text-muted-foreground">Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil. Ay değiştirmek için sağa sola kaydır.</p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">{picking ? "İzin/rapor işaretlemek istediğin günlere dokun." : "Bir güne dokun: kayıtlarını gör, ekle, değiştir veya sil. Ay değiştirmek için sağa sola kaydır. Birden çok güne izin için “Seç”."}</p>
         </CardContent>
       </Card>
       <div className="flex flex-wrap gap-3 text-xs">
@@ -115,6 +129,49 @@ function CalendarView({ today }: { today: Date }) {
           <span className="mr-1 inline-block size-2 rounded-full ring-2 ring-amber-400" />
           {days.filter((d) => holidayName(format(d, "yyyy-MM-dd"))).map((d) => `${format(d, "d")} ${holidayName(format(d, "yyyy-MM-dd"))}`).join(" · ")}
         </p>
+      )}
+      {picking && (
+        <div className="sticky bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-20 md:bottom-4">
+          <div className="glass space-y-3 p-4 shadow-lg">
+            {confirming ? (() => {
+              const plan = bulkPlan(picked, bulkType, entries, settings);
+              const skipped = plan.skipped.map((x) => `${format(parseISO(x.date), "d MMM", { locale: tr })} (${SKIP_LABEL[x.reason]})`).join(", ");
+              return (
+                <>
+                  <p className="text-sm">
+                    <b>{plan.add.length} gün</b> “{TYPE_META[bulkType].label}” olarak işaretlenecek.
+                    {plan.skipped.length > 0 && <span className="text-muted-foreground"> Atlanacak: {skipped}.</span>}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" disabled={busy} onClick={() => setConfirming(false)}>Hayır</Button>
+                    <Button disabled={busy || !plan.add.length} onClick={async () => {
+                      setBusy(true);
+                      try {
+                        await mutate.addEntries(plan.add.map((work_date) => ({ user_id: userId, work_date, type: bulkType, hours: 0, note: null, start_time: null, end_time: null })));
+                        haptic("success");
+                        toast.success(`${plan.add.length} gün işaretlendi`);
+                        stopPicking();
+                      } catch (e) { toast.error(errorText(e, "Kaydedilemedi")); }
+                      finally { setBusy(false); }
+                    }}>Evet, işaretle</Button>
+                  </div>
+                </>
+              );
+            })() : (
+              <>
+                <div className="flex flex-wrap gap-1.5">
+                  {(["paid_leave", "unpaid_leave", "sick", "absent", "holiday"] as BulkType[]).map((t) => (
+                    <button key={t} type="button" aria-pressed={bulkType === t} onClick={() => setBulkType(t)}
+                      className={`r-pill px-3 py-1.5 text-xs font-medium ${bulkType === t ? "bg-primary text-primary-foreground" : "bg-muted"}`}>{TYPE_META[t].label}</button>
+                  ))}
+                </div>
+                <Button className="h-11 w-full font-semibold" disabled={!picked.length} onClick={() => setConfirming(true)}>
+                  {picked.length ? `${picked.length} günü işaretle` : "Gün seç"}
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
       )}
       <DaySheet date={selected} entries={entries} userId={userId} onClose={() => setSelected(null)} />
       <div className="grid grid-cols-2 gap-3">
