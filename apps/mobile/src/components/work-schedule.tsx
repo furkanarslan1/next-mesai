@@ -1,7 +1,7 @@
 import { dailyHoursOf, type WorkSchedule } from "@mesai/core/auth";
 import { hrs } from "@mesai/core/calc";
 import { parseNum } from "@mesai/core/num";
-import { SHIFTS, type ShiftType } from "@mesai/core/types";
+import { SHIFTS, type ShiftStep, type ShiftType } from "@mesai/core/types";
 import { Plus, X } from "@/components/icons";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
@@ -70,5 +70,54 @@ export function HoursChips({ items, onAdd, onRemove, max = 8 }: {
       </View>
       {items.length >= max ? <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>En fazla {max} kısayol ekleyebilirsin.</Txt> : null}
     </View>
+  );
+}
+
+/** Vardiya döngüsü formu (web: RotationFields) */
+export interface RotationForm { on: boolean; weeks: number; steps: ShiftStep[]; current: number }
+
+export function RotationFields({ value, onChange }: { value: RotationForm; onChange: (v: RotationForm) => void }) {
+  const c = useColors();
+  const set = (patch: Partial<RotationForm>) => onChange({ ...value, ...patch });
+  const setStep = (i: number, patch: Partial<ShiftStep>) => set({ steps: value.steps.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+  return (
+    <FormSection title="Vardiya döngüsü"
+      footer={value.on ? "Uygulama her gün hangi vardiyada olduğunu buna göre hesaplar: Bugün kartı, çıkış saatine göre mesai, çıkış bildirimi ve çizelge." : "Vardiyan belirli haftalarda değişiyorsa (ör. bir hafta gündüz, bir hafta gece) aç."}>
+      <SwitchRow label="Vardiyam dönüşümlü değişiyor" value={value.on} onChange={(on) => set({ on })} />
+      {value.on ? (
+        <View style={{ gap: 16, padding: 12 }}>
+          {value.steps.map((x, i) => (
+            <View key={i} style={{ gap: 8, borderRadius: radius.md, backgroundColor: c.muted, paddingVertical: 8 }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 12 }}>
+                <Txt style={{ fontSize: 14, fontWeight: "600" }}>{i + 1}. vardiya</Txt>
+                {value.steps.length > 2 ? (
+                  <Pressable hitSlop={8} onPress={() => set({ steps: value.steps.filter((_, j) => j !== i), current: Math.min(value.current, value.steps.length - 2) })}>
+                    <Txt style={{ fontSize: 12, color: c.destructive }}>Kaldır</Txt>
+                  </Pressable>
+                ) : null}
+              </View>
+              <View style={{ paddingHorizontal: 12 }}>
+                <Segmented value={x.type} onChange={(t: ShiftType) => setStep(i, { type: t, start: SHIFTS[t].start, end: SHIFTS[t].end })}
+                  options={(Object.keys(SHIFTS) as ShiftType[]).map((t) => ({ value: t, label: SHIFTS[t].label }))} />
+              </View>
+              <TimeRow label="Giriş" value={x.start} onChange={(v) => setStep(i, { start: v })} tone="muted" />
+              <TimeRow label="Çıkış" value={x.end} onChange={(v) => setStep(i, { end: v })} tone="muted" />
+            </View>
+          ))}
+          {value.steps.length < 4 ? (
+            <Button title="+ Vardiya ekle" variant="secondary" size="md" onPress={() => set({ steps: [...value.steps, { type: "day", start: SHIFTS.day.start, end: SHIFTS.day.end }] })} />
+          ) : null}
+          <View style={{ gap: 6 }}>
+            <Txt style={{ fontSize: 14, fontWeight: "500", paddingHorizontal: 4 }}>Her vardiya kaç hafta sürüyor?</Txt>
+            <Segmented value={String(value.weeks)} onChange={(v) => set({ weeks: Number(v) })} options={["1", "2", "3", "4"].map((n) => ({ value: n, label: `${n} hafta` }))} />
+          </View>
+          <View style={{ gap: 6 }}>
+            <Txt style={{ fontSize: 14, fontWeight: "500", paddingHorizontal: 4 }}>Bu hafta hangi vardiyadasın?</Txt>
+            <Segmented value={String(value.current)} onChange={(v) => set({ current: Number(v) })}
+              options={value.steps.map((x, i) => ({ value: String(i), label: `${i + 1}. ${SHIFTS[x.type].label}` }))} />
+          </View>
+        </View>
+      ) : null}
+    </FormSection>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { rotationLabel, validRotation } from "@mesai/core/shift";
 import Link from "next/link";
 import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, Palette, UserRound, Users, Zap } from "lucide-react";
 import { useLinks, useProfile, useSettings, useShortcuts } from "@/lib/store";
@@ -47,7 +48,7 @@ export default function SettingsPage() {
         {employee && (
           <SettingsGroup title="Çalışma">
             <SettingsRow href="/profile/work" icon={Clock} color="#3b82c4" label="Çalışma saati"
-              value={s ? (!s.work_start || !s.work_end ? "Ayarlanmadı"
+              value={s ? (s.has_shift && validRotation(s.shift_rotation) ? rotationLabel(validRotation(s.shift_rotation)!) : !s.work_start || !s.work_end ? "Ayarlanmadı"
                 : (s.has_shift && s.shift_type ? `${SHIFTS[s.shift_type].label} · ` : "") + `${s.work_start.slice(0, 5)}–${s.work_end.slice(0, 5)}` + ((s.saturday_off ?? true) ? "" : " · 6 gün")) : undefined} />
             <SettingsRow href="/profile/pay" icon={BadgeDollarSign} color="#2f9e6e" label="Ücret ve hedef"
               value={s ? (s.monthly_salary > 0 ? money(s.monthly_salary, s.currency) : "Ayarlanmadı") : undefined} />

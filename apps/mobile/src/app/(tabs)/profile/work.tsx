@@ -7,12 +7,14 @@ import { Skeleton } from "@/components/skeleton";
 import { FormSection, SwitchRow } from "@/components/form";
 import { toast } from "@/components/toast";
 import { Button, Screen } from "@/components/ui";
-import { WorkScheduleFields } from "@/components/work-schedule";
+import { RotationFields, WorkScheduleFields, type RotationForm } from "@/components/work-schedule";
+import { rotationStartFor, scheduleFor, validRotation } from "@mesai/core/shift";
 import { haptic } from "@/lib/haptics";
 import { mutate, useProfile, useSettings } from "@/lib/store";
 
 const hhmm5 = (t: string | null, fallback: string) => (t ? t.slice(0, 5) : fallback);
 const back = { label: "Ayarlar", onPress: () => router.back() };
+const pick = (x: { start: string; end: string }) => ({ start: x.start, end: x.end });
 
 /** Çalışma saati ve vardiya (web: /profile/work → WorkSettings + WorkScheduleFields). */
 export default function WorkScreen() {
@@ -29,21 +31,34 @@ function WorkForm({ userId, settings }: { userId: string; settings: Settings }) 
   });
   const savedSat = settings.saturday_off ?? true;
   const [satOff, setSatOff] = useState(savedSat);
+  // Vardiya döngüsü (web ile aynı mantık)
+  const [rot, setRot] = useState<RotationForm>(() => {
+    const r = validRotation(settings.shift_rotation);
+    return r
+      ? { on: true, weeks: r.weeks, steps: r.steps, current: scheduleFor(new Date(), settings).step }
+      : { on: false, weeks: 1, steps: [{ type: "day", ...pick(SHIFTS.day) }, { type: "night", ...pick(SHIFTS.night) }], current: 0 };
+  });
+  const nextRotation = w.has_shift && rot.on ? validRotation({ start: rotationStartFor(new Date(), rot.current, rot.weeks), weeks: rot.weeks, steps: rot.steps }) : null;
+  const saved = validRotation(settings.shift_rotation);
+  const savedNorm = saved ? { ...saved, start: rotationStartFor(new Date(), scheduleFor(new Date(), settings).step, saved.weeks) } : null;
+  const rotationChanged = JSON.stringify(nextRotation) !== JSON.stringify(savedNorm);
   const [busy, setBusy] = useState(false);
   const daily = dailyHoursOf(w);
   const dirty = w.work_start !== hhmm5(settings.work_start, "08:00") || w.work_end !== hhmm5(settings.work_end, "16:00")
-    || w.has_shift !== settings.has_shift || (w.has_shift && w.shift_type !== settings.shift_type) || satOff !== savedSat
+    || w.has_shift !== settings.has_shift || (w.has_shift && w.shift_type !== settings.shift_type) || satOff !== savedSat || rotationChanged
     // Hiç kaydedilmemişse ekrandaki varsayılan (08:00–16:00) da kaydedilebilsin
     || !settings.work_start || !settings.work_end;
 
   async function save() {
     if (daily <= 0) return toast.error("Giriş ve çıkış saatini gir");
+    if (w.has_shift && rot.on && !nextRotation) return toast.error("Döngüdeki her vardiyanın giriş ve çıkış saatini gir");
     setBusy(true);
     try {
       await mutate.saveSettings(userId, {
         work_start: w.work_start, work_end: w.work_end, daily_hours: daily,
         has_shift: w.has_shift, shift_type: w.has_shift ? w.shift_type : null,
         ...(satOff !== savedSat ? { saturday_off: satOff } : {}),
+        ...(rotationChanged ? { shift_rotation: nextRotation } : {}),
       });
       haptic("success");
       toast.success(w.has_shift ? `${SHIFTS[w.shift_type].label} vardiyası kaydedildi` : "Çalışma saati kaydedildi");
@@ -56,6 +71,7 @@ function WorkForm({ userId, settings }: { userId: string; settings: Settings }) 
   return (
     <Screen title="Çalışma saati" back={back}>
       <WorkScheduleFields value={w} onChange={setW} tone="card" />
+      {w.has_shift ? <RotationFields value={rot} onChange={setRot} /> : null}
       <FormSection title="Çalışma günleri" footer={satOff
         ? "Haftada 5 gün: cumartesi ve pazar tatil. Çizelgede cumartesi boş kalır."
         : "Haftada 6 gün: cumartesi normal iş günü, yalnızca pazar tatil. Cumartesi mesaisi hafta içi oranıyla hesaplanır."}>

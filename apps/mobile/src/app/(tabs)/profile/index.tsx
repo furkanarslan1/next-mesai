@@ -1,4 +1,5 @@
 import { money } from "@mesai/core/calc";
+import { rotationLabel, validRotation } from "@mesai/core/shift";
 import { SHIFTS } from "@mesai/core/types";
 import { router, type Href } from "expo-router";
 import { Skeleton } from "@/components/skeleton";
@@ -50,7 +51,7 @@ export default function SettingsScreen() {
         {employee ? (
           <SettingsGroup title="Çalışma">
             <SettingsRow icon={Clock} color="#3b82c4" label="Çalışma saati" chevron onPress={() => go("/profile/work")}
-              value={s ? (!s.work_start || !s.work_end ? "Ayarlanmadı"
+              value={s ? (s.has_shift && validRotation(s.shift_rotation) ? rotationLabel(validRotation(s.shift_rotation)!) : !s.work_start || !s.work_end ? "Ayarlanmadı"
                 : (s.has_shift && s.shift_type ? `${SHIFTS[s.shift_type].label} · ` : "") + `${s.work_start.slice(0, 5)}–${s.work_end.slice(0, 5)}` + ((s.saturday_off ?? true) ? "" : " · 6 gün")) : undefined} />
             <SettingsRow icon={BadgeDollarSign} color="#2f9e6e" label="Ücret ve hedef" chevron onPress={() => go("/profile/pay")}
               value={s ? (s.monthly_salary > 0 ? money(s.monthly_salary, s.currency) : "Ayarlanmadı") : undefined} />

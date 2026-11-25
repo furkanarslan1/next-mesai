@@ -1,4 +1,5 @@
 import { eachDayOfInterval } from "date-fns/eachDayOfInterval";
+import { scheduleFor } from "./shift";
 import { endOfMonth } from "date-fns/endOfMonth";
 import { format } from "date-fns/format";
 import { startOfMonth } from "date-fns/startOfMonth";
@@ -52,12 +53,12 @@ export function addHours(time: string, hours: number): string {
  */
 export function buildTimesheet(month: Date, entries: Entry[], s: Settings, opts: { assumeWorkdays?: boolean } = {}): Timesheet {
   const assume = opts.assumeWorkdays ?? true;
-  const workStart = s.work_start ? hhmm(s.work_start) : "";
-  const workEnd = s.work_end ? hhmm(s.work_end) : "";
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
 
   const rows: TimesheetRow[] = days.map((d) => {
     const date = format(d, "yyyy-MM-dd");
+    // Vardiya döngüsü varsa günün haftasındaki vardiya saati
+    const { start: workStart, end: workEnd } = scheduleFor(d, s);
     const weekend = isRestDay(d, s);
     const recs = entries.filter((e) => e.work_date === date);
     const ot = recs.filter(isWork);

@@ -51,6 +51,8 @@ export interface Settings {
   saturday_off: boolean;
   /** Maaşın yattığı gün (1-31); boşsa geri sayım gösterilmez */
   payday?: number | null;
+  /** Vardiya döngüsü (haftalık değişen vardiya); boşsa work_start/work_end sabit */
+  shift_rotation?: ShiftRotation | null;
   /** Gider kategorisi (CategoryKey) -> aylık limit */
   budgets: Record<string, number>;
 }
@@ -65,6 +67,11 @@ export const TYPE_META: Record<EntryType, { label: string; color: string }> = {
   sick: { label: "Raporlu", color: "bg-slate-300" },
   absent: { label: "İşe gelmedim", color: "bg-rose-500" },
 };
+
+/** Döngünün bir adımı: vardiya türü ve o vardiyanın giriş/çıkış saati (HH:MM) */
+export interface ShiftStep { type: ShiftType; start: string; end: string }
+/** `start`: ilk adımın başladığı haftanın pazartesisi (yyyy-MM-dd); her adım `weeks` hafta sürer */
+export interface ShiftRotation { start: string; weeks: number; steps: ShiftStep[] }
 
 export const SHIFTS: Record<ShiftType, { label: string; start: string; end: string }> = {
   day: { label: "Gündüz", start: "08:00", end: "16:00" },

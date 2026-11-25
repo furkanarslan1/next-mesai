@@ -1,4 +1,5 @@
 import { goalProgress, hhmm, hrs, levelFor, overtimeAfter } from "@mesai/core/calc";
+import { scheduleFor } from "@mesai/core/shift";
 import { dayRules } from "@mesai/core/day";
 import { errorText } from "@mesai/core/errors";
 import { holidayName } from "@mesai/core/holidays";
@@ -88,7 +89,8 @@ export default function Home() {
   const [onHoliday, setOnHoliday] = useState(false);
 
   const holiday = holidayName(date);
-  const workEnd = settings?.work_end ? hhmm(settings.work_end) : "";
+  // Seçili günün çıkış saati (vardiya döngüsü varsa o haftanın vardiyası)
+  const workEnd = settings ? scheduleFor(parseISO(date), settings).end : "";
   const exitHours = overtimeAfter(workEnd, exitTime);
   const customValid = byExit ? exitHours : parseNum(customHours);
 

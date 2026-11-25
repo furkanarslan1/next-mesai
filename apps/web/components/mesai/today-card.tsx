@@ -1,9 +1,10 @@
 "use client";
 
+import { scheduleFor } from "@mesai/core/shift";
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Briefcase, CheckCircle2, Coffee, Moon, Plus, Sparkles, Sunrise } from "lucide-react";
-import { hhmm, hrs, overtimeAfter } from "@mesai/core/calc";
+import { hrs, overtimeAfter } from "@mesai/core/calc";
 import { TYPE_META, type Entry, type Settings } from "@mesai/core/types";
 import { isRestDay } from "@mesai/core/day";
 
@@ -35,7 +36,8 @@ export function TodayCard({ settings, entries, holiday, onAddUntil }: {
 
   const now = new Date(minute * 60_000);
   const clock = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  const start = settings.work_start ? hhmm(settings.work_start) : "", end = settings.work_end ? hhmm(settings.work_end) : "";
+  // Vardiya döngüsü varsa bu haftanın vardiyası
+  const { start, end } = scheduleFor(now, settings);
   const work = entries.find((e) => (e.type === "overtime" || e.type === "holiday") && Number(e.hours) > 0);
   const off = entries.find((e) => ["paid_leave", "unpaid_leave", "sick", "absent"].includes(e.type));
   // Pazar her zaman; cumartesi Ayarlar → Çalışma saati'ndeki "Cumartesi tatil" seçimine göre
