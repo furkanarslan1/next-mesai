@@ -390,6 +390,22 @@ export const mutate = {
     if (isHolidayMark(e)) await retypeDayWork(e.work_date, "overtime", "holiday");
     return e;
   },
+  /** Birden çok kaydı tek istekte ekler (toplu izin). Tatil işareti eklenen günlerin mesaisi tatil mesaisine döner. */
+  async addEntries(rows: Omit<Entry, "id">[]) {
+    if (!rows.length) return [];
+    writes++;
+    const { data, error } = await createClient().from("entries").insert(rows).select();
+    writes++;
+    if (error) throw error;
+    const saved = (data ?? []) as Entry[];
+    const entries = { ...state.entries };
+    saved.forEach((e) => { const k = e.work_date.slice(0, 7); if (entries[k]) entries[k] = [...entries[k], e]; });
+    set({ entries });
+    const added = saved.filter(counts).reduce((a, e) => a + Number(e.hours), 0);
+    if (state.totalHours !== null && added) set({ totalHours: state.totalHours + added });
+    for (const e of saved) if (isHolidayMark(e)) await retypeDayWork(e.work_date, "overtime", "holiday");
+    return saved;
+  },
   async removeEntry(e: Entry) {
     writes++;
     const { error } = await createClient().from("entries").delete().eq("id", e.id);
