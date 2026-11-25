@@ -1,6 +1,7 @@
 import {
   authErrorText, dailyHoursOf, DEFAULT_SCHEDULE, DEFAULT_SHORTCUT_HOURS, DEFAULT_SIGNUP_PAY, SIGNUP_STEPS, signupData, type SignupPay, type WorkSchedule,
 } from "@mesai/core/auth";
+import { openLegal } from "@/lib/legal";
 import { Clock } from "@/components/icons";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Pressable, ScrollView, type ScrollViewInstance, type TextInputInstance, View } from "react-native";
@@ -24,7 +25,8 @@ export default function Login() {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<"in" | "up">("in");
-  const [role, setRole] = useState<"employee" | "manager">("employee");
+  // Mobil uygulama çalışanlar için: yönetici hesabı (ekip paneli) web'den açılır
+  const role = "employee" as "employee" | "manager";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -132,12 +134,6 @@ export default function Login() {
             <>
               {mode === "up" ? (
                 <>
-                  <View style={{ flexDirection: "row", gap: 8 }}>
-                    {(["employee", "manager"] as const).map((r) => (
-                      <Button key={r} title={r === "employee" ? "Çalışan" : "Yönetici"} variant={role === r ? "primary" : "secondary"}
-                        style={{ flex: 1 }} onPress={() => setRole(r)} />
-                    ))}
-                  </View>
                   <Field label="Ad Soyad" value={name} onChangeText={setName} autoCapitalize="words" autoComplete="name" textContentType="name"
                     returnKeyType="next" onSubmitEditing={() => emailRef.current?.focus()} />
                 </>
@@ -160,6 +156,12 @@ export default function Login() {
           {unconfirmed && email && !forgot ? link("Doğrulama e-postasını tekrar gönder", () => void resendConfirmation(), { color: c.primary }) : null}
           <Button loading={busy} onPress={() => void submit()}
             title={forgot ? "Sıfırlama bağlantısı gönder" : mode === "in" ? "Giriş yap" : role === "employee" && step < SIGNUP_STEPS ? "Devam" : "Kayıt ol"} />
+          {/* Kayıt olurken koşullar ve gizlilik metni (KVKK aydınlatma) */}
+          {!forgot && mode === "up" && step === 1 ? (
+            <Txt muted style={{ fontSize: 12, lineHeight: 17, textAlign: "center" }}>
+              Kayıt olarak <Txt onPress={() => openLegal("terms")} style={{ fontSize: 12, color: c.primary, textDecorationLine: "underline" }}>Kullanım Koşulları</Txt>’nı kabul etmiş olursun. Verilerinin nasıl işlendiği <Txt onPress={() => openLegal("privacy")} style={{ fontSize: 12, color: c.primary, textDecorationLine: "underline" }}>Gizlilik Politikası ve KVKK Aydınlatma Metni</Txt>’nde.
+            </Txt>
+          ) : null}
           {forgot ? link("← Girişe dön", () => { setForgot(false); clear(); }) : null}
           {!forgot && mode === "up" && step > 1 ? link("← Geri", () => { setStep((step - 1) as 1 | 2); clear(); }) : null}
           {!forgot ? link(mode === "in" ? "Hesabın yok mu? Kayıt ol" : "Zaten hesabın var mı? Giriş yap", () => {

@@ -146,7 +146,8 @@ export default function Home() {
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + space.top, paddingHorizontal: space.page }}>
         <Card style={{ padding: 20, gap: 8 }}>
           <Txt style={{ fontSize: 20, fontWeight: "700" }}>Yönetici hesabı</Txt>
-          <Txt muted>Ekip paneli web uygulamasında. Mobil uygulama çalışanlar için.</Txt>
+          <Txt muted>Ekip paneli web sitesinde ({(process.env.EXPO_PUBLIC_WEB_URL ?? "next-mesai.vercel.app").replace(/^https?:\/\//, "")}). Mobil uygulama çalışanlar içindir; hesap ayarların ve çıkış Ayarlar sekmesinde.</Txt>
+          <Button title="Ayarlar" variant="secondary" size="md" onPress={() => router.push("/profile")} />
         </Card>
       </View>
     );

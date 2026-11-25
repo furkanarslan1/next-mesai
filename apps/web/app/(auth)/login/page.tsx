@@ -153,6 +153,12 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={busy}>
               {forgot ? "Sıfırlama bağlantısı gönder" : mode === "in" ? "Giriş yap" : role === "employee" && step < SIGNUP_STEPS ? "Devam" : "Kayıt ol"}
             </Button>
+            {!forgot && mode === "up" && step === 1 && (
+              <p className="text-center text-xs text-muted-foreground">
+                Kayıt olarak <a href="/terms" target="_blank" className="underline">Kullanım Koşulları</a>’nı kabul etmiş olursun. Verilerinin nasıl işlendiği{" "}
+                <a href="/privacy" target="_blank" className="underline">Gizlilik Politikası ve KVKK Aydınlatma Metni</a>’nde.
+              </p>
+            )}
             {forgot && (
               <button type="button" className="w-full text-sm text-muted-foreground" onClick={() => { setForgot(false); setMsg(""); setInfo(""); }}>← Girişe dön</button>
             )}
