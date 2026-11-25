@@ -1,9 +1,11 @@
 import { Tabs } from "expo-router/js-tabs";
 import { TabBar } from "@/components/tab-bar";
 import { useColors } from "@/theme";
+import { useReminderSync } from "@/lib/notifications";
 
 export default function TabsLayout() {
   const c = useColors();
+  useReminderSync();
   return (
     <Tabs tabBar={(props) => <TabBar {...props} />}
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.background }, animation: "fade" }}>

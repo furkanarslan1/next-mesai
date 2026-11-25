@@ -1,11 +1,13 @@
 import { router } from "expo-router";
 import { Check, Moon, Sun, SunMoon } from "@/components/icons";
 import { useState } from "react";
-import { View } from "react-native";
+import { Linking, View } from "react-native";
 import { FormRow, FormSection, Segmented, SwitchRow } from "@/components/form";
 import { Screen, Txt } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
-import { setPrefs, THEME_LABEL, usePrefs, type ThemePref } from "@/lib/prefs";
+import { setPrefs, THEME_LABEL, usePrefs, type ThemePref, type Prefs } from "@/lib/prefs";
+import { ensureNotificationPermission } from "@/lib/notifications";
+import { toast } from "@/components/toast";
 import { alpha, radius, useColors } from "@/theme";
 
 const THEME_ICON = { light: Sun, dark: Moon, system: SunMoon };
@@ -17,7 +19,15 @@ export default function AppearanceScreen() {
   const c = useColors();
   const p = usePrefs();
   const [pickHour, setPickHour] = useState(false);
-  const hourText = (h: number) => `${String(h).padStart(2, "0")}:00 sonrası`;
+  const hourText = (h: number) => `${String(h).padStart(2, "0")}:00`;
+  // Açarken bildirim izni istenir; verilmezse ayar yine açılır (uygulama içi kart çalışır), ayarlara yönlendirilir
+  async function toggle(key: "reminderOn" | "exitReminderOn", v: boolean) {
+    setPrefs({ [key]: v } as Partial<Prefs>);
+    if (!v) { if (key === "reminderOn") setPickHour(false); return; }
+    if (!(await ensureNotificationPermission())) {
+      toast.info("Bildirim izni kapalı. Telefon ayarlarından Mesai için bildirimlere izin ver.", { duration: 6000, action: { label: "Ayarlar", onPress: () => { void Linking.openSettings(); } } });
+    }
+  }
 
   return (
     <Screen title="Görünüm" back={back}>
@@ -35,8 +45,8 @@ export default function AppearanceScreen() {
         </View>
       </FormSection>
 
-      <FormSection title="Hatırlatıcı" footer="Uygulama açıkken, ayarladığın saatten sonra o güne kayıt girmediysen hatırlatır.">
-        <SwitchRow label="Akşam hatırlatıcısı" value={p.reminderOn} onChange={(v) => { setPrefs({ reminderOn: v }); if (!v) setPickHour(false); }} />
+      <FormSection title="Bildirimler" footer="Akşam: o güne hiç kayıt girmediysen ayarladığın saatte bildirim gelir (uygulama kapalıyken de). Çıkış saati: iş günlerinde normal çıkış saatinde, o güne mesai girmediysen hatırlatır.">
+        <SwitchRow label="Akşam hatırlatıcısı" value={p.reminderOn} onChange={(v) => { void toggle("reminderOn", v); }} />
         {p.reminderOn ? (
           <FormRow label="Saat" onPress={() => { haptic(); setPickHour(!pickHour); }}>
             <View style={{ height: 44, paddingHorizontal: 16, borderRadius: radius.pill, justifyContent: "center", backgroundColor: c.muted }}>
@@ -57,6 +67,7 @@ export default function AppearanceScreen() {
             ))}
           </View>
         ) : null}
+        <SwitchRow label="Çıkış saatinde hatırlat" value={p.exitReminderOn} onChange={(v) => { void toggle("exitReminderOn", v); }} />
       </FormSection>
     </Screen>
   );
