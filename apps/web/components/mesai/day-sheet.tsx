@@ -7,7 +7,8 @@ import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { mutate } from "@/lib/store";
+import { mutate, useSettings } from "@/lib/store";
+import { scheduleFor } from "@mesai/core/shift";
 import { hhmm, hrs } from "@mesai/core/calc";
 import { TYPE_META, type Entry, type EntryType } from "@mesai/core/types";
 import { dayRules } from "@mesai/core/day";
@@ -62,7 +63,9 @@ export function DaySheet({ date, entries, userId, onClose }: {
   // Günde tek mesai kaydı: varsa yeni eklenemez, saati kalemle değiştirilir ya da silinir
   const hasWork = day.some((e) => isWork(e) && Number(e.hours) > 0);
   const primary = day.find((e) => isWork(e) && Number(e.hours) > 0) ?? day[0];
-  const rules = date ? dayRules(day, date) : null;
+  const settings = useSettings();
+  // Arifede mesainin türü normal çıkış saatine göre (13:00 sonrası tatil oranı)
+  const rules = date ? dayRules(day, date, settings ? scheduleFor(parseISO(date), settings).end : null) : null;
   const label = date ? format(parseISO(date), "d MMMM EEEE", { locale: tr }) : "";
   const valid = (v: string) => { const h = parseNum(v); return h > 0 && h <= 24 ? h : 0; };
 

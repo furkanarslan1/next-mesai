@@ -22,3 +22,22 @@ export function holidayName(date: string): string | null {
   const fixed = FIXED.find(([md]) => date.slice(5) === md);
   return fixed?.[1] ?? RELIGIOUS[date] ?? null;
 }
+
+/** Arife yarım gün resmi tatildir: bu saatten sonrası tatil sayılır (2429 sayılı Kanun). */
+export const AREFE_START = "13:00";
+
+/** "YYYY-MM-DD" bir gün öncesi (yerel saat dilimine bağlı olmadan). */
+function prevDay(date: string) {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+const AREFE: Record<string, string> = Object.fromEntries(
+  Object.entries(RELIGIOUS).filter(([, n]) => n.endsWith("1. gün")).map(([d, n]) => [prevDay(d), `${n.replace(" 1. gün", "")} arifesi`]),
+);
+
+/** Arife (yarım gün tatil) ise adı: 28 Ekim ve Ramazan/Kurban bayramı arifeleri; değilse null. */
+export function arefeName(date: string): string | null {
+  if (date.slice(5) === "10-28") return "Cumhuriyet Bayramı arifesi";
+  return AREFE[date] ?? null;
+}

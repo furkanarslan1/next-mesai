@@ -46,7 +46,7 @@ export type SignupPay = {
 export const DEFAULT_SCHEDULE: WorkSchedule = { work_start: "08:00", work_end: "16:00", has_shift: false, shift_type: "day" };
 /** Varsayılanlar veritabanı sütun varsayılanlarıyla aynı; tutar/saat alanları boş (0) başlar. */
 export const DEFAULT_SIGNUP_PAY: SignupPay = {
-  monthly_salary: "", hourly_rate: "", included_overtime_hours: "", weekday_percent: 150, sunday_percent: 100, holiday_percent: 200,
+  monthly_salary: "", hourly_rate: "", included_overtime_hours: "", weekday_percent: 150, sunday_percent: 150, holiday_percent: 200,
   sick_leave_unpaid: false, sick_deducts_overtime: false, sunday_rate: "", holiday_rate: "",
   goal_mode: "amount", monthly_goal_amount: "", monthly_goal_hours: "", saturday_off: true, annual_leave_days: "14",
 };

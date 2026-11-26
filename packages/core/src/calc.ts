@@ -16,7 +16,7 @@ const isSunday = (date: string) => getDay(parseISO(date)) === 0;
 /** Bir mesai kaydının oranı (%): resmi tatil, pazar ya da hafta içi. */
 export function percentFor(e: { type: string; work_date: string }, s: Settings): number {
   if (e.type === "holiday") return s.holiday_percent ?? 200;
-  return isSunday(e.work_date) ? (s.sunday_percent ?? 100) : (s.weekday_percent ?? 150);
+  return isSunday(e.work_date) ? (s.sunday_percent ?? 150) : (s.weekday_percent ?? 150);
 }
 
 /** Kaydın saatlik ücreti: sabit TL (pazar/tatil için elle girilmişse) yoksa saatlik ücret x oran. */

@@ -126,7 +126,7 @@ function HomeView({ today }: { today: Date }) {
   }
 
   const todays = entries.filter((e) => e.work_date === date);
-  const rules = dayRules(todays, date);
+  const rules = dayRules(todays, date, workEnd);
   // Günün durumu (izin/rapor/gelmedim/tatil) tek olabilir; çalışılan tatil (saatli) durum sayılmaz
   const isStatusRow = (e: Entry) => STATUS.includes(e.type) && !(e.type === "holiday" && Number(e.hours) > 0);
   const activeStatus = todays.find(isStatusRow);
@@ -175,9 +175,16 @@ function HomeView({ today }: { today: Date }) {
       {date === todayStr && settings && realEntries && (
         <TodayCard settings={settings} entries={todays} holiday={holiday}
           onAddUntil={(exit, h) => setConfirm({
-            title: "Mesai eklensin mi?", desc: `Normal çıkışın ${workEnd}, şu an ${exit}. Bugüne ${hrs(h)} ${rules.isHoliday ? "resmi tatil mesaisi" : "mesai"} eklenecek.`,
+            title: "Mesai eklensin mi?", desc: `Normal çıkışın ${workEnd}, şu an ${exit}. Bugüne ${hrs(h)} ${rules.workType === "holiday" ? "resmi tatil mesaisi" : "mesai"} eklenecek.`,
             yes: "Evet, ekle", run: () => add(rules.workType, h, workEnd, exit, true),
           })} />
+      )}
+
+      {rules.arefe && !activeStatus && (
+        <div className="glass r-lg flex items-center gap-2 px-4 py-3 text-sm">
+          <Sparkles className="size-4 shrink-0 text-amber-500" aria-hidden />
+          <span><b className="font-medium">{rules.arefe}</b> · 13:00&apos;ten sonra yapılan mesai tatil oranıyla hesaplanır</span>
+        </div>
       )}
 
       {holiday && !activeStatus && (
@@ -223,7 +230,7 @@ function HomeView({ today }: { today: Date }) {
                 active={!!existing} disabled={existing?.id.startsWith("tmp-") || (!existing && (!!workEntry || !!rules.off))}
                 onPress={() => setConfirm(existing
                   ? { title: "Mesai geri alınsın mı?", desc: `${hrs(Number(s.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(existing) }
-                  : { title: "Mesai eklensin mi?", desc: `${format(parseISO(date), "d MMMM", { locale: tr })} tarihine ${hrs(Number(s.hours))} ${rules.isHoliday ? "resmi tatil mesaisi (tatil oranıyla)" : "mesai"} eklenecek.`, yes: "Evet, ekle", run: () => add(rules.workType, Number(s.hours), s.start_time, s.end_time, false, s.id) })}
+                  : { title: "Mesai eklensin mi?", desc: `${format(parseISO(date), "d MMMM", { locale: tr })} tarihine ${hrs(Number(s.hours))} ${rules.workTypeAt(s.start_time) === "holiday" ? "resmi tatil mesaisi (tatil oranıyla)" : "mesai"} eklenecek.`, yes: "Evet, ekle", run: () => add(rules.workTypeAt(s.start_time), Number(s.hours), s.start_time, s.end_time, false, s.id) })}
               />
             );
           })}
@@ -238,7 +245,7 @@ function HomeView({ today }: { today: Date }) {
           )}
         </div>
         {!workEntry && !rules.off && (
-          <button type="button" {...realTap(() => { setOnHoliday(rules.isHoliday); setCustom(true); })}
+          <button type="button" {...realTap(() => { setOnHoliday(rules.workType === "holiday"); setCustom(true); })}
             className="glass r-pill mt-5 flex w-full items-center justify-center gap-2 py-3.5 text-sm font-medium">
             <Plus className="size-4" />Farklı mesai ekle
           </button>

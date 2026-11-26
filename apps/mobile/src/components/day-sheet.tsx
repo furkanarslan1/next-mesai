@@ -11,7 +11,8 @@ import { Pencil, Plus, Trash2 } from "@/components/icons";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import { haptic } from "@/lib/haptics";
-import { mutate } from "@/lib/store";
+import { mutate, useSettings } from "@/lib/store";
+import { scheduleFor } from "@mesai/core/shift";
 import { radius, useColors } from "@/theme";
 import { Sheet } from "./sheet";
 import { StatusIcon } from "./status-icon";
@@ -86,7 +87,9 @@ export function DaySheet({ date, entries, userId, onClose }: {
   // Günde tek mesai kaydı: varsa yeni eklenemez, saati kalemle değiştirilir ya da silinir
   const hasWork = day.some((e) => isWork(e) && Number(e.hours) > 0);
   const primary = day.find((e) => isWork(e) && Number(e.hours) > 0) ?? day[0];
-  const rules = date ? dayRules(day, date) : null;
+  const settings = useSettings();
+  // Arifede mesainin türü normal çıkış saatine göre (13:00 sonrası tatil oranı)
+  const rules = date ? dayRules(day, date, settings ? scheduleFor(parseISO(date), settings).end : null) : null;
   const label = date ? format(parseISO(date), "d MMMM EEEE", { locale: tr }) : "";
   const valid = (v: string) => { const h = parseNum(v); return h > 0 && h <= 24 ? h : 0; };
 
