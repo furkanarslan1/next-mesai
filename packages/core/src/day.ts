@@ -1,4 +1,4 @@
-import { holidayName } from "./holidays";
+import { AREFE_START, arefeName, holidayName } from "./holidays";
 import type { Entry, EntryType, Settings } from "./types";
 
 /** Hafta tatili mi: pazar her zaman; cumartesi yalnızca "Cumartesi tatil" açıksa (eski kayıtlarda varsayılan açık). */
@@ -14,14 +14,24 @@ const isWork = (e: Entry) => (e.type === "overtime" || e.type === "holiday") && 
  * - `work`: günün mesai kaydı (günde tek olur)
  * - `off`: izin / rapor / gelmedim kaydı
  * - `isHoliday`: resmi tatil listesinde ya da kullanıcı "Resmi tatil" olarak işaretlemiş
- * - `workType`: o güne eklenecek mesainin türü; resmi tatilde tatil oranıyla hesaplansın diye "holiday"
+ * - `arefe`: arife adı (13:00'ten sonrası yarım gün resmi tatil)
+ * - `workTypeAt(start)`: o güne eklenecek mesainin türü; resmi tatilde ya da arifede 13:00 sonrası başlayan mesai
+ *   tatil oranıyla hesaplansın diye "holiday". Başlangıç bilinmiyorsa normal çıkış saati (`workEnd`) esas alınır,
+ *   çünkü mesai normal çıkıştan sonra başlar.
+ * - `workType`: `workTypeAt(workEnd)`
  */
-export function dayRules(dayEntries: Entry[], date: string) {
+export function dayRules(dayEntries: Entry[], date: string, workEnd?: string | null) {
   const work = dayEntries.find(isWork);
   const off = dayEntries.find((e) => OFF_TYPES.includes(e.type));
   const holidayMarked = dayEntries.some((e) => e.type === "holiday" && Number(e.hours) === 0);
   const isHoliday = !!holidayName(date) || holidayMarked;
-  return { work, off, isHoliday, workType: (isHoliday ? "holiday" : "overtime") as EntryType };
+  const arefe = isHoliday ? null : arefeName(date);
+  const workTypeAt = (start?: string | null): EntryType => {
+    if (isHoliday) return "holiday";
+    const from = (start || workEnd || "").slice(0, 5);
+    return arefe && from >= AREFE_START ? "holiday" : "overtime";
+  };
+  return { work, off, isHoliday, arefe, workTypeAt, workType: workTypeAt(workEnd) };
 }
 
 export type BulkType = "paid_leave" | "unpaid_leave" | "sick" | "absent" | "holiday";

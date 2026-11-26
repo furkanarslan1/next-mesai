@@ -31,6 +31,7 @@ import { ShortcutButton } from "@/components/shortcut-button";
 import { StatusIcon } from "@/components/status-icon";
 import { toast } from "@/components/toast";
 import { TodayCard } from "@/components/today-card";
+import { WeekCard } from "@/components/week-card";
 import { Button, Card, COMPACT_AT, CompactBar, Eyebrow, TAB_BAR_SPACE, Txt } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
 import { useToday } from "@/lib/now";
@@ -101,7 +102,7 @@ export default function Home() {
   const lvlPop = usePop(lvlBurst);
 
   const todays = entries.filter((e) => e.work_date === date);
-  const rules = dayRules(todays, date);
+  const rules = dayRules(todays, date, workEnd);
   const isStatusRow = (e: Entry) => STATUS.includes(e.type) && !(e.type === "holiday" && Number(e.hours) > 0);
   const activeStatus = todays.find(isStatusRow);
   const workEntry = todays.find((e) => isWork(e) && Number(e.hours) > 0);
@@ -161,7 +162,7 @@ export default function Home() {
         active={!!existing} disabled={existing?.id.startsWith("tmp-") || (!existing && (!!workEntry || !!rules.off))}
         onPress={() => confirm(existing
           ? { title: "Mesai geri alınsın mı?", desc: `${hrs(Number(s.hours))} mesai kaydı silinecek.`, yes: "Evet, geri al", run: () => remove(existing) }
-          : { title: "Mesai eklensin mi?", desc: `${dayLabel} tarihine ${hrs(Number(s.hours))} ${rules.isHoliday ? "resmi tatil mesaisi (tatil oranıyla)" : "mesai"} eklenecek.`, yes: "Evet, ekle", run: () => add(rules.workType, Number(s.hours), s.start_time, s.end_time, false, s.id) })} />
+          : { title: "Mesai eklensin mi?", desc: `${dayLabel} tarihine ${hrs(Number(s.hours))} ${rules.workTypeAt(s.start_time) === "holiday" ? "resmi tatil mesaisi (tatil oranıyla)" : "mesai"} eklenecek.`, yes: "Evet, ekle", run: () => add(rules.workTypeAt(s.start_time), Number(s.hours), s.start_time, s.end_time, false, s.id) })} />
     );
   });
   // "Farklı mesai" ile girilen (ya da silinmiş kısayoldan gelen) kayıt da kısayol gibi görünür; dokununca geri alınır
@@ -257,9 +258,16 @@ export default function Home() {
         {isToday && settings && realEntries ? (
           <TodayCard settings={settings} entries={todays} holiday={holiday}
             onAddUntil={(exit, h) => confirm({
-              title: "Mesai eklensin mi?", desc: `Normal çıkışın ${workEnd}, şu an ${exit}. Bugüne ${hrs(h)} ${rules.isHoliday ? "resmi tatil mesaisi" : "mesai"} eklenecek.`,
+              title: "Mesai eklensin mi?", desc: `Normal çıkışın ${workEnd}, şu an ${exit}. Bugüne ${hrs(h)} ${rules.workType === "holiday" ? "resmi tatil mesaisi" : "mesai"} eklenecek.`,
               yes: "Evet, ekle", run: () => add(rules.workType, h, workEnd, exit, true),
             })} />
+        ) : null}
+
+        {rules.arefe && !activeStatus ? (
+          <Card size="lg" style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Sparkles size={16} color="#f59e0b" />
+            <Txt style={{ fontSize: 14, flexShrink: 1 }}><Txt style={{ fontSize: 14, fontWeight: "500" }}>{rules.arefe}</Txt> · 13:00&apos;ten sonra yapılan mesai tatil oranıyla hesaplanır</Txt>
+          </Card>
         ) : null}
 
         {holiday && !activeStatus ? (
@@ -307,7 +315,7 @@ export default function Home() {
             ))}
           </View>
           {!workEntry && !rules.off ? (
-            <Pressable onPress={() => { haptic(); setOnHoliday(rules.isHoliday); setCustom(true); }}
+            <Pressable onPress={() => { haptic(); setOnHoliday(rules.workType === "holiday"); setCustom(true); }}
               style={({ pressed }) => ({
                 marginTop: 12, height: 50, borderRadius: radius.pill, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
                 backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, boxShadow: c.shadow.card, transform: [{ scale: pressed ? 0.98 : 1 }],
@@ -336,6 +344,9 @@ export default function Home() {
             <Card style={{ marginTop: 8, padding: 20 }}><MonthSummary entries={entries} settings={settings} month={monthKey(parseISO(date))} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} /></Card>
           ) : null}
         </View>
+
+        {/* Bu hafta */}
+        {settings && realEntries ? <WeekCard date={date} todayStr={todayStr} today={today} month={key} entries={entries} settings={settings} /> : null}
 
         {/* Seviye */}
         <Card style={{ paddingVertical: 16, paddingHorizontal: 16, gap: 12, opacity: realTotal === null ? 0 : 1 }}>
