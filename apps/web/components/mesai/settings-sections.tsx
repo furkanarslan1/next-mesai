@@ -211,7 +211,7 @@ export function DataSettings() {
       // 1000 satır sınırına takılmadan tüm kayıtlar okunur (eksik yedek sessizce oluşmasın)
       const data = await collectBackup(createClient(), employee);
       if (!data) { toast.error("Yedek alınamadı, tekrar dene"); return; }
-      const stamp = new Date().toISOString().slice(0, 10);
+      const stamp = new Date().toLocaleDateString("sv-SE"); // yerel YYYY-MM-DD (toISOString UTC: gece yarısından sonra dünü yazardı)
       if (format === "json") download(`mesai-yedek-${stamp}.json`, JSON.stringify(data, null, 2), "application/json");
       else for (const t of tables) if (data[t].length) { download(`mesai-${t}-${stamp}.csv`, toCSV(data[t] as Record<string, unknown>[]), "text/csv"); await nextDownload(); }
       haptic("success");
