@@ -16,9 +16,14 @@ import { radius, space, useColors, useIsDark } from "@/theme";
 export const TAB_BAR_SPACE = 112;
 
 /** Metin: web'deki gövde metni (16px) ve renkleri. `muted` ikincil metin rengi. */
+/**
+ * Büyük yazı (iOS Dinamik Yazı / Android yazı boyutu) 1,35 kata kadar uygulanır: daha fazlası sabit yükseklikli
+ * düğme, sekme çubuğu ve takvim hücrelerini taşırır. Gerekirse `maxFontSizeMultiplier` ile ezilir.
+ */
+export const FONT_SCALE_MAX = 1.35;
 export function Txt({ style, muted, ...p }: TextProps & { muted?: boolean }) {
   const c = useColors();
-  return <Text {...p} style={[{ color: muted ? c.mutedForeground : c.foreground, fontSize: 16 }, style]} />;
+  return <Text maxFontSizeMultiplier={FONT_SCALE_MAX} {...p} style={[{ color: muted ? c.mutedForeground : c.foreground, fontSize: 16 }, style]} />;
 }
 
 /** Büyük başlığın üstündeki küçük satır (web: 13px, kalın, büyük harf) */
@@ -63,6 +68,8 @@ export function Button({ title, icon, loading, variant = "primary", size = "defa
   const fg = variant === "secondary" ? c.secondaryForeground : variant === "destructive" ? "#ffffff" : c.primaryForeground;
   return (
     <Pressable
+      // Küçük düğmelerde dokunma alanı en az 44 pt olsun (Apple HIG), görünüm değişmez
+      hitSlop={s.h < 44 ? { top: (44 - s.h) / 2, bottom: (44 - s.h) / 2 } : undefined}
       {...p}
       disabled={disabled || loading}
       onPress={(e) => { haptic(); onPress?.(e); }}
@@ -87,7 +94,7 @@ export const Field = forwardRef<TextInputInstance, TextInputProps & { label: str
   return (
     <View style={{ gap: 6 }}>
       <Txt style={{ fontSize: 14, fontWeight: "500" }}>{label}</Txt>
-      <TextInput
+      <TextInput maxFontSizeMultiplier={1.35}
         ref={ref}
         placeholderTextColor={c.mutedForeground}
         {...p}
@@ -167,7 +174,7 @@ export function LargeTitle({ children }: { children: React.ReactNode }) {
 export function IconButton({ onPress, label, children }: { onPress: () => void; label: string; children: React.ReactNode }) {
   const c = useColors();
   return (
-    <Pressable onPress={() => { haptic(); onPress(); }} accessibilityLabel={label} accessibilityRole="button"
+    <Pressable onPress={() => { haptic(); onPress(); }} accessibilityLabel={label} accessibilityRole="button" hitSlop={6}
       style={({ pressed }) => ({ width: 32, height: 32, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: c.secondary, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
       {children}
     </Pressable>

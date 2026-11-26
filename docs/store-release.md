@@ -147,6 +147,10 @@ Kodda tamam:
 - [x] Başka platformdan (Android/APK/Play) söz edilmiyor (2.3.10); APK kartı yalnızca web'de.
 - [x] Şifreleme beyanı, gizlilik manifesti, yalnızca iPhone, iOS dili Türkçe (`CFBundleDevelopmentRegion: tr`).
 - [x] Finansal hesaplar "yaklaşık / bilgi amaçlı" olarak belirtiliyor.
+- [x] Erişilebilirlik (2026-11-26): adsız dokunulabilir öğe yok (VoiceOver her düğmeyi adıyla okur); küçük düğmelere
+      hitSlop ile en az 44 pt dokunma alanı; büyük yazı 1,35 kata kadar (`FONT_SCALE_MAX`). App Store "Accessibility"
+      bölümünde **VoiceOver** ve **Karanlık mod** işaretlenebilir; "Larger Text" (%200) iddia edilmemeli.
+      Ekran boyutları denendi: 360×800, 375×667 (SE), 393×852, 440×956.
 - [x] Puan isteği sistemin kendi penceresiyle (`expo-store-review`, 5.6.1): ön soru/teşvik yok; 10 mesai + 7 gün sonra,
       sürüm başına bir kez, en az 120 gün arayla (`@mesai/core/review`). TestFlight'ta pencere çıkmaz (normal).
 

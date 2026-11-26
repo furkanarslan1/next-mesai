@@ -41,7 +41,7 @@ export function WeekCard({ date, todayStr, today, month, entries, settings }: {
               <View key={d.date} style={{ flex: 1, height: "100%", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
                 {d.hours > 0 ? <Txt muted style={{ fontSize: 11, lineHeight: 11, fontVariant: ["tabular-nums"] }}>{num(d.hours)}</Txt> : null}
                 {d.hours > 0 ? (
-                  <View style={{ width: "100%", maxWidth: 28, height: Math.max(8, (d.hours / scale) * 72), borderRadius: 6, backgroundColor: TYPE_HEX[d.workType] }} />
+                  <View style={{ width: "100%", maxWidth: 28, height: Math.max(8, (d.hours / scale) * 72), borderRadius: 19.2 /* web rounded-md */, backgroundColor: TYPE_HEX[d.workType] }} />
                 ) : d.status ? (
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: TYPE_HEX[d.status] }} />
                 ) : (

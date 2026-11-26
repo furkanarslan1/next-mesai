@@ -53,11 +53,11 @@ export function Toaster() {
         <BlurView intensity={100} tint={dark ? "dark" : "light"} style={[StyleSheet.absoluteFill, { borderRadius: 22.4, overflow: "hidden" }]} />
         <View style={[StyleSheet.absoluteFill, { borderRadius: 22.4, backgroundColor: c.toastBg }]} />
         <Icon size={16} color={c.foreground} />
-        <Text style={[styles.text, { color: c.foreground }]} numberOfLines={3}>{item.text}</Text>
+        <Text maxFontSizeMultiplier={1.35} style={[styles.text, { color: c.foreground }]} numberOfLines={3}>{item.text}</Text>
         {item.action ? (
           <Pressable onPress={() => { item.action?.onPress(); close(); }} hitSlop={8}
             style={{ height: 24, paddingHorizontal: 8, borderRadius: 6, justifyContent: "center", backgroundColor: c.foreground }}>
-            <Text style={{ color: c.popover, fontWeight: "500", fontSize: 12 }}>{item.action.label}</Text>
+            <Text maxFontSizeMultiplier={1.35} style={{ color: c.popover, fontWeight: "500", fontSize: 12 }}>{item.action.label}</Text>
           </Pressable>
         ) : null}
       </View>

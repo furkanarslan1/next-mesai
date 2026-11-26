@@ -156,7 +156,7 @@ function ReportsView({ settings }: { settings: Settings }) {
           <Txt style={h2}>Özet</Txt>
           <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 4, borderRadius: radius.pill, backgroundColor: c.muted, padding: 4 }}>
             {(["week", "month", "year"] as const).map((p) => (
-              <Pressable key={p} accessibilityRole="radio" accessibilityState={{ selected: period === p }} onPress={() => { haptic(); setPeriod(p); }}
+              <Pressable key={p} accessibilityRole="radio" accessibilityState={{ selected: period === p }} hitSlop={{ top: 8, bottom: 8 }} onPress={() => { haptic(); setPeriod(p); }}
                 // Web: grid-cols-3, üç sekme en genişi kadar eşit
                 onLayout={(e) => { const w = Math.ceil(e.nativeEvent.layout.width); setSegW((cur) => Math.max(cur, w)); }}
                 style={{ minWidth: segW || undefined, alignItems: "center", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: period === p ? c.primary : "transparent" }}>
@@ -310,7 +310,7 @@ function ReportsView({ settings }: { settings: Settings }) {
         {leave.over > 0 ? <Txt style={{ fontSize: 12, lineHeight: 16, color: c.destructive }}>Hakkını {leave.over} gün aştın.</Txt> : null}
         <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>Takvimde &quot;Ücretli izin&quot; olarak işaretlediğin günler (ileriye planladıkların dahil) sayılır.</Txt>
         <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
-          <TextInput value={leaveInput} onChangeText={(t) => setLeaveInput(t.replace(/\D/g, "").slice(0, 2))} keyboardType="number-pad" accessibilityLabel="Yıllık izin hakkı (gün)"
+          <TextInput maxFontSizeMultiplier={1.35} value={leaveInput} onChangeText={(t) => setLeaveInput(t.replace(/\D/g, "").slice(0, 2))} keyboardType="number-pad" accessibilityLabel="Yıllık izin hakkı (gün)"
             style={{ flex: 1, height: 44, borderRadius: radius.md, backgroundColor: c.muted, paddingHorizontal: 16, fontSize: 16, color: c.foreground }} />
           <Button title="Hakkı kaydet" variant="secondary" onPress={saveLeave}
             disabled={leaveInput === "" || Number(leaveInput) > 60 || Number(leaveInput) === settings.annual_leave_days} />

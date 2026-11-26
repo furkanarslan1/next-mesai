@@ -52,7 +52,7 @@ export function SwipeRow({ children, onDelete, onPress, label = "Sil", style, bg
         <Pressable onPress={() => { drag.close(); onDelete(); }} accessibilityLabel={label}
           style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: W, alignItems: "center", justifyContent: "center", paddingRight: 4 }}>
           <Trash2 size={18} color="#fff" />
-          <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600", marginTop: 2 }}>{label}</Text>
+          <Text maxFontSizeMultiplier={1.2} style={{ color: "#fff", fontSize: 14, fontWeight: "600", marginTop: 2 }}>{label}</Text>
         </Pressable>
       </Animated.View>
       <Animated.View {...drag.handlers} style={{ transform: [{ translateX: x }] }}>

@@ -38,7 +38,7 @@ export function GrossNetDialog({ open, onClose, today, onApply }: {
           options={[{ value: "gross", label: "Brüt giriyorum" }, { value: "net", label: "Net giriyorum" }]} />
         <View style={{ gap: 6 }}>
           <Txt style={{ fontSize: 14, lineHeight: 14, fontWeight: "500" }}>{mode === "gross" ? "Aylık brüt maaş" : `${MONTHS[month - 1]} ayı net maaş`}</Txt>
-          <TextInput value={value} onChangeText={(t) => setValue(t.replace(/[^0-9.,]/g, ""))} keyboardType="decimal-pad" autoFocus
+          <TextInput maxFontSizeMultiplier={1.35} value={value} onChangeText={(t) => setValue(t.replace(/[^0-9.,]/g, ""))} keyboardType="decimal-pad" autoFocus
             placeholder="Örn. 50000" placeholderTextColor={c.mutedForeground}
             style={{ height: 44, borderRadius: radius.md, backgroundColor: c.muted, paddingHorizontal: 16, fontSize: 16, color: c.foreground }} />
         </View>

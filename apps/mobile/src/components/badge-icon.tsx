@@ -36,7 +36,7 @@ export function BadgeIcon({ badge, earned, size = 56 }: { badge: BadgeKey; earne
       </Svg>
       {label ? (
         <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: W, fontWeight: "800", fontSize: (size / 24) * (label.length > 2 ? 7.4 : 8.6), letterSpacing: -0.2 }}>{label}</Text>
+          <Text allowFontScaling={false} style={{ color: W, fontWeight: "800", fontSize: (size / 24) * (label.length > 2 ? 7.4 : 8.6), letterSpacing: -0.2 }}>{label}</Text>
         </View>
       ) : null}
     </View>

@@ -63,7 +63,7 @@ export function HoursChips({ items, onAdd, onRemove, max = 8 }: {
         ))}
       </View>
       <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-        <TextInput value={v} onChangeText={(t) => setV(t.replace(/[^0-9.,]/g, ""))} placeholder="Örn. 2,5" placeholderTextColor={c.mutedForeground}
+        <TextInput maxFontSizeMultiplier={1.35} value={v} onChangeText={(t) => setV(t.replace(/[^0-9.,]/g, ""))} placeholder="Örn. 2,5" placeholderTextColor={c.mutedForeground}
           keyboardType="decimal-pad" returnKeyType="done" onSubmitEditing={add} accessibilityLabel="Mesai saati"
           style={{ flex: 1, height: 44, borderRadius: radius.md, backgroundColor: c.muted, paddingHorizontal: 16, fontSize: 16, color: c.foreground }} />
         <Button title="Ekle" variant="secondary" disabled={!valid} icon={<Plus size={16} color={c.secondaryForeground} />} onPress={add} accessibilityLabel="Kısayol ekle" />

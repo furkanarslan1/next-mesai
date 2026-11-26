@@ -69,7 +69,7 @@ export function CalendarGrid({ month, onMonthChange, value, today, marked, onSel
 function NavBtn({ dir, month, onMonthChange }: { dir: -1 | 1; month: Date; onMonthChange: (m: Date) => void }) {
   const c = useColors();
   return (
-    <Pressable onPress={() => { haptic(); onMonthChange(addMonths(month, dir)); }} accessibilityLabel={dir < 0 ? "Önceki ay" : "Sonraki ay"}
+    <Pressable onPress={() => { haptic(); onMonthChange(addMonths(month, dir)); }} accessibilityLabel={dir < 0 ? "Önceki ay" : "Sonraki ay"} accessibilityRole="button" hitSlop={6}
       style={({ pressed }) => ({ width: 32, height: 32, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: c.secondary, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
       {dir < 0 ? <ChevronLeft size={16} color={c.secondaryForeground} /> : <ChevronRight size={16} color={c.secondaryForeground} />}
     </Pressable>
