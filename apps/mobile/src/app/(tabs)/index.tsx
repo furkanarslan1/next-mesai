@@ -81,7 +81,6 @@ export default function Home() {
 
   // "Farklı mesai" penceresi
   const [custom, setCustom] = useState(false);
-  const [absenceOpen, setAbsenceOpen] = useState(false);
   const [customHours, setCustomHours] = useState("");
   const [byExit, setByExit] = useState(false);
   const [exitTime, setExitTime] = useState("");
@@ -174,7 +173,7 @@ export default function Home() {
     );
   }
 
-  /* ---------- "işe gitmedin mi?" kartları ---------- */
+  /* ---------- izin / rapor / tatil kartları ---------- */
   const statusCard = (t: EntryType) => {
     const existing = todays.find((e) => e.type === t && isStatusRow(e));
     const pending = !!existing?.id.startsWith("tmp-");
@@ -188,17 +187,17 @@ export default function Home() {
     return (
       <Pressable key={t} disabled={pending || locked} onPress={() => askStatus(t)} accessibilityRole="button" accessibilityState={{ selected: !!existing, disabled: pending || locked }}
         style={({ pressed }) => ({
-          flexGrow: 1, alignItems: "center", gap: 10, padding: 16, borderRadius: radius.lg, borderWidth: 1,
+          flexGrow: 1, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: radius.lg, borderWidth: 1,
           backgroundColor: existing ? alpha(c.primary, 0.15) : c.card, borderColor: existing ? alpha(c.primary, 0.6) : c.cardBorder,
           boxShadow: c.shadow.card, opacity: pending || locked ? 0.5 : 1, filter: locked ? "grayscale(1)" : undefined,
           transform: [{ scale: pressed ? 0.97 : 1 }],
         })}>
-        <View style={{ width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: radius.md, backgroundColor: existing ? c.primary : "transparent" }}>
-          {existing ? <Check size={24} color={c.primaryForeground} /> : <StatusIcon type={t} size={44} />}
+        <View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center", borderRadius: radius.md, backgroundColor: existing ? c.primary : "transparent" }}>
+          {existing ? <Check size={20} color={c.primaryForeground} /> : <StatusIcon type={t} size={36} />}
         </View>
-        <View style={{ alignItems: "center" }}>
-          <Txt style={{ fontSize: 14, lineHeight: 17.5, fontWeight: "600", textAlign: "center" }}>{TYPE_META[t].label}</Txt>
-          <Txt muted style={{ marginTop: 2, fontSize: 12, lineHeight: 15, textAlign: "center" }}>{hint}</Txt>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Txt style={{ fontSize: 14, lineHeight: 17.5, fontWeight: "600" }}>{TYPE_META[t].label}</Txt>
+          <Txt muted style={{ marginTop: 2, fontSize: 12, lineHeight: 15 }}>{hint}</Txt>
         </View>
       </Pressable>
     );
@@ -318,30 +317,20 @@ export default function Home() {
           ) : null}
         </View>
 
-        {/* İşe gitmedin mi? */}
-        <View style={{ gap: 12 }}>
-          {/* Ayda birkaç kez kullanılır: tek satır, dokununca seçenekler açılır (web ile aynı) */}
-          <Pressable onPress={() => { haptic(); setAbsenceOpen((o) => !o); }} accessibilityRole="button" accessibilityState={{ expanded: absenceOpen }}
-            style={({ pressed }) => ({
-              flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderRadius: radius.lg, borderWidth: 1,
-              backgroundColor: activeStatus ? alpha(c.primary, 0.15) : c.card, borderColor: activeStatus ? alpha(c.primary, 0.6) : c.cardBorder,
-              boxShadow: c.shadow.card, transform: [{ scale: pressed ? 0.99 : 1 }],
-            })}>
-            <View style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: radius.md, backgroundColor: activeStatus ? c.primary : "transparent" }}>
-              {activeStatus ? <Check size={24} color={c.primaryForeground} /> : <StatusIcon type="absent" size={40} />}
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Txt style={{ fontSize: 16, lineHeight: 20, fontWeight: "600" }}>{activeStatus ? `${TYPE_META[activeStatus.type].label} işaretli` : `${isToday ? "Bugün" : dayLabel} işe gitmedim`}</Txt>
-              <Txt muted style={{ marginTop: 2, fontSize: 12, lineHeight: 15 }}>{activeStatus ? "Geri almak için aç ve tekrar dokun" : "İzin, rapor, gelmedim ya da resmi tatil"}</Txt>
-            </View>
-            <View style={{ transform: [{ rotate: absenceOpen ? "180deg" : "0deg" }] }}><ChevronDown size={20} color={c.mutedForeground} /></View>
-          </Pressable>
-          {absenceOpen ? pairs(STATUS).map((row, i) => (
-            <View key={i} style={{ flexDirection: "row", gap: 12 }}>
-              {row.map((t) => <View key={t} style={{ flex: 1 }}>{statusCard(t)}</View>)}
-              {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
-            </View>
-          )) : null}
+        {/* İzin, rapor ve tatil: ayda birkaç kez kullanılır; başlık altında küçük seçenekler (web ile aynı) */}
+        <View style={{ gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}>
+            <Txt style={{ fontSize: 16, lineHeight: 24, fontWeight: "600" }}>İzin, rapor ve tatil</Txt>
+            <Txt muted style={{ fontSize: 12, lineHeight: 16 }}>{activeStatus ? "Gün için tek durum" : "Gerekirse işaretle"}</Txt>
+          </View>
+          <View style={{ gap: 12 }}>
+            {pairs(STATUS).map((row, i) => (
+              <View key={i} style={{ flexDirection: "row", gap: 12 }}>
+                {row.map((t) => <View key={t} style={{ flex: 1 }}>{statusCard(t)}</View>)}
+                {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
+              </View>
+            ))}
+          </View>
           {/* Hedef belirlenmişse özet burada; hedef yokken hedef kartının içinde görünür */}
           {settings && realEntries && goalProgress(entries, settings).set ? (
             <Card style={{ marginTop: 8, padding: 20 }}><MonthSummary entries={entries} settings={settings} month={monthKey(parseISO(date))} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} /></Card>

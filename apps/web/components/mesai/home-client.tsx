@@ -81,7 +81,6 @@ function HomeView({ today }: { today: Date }) {
     "add" in a ? [...list, a.add] : list.filter((e) => e.id !== a.remove));
   const [, startTransition] = useTransition();
   const [custom, setCustom] = useState(false);
-  const [absenceOpen, setAbsenceOpen] = useState(false);
   const [customHours, setCustomHours] = useState("");
   const [byExit, setByExit] = useState(false);
   const [exitTime, setExitTime] = useState("");
@@ -247,20 +246,12 @@ function HomeView({ today }: { today: Date }) {
       </section>
 
       <div className="grid items-start gap-5 md:grid-cols-2">
-        <section className="space-y-3">
-          {/* Ayda birkaç kez kullanılır: tek satır, dokununca seçenekler açılır */}
-          <button type="button" aria-expanded={absenceOpen} {...realTap(() => setAbsenceOpen((o) => !o))}
-            className={`glass r-lg flex w-full items-center gap-3 p-4 text-left transition active:scale-[0.99] ${activeStatus ? "!border-primary/60 !bg-primary/15" : ""}`}>
-            <span className={`grid size-11 shrink-0 place-items-center ${activeStatus ? "r-md bg-primary text-primary-foreground" : ""}`}>
-              {activeStatus ? <Check className="size-6" /> : <StatusIcon type="absent" className="size-10" />}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block font-semibold leading-tight">{activeStatus ? `${TYPE_META[activeStatus.type].label} işaretli` : `${date === todayStr ? "Bugün" : dayLabel} işe gitmedim`}</span>
-              <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{activeStatus ? "Geri almak için aç ve tekrar dokun" : "İzin, rapor, gelmedim ya da resmi tatil"}</span>
-            </span>
-            <ChevronDown className={`size-5 shrink-0 text-muted-foreground transition ${absenceOpen ? "rotate-180" : ""}`} aria-hidden />
-          </button>
-          {absenceOpen && (
+        <section className="space-y-2">
+          {/* Ayda birkaç kez kullanılır: başlık altında küçük seçenekler (tek tuş "işe gitmedim" gibi durmasın) */}
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-semibold">İzin, rapor ve tatil</h2>
+            <span className="text-xs text-muted-foreground">{activeStatus ? "Gün için tek durum" : "Gerekirse işaretle"}</span>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             {STATUS.map((t) => {
               const m = STATUS_META[t];
@@ -273,12 +264,12 @@ function HomeView({ today }: { today: Date }) {
                 <button
                   key={t} type="button" disabled={pending || locked} aria-pressed={!!existing}
                   {...realTap(() => askStatus(t))}
-                  className={`glass r-lg relative flex flex-col items-center gap-2.5 p-4 text-center transition active:scale-[0.97] disabled:opacity-50 ${locked ? "grayscale" : ""} ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
+                  className={`glass r-lg relative flex items-center gap-2.5 p-3 text-left transition active:scale-[0.97] disabled:opacity-50 ${locked ? "grayscale" : ""} ${existing ? "!border-primary/60 !bg-primary/15" : ""}`}
                 >
-                  <span className={`grid size-12 place-items-center ${existing ? "r-md bg-primary text-primary-foreground" : ""}`}>
-                    {existing ? <Check className="size-6" /> : <StatusIcon type={t} className="size-11" />}
+                  <span className={`grid size-9 shrink-0 place-items-center ${existing ? "r-md bg-primary text-primary-foreground" : ""}`}>
+                    {existing ? <Check className="size-5" /> : <StatusIcon type={t} className="size-9" />}
                   </span>
-                  <span>
+                  <span className="min-w-0">
                     <span className="block text-sm font-semibold leading-tight">{TYPE_META[t].label}</span>
                     <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">{existing ? "Geri almak için dokun" : blockedByWork ? "Bu gün mesai var" : locked ? "Önce seçileni geri al" : t === "sick" && (settings?.sick_leave_unpaid || settings?.sick_deducts_overtime) ? [settings.sick_leave_unpaid && "Maaştan düşer", settings.sick_deducts_overtime && "Mesaiden düşer"].filter(Boolean).join(" · ") : m.hint}</span>
                   </span>
@@ -286,7 +277,6 @@ function HomeView({ today }: { today: Date }) {
               );
             })}
           </div>
-          )}
           {/* Hedef belirlenmişse özet burada; hedef yokken hedef kartının içinde görünür */}
           {settings && realEntries && goalProgress(entries, settings).set && (
             <div className="glass mt-2 p-5 sm:p-6"><MonthSummary entries={entries} settings={settings} month={key} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} /></div>
