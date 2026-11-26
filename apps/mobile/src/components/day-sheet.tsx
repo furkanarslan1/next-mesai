@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import { haptic } from "@/lib/haptics";
 import { mutate, useSettings } from "@/lib/store";
+import { noteMesaiAdded } from "@/lib/review";
 import { scheduleFor } from "@mesai/core/shift";
 import { radius, useColors } from "@/theme";
 import { Sheet } from "./sheet";
@@ -107,7 +108,7 @@ export function DaySheet({ date, entries, userId, onClose }: {
     if (!h) return;
     setPending({
       title: "Mesai eklensin mi?", desc: `${label} gününe ${hrs(h)} ${rules?.isHoliday ? "resmi tatil mesaisi (tatil oranıyla)" : "mesai"} eklenecek.`, yes: "Evet, ekle",
-      run: async () => { await mutate.addEntry(row(rules?.workType ?? "overtime", h)); setNewHours(""); toast.success("Mesai eklendi"); },
+      run: async () => { await mutate.addEntry(row(rules?.workType ?? "overtime", h)); setNewHours(""); toast.success("Mesai eklendi"); void noteMesaiAdded(); },
     });
   }
   function askEdit(e: Entry) {

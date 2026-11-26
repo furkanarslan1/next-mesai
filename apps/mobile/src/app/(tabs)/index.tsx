@@ -32,6 +32,7 @@ import { StatusIcon } from "@/components/status-icon";
 import { toast } from "@/components/toast";
 import { TodayCard } from "@/components/today-card";
 import { WeekCard } from "@/components/week-card";
+import { noteMesaiAdded } from "@/lib/review";
 import { Button, Card, COMPACT_AT, CompactBar, Eyebrow, TAB_BAR_SPACE, Txt } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
 import { useToday } from "@/lib/now";
@@ -123,6 +124,8 @@ export default function Home() {
       try {
         const saved = await mutate.addEntry(row);
         haptic("success");
+        // Mesai (olumlu an) puan isteği sayacına yazılır; "Geri al" bildirimi açıkken pencere çıkmaz
+        if (isWorkRow) void noteMesaiAdded(!undo);
         // Kısayol/durum kartları ikinci dokunuşla geri alır; "Farklı mesai"nin geri alma yolu bu bildirimdeki düğme
         toast.success(`${TYPE_META[type].label} eklendi`, undo ? { duration: 4500, action: { label: "Geri al", onPress: () => remove(saved) } } : undefined);
       } catch (e) { toast.error(errorText(e, "Eklenemedi")); }
