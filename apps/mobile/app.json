@@ -12,7 +12,9 @@
       "bundleIdentifier": "com.furkanarslan.mesai",
       "supportsTablet": false,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "tr",
+        "CFBundleLocalizations": ["tr"]
       },
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [

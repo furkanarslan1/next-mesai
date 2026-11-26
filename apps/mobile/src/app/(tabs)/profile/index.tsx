@@ -3,7 +3,7 @@ import { rotationLabel, validRotation } from "@mesai/core/shift";
 import { SHIFTS } from "@mesai/core/types";
 import { router, type Href } from "expo-router";
 import { Skeleton } from "@/components/skeleton";
-import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, FileText, Palette, UserRound, Users, Zap } from "@/components/icons";
+import { BadgeDollarSign, Bell, Briefcase, ChevronRight, CircleHelp, Clock, DatabaseBackup, FileText, Palette, UserRound, Users, Zap } from "@/components/icons";
 import { openLegal } from "@/lib/legal";
 import { Pressable, View } from "react-native";
 import { SettingsGroup, SettingsRow } from "@/components/settings-list";
@@ -82,6 +82,7 @@ export default function SettingsScreen() {
         </SettingsGroup>
 
         <SettingsGroup>
+          <SettingsRow icon={CircleHelp} color="#3b82c4" label="Yardım ve destek" chevron onPress={() => openLegal("support")} />
           <SettingsRow icon={FileText} color="#6b7d8f" label="Gizlilik politikası" chevron onPress={() => openLegal("privacy")} />
           <SettingsRow icon={FileText} color="#6b7d8f" label="Kullanım koşulları" chevron onPress={() => openLegal("terms")} />
         </SettingsGroup>

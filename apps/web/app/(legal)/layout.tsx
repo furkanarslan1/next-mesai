@@ -10,6 +10,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
         <Link href="/privacy">Gizlilik</Link>
         <Link href="/terms">Kullanım koşulları</Link>
         <Link href="/delete-account">Hesap silme</Link>
+        <Link href="/support">Destek</Link>
       </nav>
       <article className="legal space-y-4 text-[15px] leading-relaxed [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:mt-8 [&_h2]:text-lg [&_h2]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_a]:underline">
         {children}

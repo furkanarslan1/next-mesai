@@ -19,6 +19,7 @@ export { default as ChevronDown } from "lucide-react-native/icons/chevron-down";
 export { default as ChevronLeft } from "lucide-react-native/icons/chevron-left";
 export { default as ChevronRight } from "lucide-react-native/icons/chevron-right";
 export { default as CircleCheck } from "lucide-react-native/icons/circle-check";
+export { default as CircleHelp } from "lucide-react-native/icons/circle-question-mark";
 export { default as Clock } from "lucide-react-native/icons/clock";
 export { default as Coffee } from "lucide-react-native/icons/coffee";
 export { default as DatabaseBackup } from "lucide-react-native/icons/database-backup";
