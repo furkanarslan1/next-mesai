@@ -147,6 +147,8 @@ Kodda tamam:
 - [x] Başka platformdan (Android/APK/Play) söz edilmiyor (2.3.10); APK kartı yalnızca web'de.
 - [x] Şifreleme beyanı, gizlilik manifesti, yalnızca iPhone, iOS dili Türkçe (`CFBundleDevelopmentRegion: tr`).
 - [x] Finansal hesaplar "yaklaşık / bilgi amaçlı" olarak belirtiliyor.
+- [x] Puan isteği sistemin kendi penceresiyle (`expo-store-review`, 5.6.1): ön soru/teşvik yok; 10 mesai + 7 gün sonra,
+      sürüm başına bir kez, en az 120 gün arayla (`@mesai/core/review`). TestFlight'ta pencere çıkmaz (normal).
 
 Senin yapacakların (sırayla):
 - [ ] `apps/web/lib/legal.ts` → **owner** (ad soyad) ve **email** (destek e-postası). Yer tutucu metinle inceleme reddedilir (2.1).
