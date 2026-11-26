@@ -35,7 +35,7 @@ export default function DataScreen() {
       // 1000 satır sınırına takılmadan tüm kayıtlar okunur (eksik yedek sessizce oluşmasın)
       const data = await collectBackup(supabase, employee);
       if (!data) { toast.error("Yedek alınamadı, tekrar dene"); return; }
-      const stamp = new Date().toISOString().slice(0, 10);
+      const stamp = new Date().toLocaleDateString("sv-SE"); // yerel YYYY-MM-DD (toISOString UTC: gece yarısından sonra dünü yazardı)
       if (format === "json") await shareJson(`mesai-yedek-${stamp}.json`, JSON.stringify(data, null, 2));
       // Her tablo ayrı dosya: paylaş menüsü sırayla açılır
       else for (const [t, rows] of Object.entries(data)) if (rows.length) await shareCsv(`mesai-${t}-${stamp}.csv`, toCSV(rows));
