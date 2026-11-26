@@ -28,7 +28,7 @@ export function AmountInput({ value, onChange, autoFocus, label }: { value: stri
   return (
     <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center", gap: 8, paddingVertical: 4 }}>
       <Txt muted style={{ fontSize: 30, lineHeight: 36, fontWeight: "600" }}>₺</Txt>
-      <TextInput value={value} onChangeText={(t) => onChange(t.replace(/[^0-9.,]/g, ""))} placeholder="0" autoFocus={autoFocus}
+      <TextInput maxFontSizeMultiplier={1.35} value={value} onChangeText={(t) => onChange(t.replace(/[^0-9.,]/g, ""))} placeholder="0" autoFocus={autoFocus}
         keyboardType="decimal-pad" accessibilityLabel={label} placeholderTextColor={alpha(c.mutedForeground, 0.4)}
         style={{ minWidth: 40, width: Math.max(value.length, 1) * 29 + 18, maxWidth: "100%", textAlign: "center", fontSize: 48, lineHeight: 56, fontWeight: "700", letterSpacing: -1.2, fontVariant: ["tabular-nums"], color: c.foreground, padding: 0 }} />
     </View>
@@ -152,7 +152,7 @@ export function FinanceSheet({ item, viewKey, userId, today, defaultDate, defaul
 
           <CategoryGrid cats={cats} value={cat} onChange={setCat} />
           {cat === "diger" ? (
-            <TextInput placeholder="Kategori adı (isteğe bağlı)" value={custom} onChangeText={setCustom} maxLength={30} placeholderTextColor={c.mutedForeground}
+            <TextInput maxFontSizeMultiplier={1.35} placeholder="Kategori adı (isteğe bağlı)" value={custom} onChangeText={setCustom} maxLength={30} placeholderTextColor={c.mutedForeground}
               style={{ height: 44, borderRadius: radius.md, backgroundColor: c.muted, paddingHorizontal: 16, fontSize: 16, color: c.foreground }} />
           ) : null}
 

@@ -50,7 +50,7 @@ export function NumberRow({ label, hint, suffix, value, onChange, placeholder = 
   const c = useColors();
   return (
     <FormRow label={label} hint={hint}>
-      <TextInput value={value} onChangeText={(t) => onChange(t.replace(/[^0-9.,]/g, ""))} placeholder={placeholder} autoFocus={autoFocus}
+      <TextInput maxFontSizeMultiplier={1.35} value={value} onChangeText={(t) => onChange(t.replace(/[^0-9.,]/g, ""))} placeholder={placeholder} autoFocus={autoFocus}
         keyboardType="decimal-pad" placeholderTextColor={alpha(c.mutedForeground, 0.5)} accessibilityLabel={label}
         style={{ flex: 1, minWidth: 0, height: 44, textAlign: "right", fontSize: 17, fontWeight: value ? "600" : "400", fontVariant: ["tabular-nums"], color: c.foreground, padding: 0 }} />
       {suffix ? <Txt muted style={{ fontSize: 15 }}>{suffix}</Txt> : null}
@@ -135,7 +135,7 @@ export function PercentRow({ label, hint, value, onChange }: { label: string; hi
       {custom ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: radius.pill, backgroundColor: c.muted, paddingHorizontal: 16 }}>
           <Txt muted>%</Txt>
-          <TextInput value={String(value || "")} placeholder="Örn. 175" placeholderTextColor={alpha(c.mutedForeground, 0.5)} keyboardType="decimal-pad"
+          <TextInput maxFontSizeMultiplier={1.35} value={String(value || "")} placeholder="Örn. 175" placeholderTextColor={alpha(c.mutedForeground, 0.5)} keyboardType="decimal-pad"
             accessibilityLabel={`${label} özel oran`}
             onChangeText={(t) => { const n = parseNum(t); onChange(Number.isFinite(n) ? Math.min(500, Math.max(0, n)) : 0); }}
             style={{ flex: 1, height: 44, fontSize: 17, fontWeight: "600", fontVariant: ["tabular-nums"], color: c.foreground, padding: 0 }} />

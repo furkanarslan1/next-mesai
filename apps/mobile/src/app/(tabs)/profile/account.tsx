@@ -65,7 +65,7 @@ export default function AccountScreen() {
       <View style={{ gap: 24 }}>
         <SettingsGroup title="Ad Soyad">
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 6 }}>
-            <TextInput value={current} onChangeText={setValue} maxLength={60} placeholder="Ad Soyad" placeholderTextColor={c.mutedForeground}
+            <TextInput maxFontSizeMultiplier={1.35} value={current} onChangeText={setValue} maxLength={60} placeholder="Ad Soyad" placeholderTextColor={c.mutedForeground}
               accessibilityLabel="Ad Soyad" autoCapitalize="words" returnKeyType="done" onSubmitEditing={() => void saveName()}
               style={{ flex: 1, minWidth: 0, height: 44, fontSize: 17, color: c.foreground, padding: 0 }} />
             {trimmed !== name ? <Button title="Kaydet" size="sm" disabled={busy || !trimmed} onPress={() => void saveName()} /> : null}
@@ -85,7 +85,7 @@ export default function AccountScreen() {
       <Dialog open={confirm} onClose={() => setConfirm(false)} showClose={false} padding={24} gap={20}
         title="Hesabın kalıcı olarak silinsin mi?"
         description={<>Bu işlem geri alınamaz. Onaylamak için <Txt style={{ fontSize: 14, fontWeight: "700" }}>SİL</Txt> yaz.</>}>
-        <TextInput value={typed} onChangeText={setTyped} placeholder="SİL" placeholderTextColor={c.mutedForeground} autoCapitalize="characters" autoCorrect={false}
+        <TextInput maxFontSizeMultiplier={1.35} value={typed} onChangeText={setTyped} placeholder="SİL" placeholderTextColor={c.mutedForeground} autoCapitalize="characters" autoCorrect={false}
           accessibilityLabel="Onay metni" style={{ height: 44, borderRadius: radius.md, backgroundColor: c.muted, paddingHorizontal: 16, fontSize: 16, color: c.foreground }} />
         <View style={{ flexDirection: "row", gap: 12 }}>
           <Button title="Vazgeç" variant="secondary" size="md" style={{ flex: 1 }} onPress={() => setConfirm(false)} />
@@ -127,11 +127,11 @@ function PasswordDialog({ open, onClose }: { open: boolean; onClose: () => void 
     <Dialog open={open} onClose={close} showClose={false} padding={24} gap={20}
       title="Şifreyi değiştir" description={`Yeni şifre en az ${MIN_PASSWORD} karakter olmalı.`}>
       <View style={{ gap: 12 }}>
-        <TextInput value={current} onChangeText={setCurrent} placeholder="Mevcut şifre" placeholderTextColor={c.mutedForeground} accessibilityLabel="Mevcut şifre"
+        <TextInput maxFontSizeMultiplier={1.35} value={current} onChangeText={setCurrent} placeholder="Mevcut şifre" placeholderTextColor={c.mutedForeground} accessibilityLabel="Mevcut şifre"
           secureTextEntry autoCapitalize="none" autoCorrect={false} textContentType="password" autoComplete="current-password" style={input} />
-        <TextInput value={next} onChangeText={setNext} placeholder="Yeni şifre" placeholderTextColor={c.mutedForeground} accessibilityLabel="Yeni şifre"
+        <TextInput maxFontSizeMultiplier={1.35} value={next} onChangeText={setNext} placeholder="Yeni şifre" placeholderTextColor={c.mutedForeground} accessibilityLabel="Yeni şifre"
           secureTextEntry autoCapitalize="none" autoCorrect={false} textContentType="newPassword" autoComplete="new-password" style={input} />
-        <TextInput value={again} onChangeText={setAgain} placeholder="Yeni şifre (tekrar)" placeholderTextColor={c.mutedForeground} accessibilityLabel="Yeni şifre (tekrar)"
+        <TextInput maxFontSizeMultiplier={1.35} value={again} onChangeText={setAgain} placeholder="Yeni şifre (tekrar)" placeholderTextColor={c.mutedForeground} accessibilityLabel="Yeni şifre (tekrar)"
           secureTextEntry autoCapitalize="none" autoCorrect={false} textContentType="newPassword" autoComplete="new-password" returnKeyType="done"
           onSubmitEditing={() => void submit()} style={input} />
         {msg ? <Txt accessibilityRole="alert" style={{ fontSize: 14, color: c.destructive }}>{msg}</Txt> : null}

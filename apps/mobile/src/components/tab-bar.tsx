@@ -50,7 +50,7 @@ export function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
                 }}
                 style={[styles.item, active && { backgroundColor: c.primary, boxShadow: c.shadow.navActive }]}>
                 <Icon size={22} strokeWidth={active ? 2.4 : 2} color={fg} />
-                <Text style={[styles.label, { color: fg }]}>{meta.label}</Text>
+                <Text maxFontSizeMultiplier={1.2} style={[styles.label, { color: fg }]}>{meta.label}</Text>
               </Pressable>
             );
           })}

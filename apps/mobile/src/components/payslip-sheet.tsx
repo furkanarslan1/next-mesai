@@ -143,9 +143,9 @@ export function PayslipSheet({ userId, months, item, defaultMonth, existingMonth
             {ot.map((r, i) => (
               <View key={i} style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16 }}>
                 <Txt muted>%</Txt>
-                <TextInput value={r.pct} onChangeText={(t) => mark(i, { pct: t.replace(/[^0-9.,]/g, "") })} keyboardType="decimal-pad" accessibilityLabel="Oran"
+                <TextInput maxFontSizeMultiplier={1.35} value={r.pct} onChangeText={(t) => mark(i, { pct: t.replace(/[^0-9.,]/g, "") })} keyboardType="decimal-pad" accessibilityLabel="Oran"
                   style={{ height: 44, width: 64, borderRadius: radius.pill, backgroundColor: inputBg, paddingHorizontal: 12, textAlign: "center", fontSize: 17, fontWeight: "600", color: c.foreground }} />
-                <TextInput value={r.hours} onChangeText={(t) => mark(i, { hours: t.replace(/[^0-9.,]/g, "") })} keyboardType="decimal-pad" placeholder="0"
+                <TextInput maxFontSizeMultiplier={1.35} value={r.hours} onChangeText={(t) => mark(i, { hours: t.replace(/[^0-9.,]/g, "") })} keyboardType="decimal-pad" placeholder="0"
                   placeholderTextColor={alpha(c.mutedForeground, 0.5)} accessibilityLabel={`%${r.pct} mesai saati`}
                   style={{ flex: 1, minWidth: 0, height: 44, textAlign: "right", fontSize: 17, fontWeight: r.hours ? "600" : "400", color: c.foreground }} />
                 <Txt muted style={{ fontSize: 15 }}>saat</Txt>

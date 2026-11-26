@@ -36,8 +36,9 @@ export function MonthSummary({ entries, settings, month, today }: {
           { label: "Mesai günü", value: `${workDays} gün` },
           { label: "Mesai kazancı", value: money(sum.earned, cur) },
         ].map((t) => (
-          <div key={t.label} className="r-md bg-muted px-2 py-3 text-center">
-            <p className="text-lg font-bold tabular-nums leading-tight">{t.value}</p>
+          <div key={t.label} className="@container r-md bg-muted px-2 py-3 text-center">
+            {/* Dar ekranda (360 px) tek satırda kalsın: yazı kutu genişliğine göre küçülür (mobil: adjustsFontSizeToFit) */}
+            <p className="whitespace-nowrap text-[clamp(0.75rem,16cqi,1.125rem)] font-bold tabular-nums leading-tight">{t.value}</p>
             <p className="mt-1 text-[11px] leading-tight text-muted-foreground">{t.label}</p>
           </div>
         ))}

@@ -28,7 +28,7 @@ const isWork = (e: Entry) => e.type === "overtime" || e.type === "holiday";
 function Input(p: React.ComponentProps<typeof TextInput>) {
   const c = useColors();
   return (
-    <TextInput placeholderTextColor={c.mutedForeground} {...p}
+    <TextInput maxFontSizeMultiplier={1.35} placeholderTextColor={c.mutedForeground} {...p}
       style={[{ height: 44, borderRadius: radius.md, backgroundColor: c.muted, paddingHorizontal: 16, fontSize: 16, color: c.foreground, opacity: p.editable === false ? 0.5 : 1 }, p.style]} />
   );
 }

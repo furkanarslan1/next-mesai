@@ -62,7 +62,7 @@ export default function ShortcutsScreen() {
         </SettingsGroup>
         <SettingsGroup title="Yeni kısayol">
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 8 }}>
-            <TextInput value={v} onChangeText={(t) => setV(t.replace(/[^0-9.,]/g, ""))} placeholder="Örn. 2,5" placeholderTextColor={alpha(c.mutedForeground, 0.5)}
+            <TextInput maxFontSizeMultiplier={1.35} value={v} onChangeText={(t) => setV(t.replace(/[^0-9.,]/g, ""))} placeholder="Örn. 2,5" placeholderTextColor={alpha(c.mutedForeground, 0.5)}
               keyboardType="decimal-pad" returnKeyType="done" onSubmitEditing={() => void add()} accessibilityLabel="Mesai saati"
               style={{ flex: 1, minWidth: 0, height: 44, fontSize: 17, fontWeight: v ? "600" : "400", fontVariant: ["tabular-nums"], color: c.foreground, padding: 0 }} />
             <Txt muted style={{ fontSize: 15 }}>saat</Txt>
