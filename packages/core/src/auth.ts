@@ -14,6 +14,8 @@ export function authErrorText(message: string) {
   if (m.includes("email not confirmed")) return "E-postan henüz doğrulanmamış. Gelen kutundaki bağlantıya tıkla.";
   if (m.includes("already registered") || m.includes("already been registered")) return "Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.";
   if (m.includes("password should be at least")) return "Şifre en az 6 karakter olmalı.";
+  if (m.includes("should be different from the old password")) return "Yeni şifre eskisiyle aynı olamaz.";
+  if (m.includes("reauthentication")) return "Güvenlik için çıkış yapıp yeniden giriş yaptıktan sonra tekrar dene.";
   if (m.includes("rate limit") || m.includes("too many")) return "Çok fazla deneme yapıldı, biraz bekleyip tekrar dene.";
   if (m.includes("invalid email") || m.includes("unable to validate email")) return "Geçerli bir e-posta gir.";
   if (m.includes("failed to fetch") || m.includes("network")) return "Bağlantı kurulamadı. İnternetini kontrol et.";
@@ -74,4 +76,39 @@ export function signupData({ name, role, sched, pay, shortcutHours }: {
       annual_leave_days: pay.annual_leave_days.trim() === "" ? 14 : Math.min(60, Math.round(parsePositive(pay.annual_leave_days))),
     }),
   };
+}
+
+/** Şifre en az bu kadar karakter (Supabase varsayılanı; kayıt ve sıfırlama formlarıyla aynı). */
+export const MIN_PASSWORD = 6;
+
+/** Şifre değiştirme formu: sorun varsa Türkçe mesaj, yoksa null. */
+export function passwordChangeProblem(current: string, next: string, again: string): string | null {
+  if (!current) return "Mevcut şifreni gir.";
+  if (next.length < MIN_PASSWORD) return `Yeni şifre en az ${MIN_PASSWORD} karakter olmalı.`;
+  if (next !== again) return "Yeni şifreler eşleşmiyor.";
+  if (next === current) return "Yeni şifre eskisiyle aynı olamaz.";
+  return null;
+}
+
+type AuthResult = Promise<{ error: { message: string } | null }>;
+/** supabase-js istemcisinin burada kullanılan kısmı (web ve mobil istemcisi ikisi de uyar). */
+export interface PasswordClient {
+  auth: {
+    signInWithPassword(c: { email: string; password: string }): AuthResult;
+    updateUser(a: { password: string }): AuthResult;
+  };
+}
+
+/**
+ * Giriş yapmış kullanıcının şifresini e-posta göndermeden değiştirir. Önce mevcut şifre doğrulanır
+ * (telefonu açık bırakılan birinin şifreyi değiştirip hesabı ele geçirmesin), sonra yeni şifre yazılır.
+ * Hata varsa Türkçe mesaj, başarılıysa null.
+ */
+export async function changePassword(client: PasswordClient, email: string, current: string, next: string): Promise<string | null> {
+  const check = await client.auth.signInWithPassword({ email, password: current });
+  if (check.error) {
+    return check.error.message.toLowerCase().includes("invalid login credentials") ? "Mevcut şifre hatalı." : authErrorText(check.error.message);
+  }
+  const { error } = await client.auth.updateUser({ password: next });
+  return error ? authErrorText(error.message) : null;
 }
