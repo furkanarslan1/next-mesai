@@ -70,7 +70,7 @@ Hesaplamalar bilgi amaçlıdır; resmi bordron esastır.
 mesai,fazla mesai,puantaj,maaş,bordro,izin,vardiya,brüt net,çalışma saati,hesaplama
 
 **Kategori:** Verimlilik (Productivity); ikincil: Finans
-**Destek URL'si:** https://next-mesai.vercel.app/privacy (ya da ayrı bir destek sayfası)
+**Destek URL'si:** https://next-mesai.vercel.app/support (iletişim + sık sorulanlar)
 **Gizlilik politikası URL'si:** https://next-mesai.vercel.app/privacy
 
 ## 4. Google Play: App content formları
@@ -114,3 +114,50 @@ mesai,fazla mesai,puantaj,maaş,bordro,izin,vardiya,brüt net,çalışma saati,h
 2. **KVKK yükümlülükleri** (VERBİS kaydı, yurt dışı aktarım bildirimi) işin büyüklüğüne ve yapısına göre
    değişir; bir hukukçuya danışılması önerilir. Yasal metinler taslaktır, hukuki görüş değildir.
 3. **Play kapalı testi**: 12 kişi, 14 gün. Erken başlamak takvimi kısaltır (arkadaş, iş yeri çevresi).
+
+## 7. App Store'a yükleme (Expo → App Store)
+
+Expo Go ve preview APK mağazaya yüklenemez. iOS için EAS bulutta `.ipa` derler ve App Store Connect'e gönderir;
+**Mac ve Xcode gerekmez.** Sertifika ve provisioning profilini EAS kendisi oluşturur (Apple hesabıyla giriş ister).
+
+Sıra (komutlar `apps/mobile` içinde):
+1. Apple Developer Program üyeliği (99 USD/yıl) onaylanmış olmalı.
+2. Canlı Supabase (Frankfurt) hazır ve EAS **production** ortamındaki `EXPO_PUBLIC_SUPABASE_URL` /
+   `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` Frankfurt'a çevrilmiş olmalı (şu an Singapur deneme projesi!).
+3. `npx expo install --fix` (Expo yama sürümleri; 2026-11-26'da pnpm yeni sürümü yaşı nedeniyle beklettiği için yapılamadı).
+4. `npx eas-cli@latest build -p ios --profile production` → Apple girişi, bundle ID `com.furkanarslan.mesai` kaydı,
+   sertifikalar otomatik. Build numarası uzaktan otomatik artar.
+5. `npx eas-cli@latest submit -p ios --latest` → App Store Connect'e yükler (uygulama kaydı yoksa oluşturur).
+   Yükleme TestFlight'ta görünür; önce kendi iPhone'unda (ve arkadaşınınkinde) TestFlight ile dene.
+6. App Store Connect: açıklamalar (bölüm 3), ekran görüntüleri, App Privacy (bölüm 5), yaş derecelendirmesi,
+   demo hesap, fiyat (ücretsiz), ülke/bölge → **Submit for Review**. İnceleme genelde 1-3 gün.
+7. Sonraki JS değişiklikleri `eas update --channel production` ile gider; yerel paket/ayar değişirse
+   (fingerprint değişir) yeni build + inceleme gerekir.
+
+## 8. App Store politika kontrol listesi (2026-11-26)
+
+Kodda tamam:
+- [x] Uygulama içi hesap silme (5.1.1(v)): Ayarlar → Hesap → Hesabı sil.
+- [x] Uygulama içi şifre değiştirme; şifre sıfırlama e-postayla.
+- [x] Gizlilik politikası uygulama içinden ve mağazadan erişilebilir (5.1.1(i)); destek sayfası `/support`.
+- [x] Kayıt uygulama içinde yapılabiliyor (yalnızca web'e yönlendirme yok).
+- [x] Üçüncü taraf/sosyal giriş yok → **Sign in with Apple zorunlu değil** (4.8). Google ile giriş eklenirse Apple da eklenmeli.
+- [x] Reklam, takip, uygulama içi satın alma yok → ATT izni ve IAP gerekmez.
+- [x] Bildirim izni açılışta değil, kullanıcı hatırlatıcıyı açınca isteniyor; uzak bildirim yok (`enableRemoteNotifications: false`).
+- [x] Başka platformdan (Android/APK/Play) söz edilmiyor (2.3.10); APK kartı yalnızca web'de.
+- [x] Şifreleme beyanı, gizlilik manifesti, yalnızca iPhone, iOS dili Türkçe (`CFBundleDevelopmentRegion: tr`).
+- [x] Finansal hesaplar "yaklaşık / bilgi amaçlı" olarak belirtiliyor.
+
+Senin yapacakların (sırayla):
+- [ ] `apps/web/lib/legal.ts` → **owner** (ad soyad) ve **email** (destek e-postası). Yer tutucu metinle inceleme reddedilir (2.1).
+- [ ] Apple Developer Program üyeliği.
+- [ ] Frankfurt Supabase projesi + migration 0001-0017 + EAS production env.
+- [ ] Şifremi unuttum için SMTP (Gmail uygulama şifresi ya da kendi alan adıyla Resend) ve Supabase Redirect URL'leri.
+- [ ] Canlı veritabanında **örnek verili demo hesap** (inceleme ekibi giriş yapabilmeli; bilgiler yalnızca App Review Information'a).
+- [ ] App Store adı (benzersiz olmalı), ekran görüntüleri (6,9").
+- [ ] **AB Dijital Hizmetler Yasası (DSA) "trader" beyanı:** AB'de yayınlanırsa sorulur; "trader" isen adres/telefon
+      mağazada herkese açık görünür. İstemiyorsan ilk sürümü yalnızca **Türkiye**'de yayınla.
+- [ ] Yaş derecelendirmesi anketi (yeni 13+/16+/18+ sistemi; tüm içerik soruları "Yok").
+
+Bilinen risk: Apple 5.1.1 "hesap gerektirmeyen özellikler için giriş zorunlu tutulmamalı" der. Mesai verisi hesaba bağlı
+ve cihazlar/web arasında eşitlendiği için giriş gerekçeli; inceleme notunda bu açıkça yazılmalı (bölüm 5'teki not).

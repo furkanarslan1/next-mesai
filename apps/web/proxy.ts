@@ -22,8 +22,8 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = path.startsWith("/login");
   // Şifre sıfırlama bağlantısı oturumsuz da, bağlantıdan sonra oturumlu da açılabilmeli
   if (path.startsWith("/reset-password")) return response;
-  // Yasal sayfalar (gizlilik, koşullar, hesap silme) mağaza bağlantıları için herkese açık
-  if (["/privacy", "/terms", "/delete-account"].some((p) => path === p || path.startsWith(`${p}/`))) return response;
+  // Yasal sayfalar (gizlilik, koşullar, hesap silme, destek) mağaza bağlantıları için herkese açık
+  if (["/privacy", "/terms", "/delete-account", "/support"].some((p) => path === p || path.startsWith(`${p}/`))) return response;
   if (!data?.claims && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }

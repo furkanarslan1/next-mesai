@@ -2,7 +2,7 @@
 
 import { rotationLabel, validRotation } from "@mesai/core/shift";
 import Link from "next/link";
-import { BadgeDollarSign, Bell, Briefcase, ChevronRight, Clock, DatabaseBackup, FileText, Palette, UserRound, Users, Zap } from "lucide-react";
+import { BadgeDollarSign, Bell, Briefcase, ChevronRight, CircleHelp, Clock, DatabaseBackup, FileText, Palette, UserRound, Users, Zap } from "lucide-react";
 import { useLinks, useProfile, useSettings, useShortcuts } from "@/lib/store";
 import { usePrefs } from "@/lib/prefs";
 import { money } from "@mesai/core/calc";
@@ -75,6 +75,7 @@ export default function SettingsPage() {
         </SettingsGroup>
 
         <SettingsGroup>
+          <SettingsRow href="/support" icon={CircleHelp} color="#3b82c4" label="Yardım ve destek" />
           <SettingsRow href="/privacy" icon={FileText} color="#6b7d8f" label="Gizlilik politikası" />
           <SettingsRow href="/terms" icon={FileText} color="#6b7d8f" label="Kullanım koşulları" />
         </SettingsGroup>
