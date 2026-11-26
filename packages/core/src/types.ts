@@ -67,6 +67,10 @@ export const TYPE_META: Record<EntryType, { label: string; color: string }> = {
   sick: { label: "Raporlu", color: "bg-slate-300" },
   absent: { label: "İşe gelmedim", color: "bg-rose-500" },
 };
+/** TYPE_META renklerinin hex karşılığı (mobil: Tailwind sınıfı yok) */
+export const TYPE_HEX: Record<EntryType, string> = {
+  overtime: "#00d492", holiday: "#ffb900", paid_leave: "#00bcff", unpaid_leave: "#f54a00", sick: "#cad5e2", absent: "#ff2056",
+};
 
 /** Döngünün bir adımı: vardiya türü ve o vardiyanın giriş/çıkış saati (HH:MM) */
 export interface ShiftStep { type: ShiftType; start: string; end: string }

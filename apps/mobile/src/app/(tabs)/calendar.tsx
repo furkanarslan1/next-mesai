@@ -1,7 +1,7 @@
 import { goalProgress, hrs, money, monthSummary, num } from "@mesai/core/calc";
 import { holidayName } from "@mesai/core/holidays";
 import { DEFAULT_SETTINGS } from "@mesai/core/settings";
-import { TYPE_META, type EntryType } from "@mesai/core/types";
+import { TYPE_HEX, TYPE_META, type EntryType } from "@mesai/core/types";
 import { addMonths } from "date-fns/addMonths";
 import { eachDayOfInterval } from "date-fns/eachDayOfInterval";
 import { endOfMonth } from "date-fns/endOfMonth";
@@ -40,9 +40,7 @@ const STATUS_CELL: Record<string, { dark: string; light: string; text: string; s
   holiday: { dark: "#227e77", light: "#005c60", text: "#fee685", short: "Tatil" },
 };
 /** Tür renk noktaları (web: TYPE_META'daki Tailwind renkleri) */
-const DOT: Record<EntryType, string> = {
-  overtime: "#00d492", holiday: "#ffb900", paid_leave: "#00bcff", unpaid_leave: "#f54a00", sick: "#cad5e2", absent: "#ff2056",
-};
+const DOT: Record<EntryType, string> = TYPE_HEX;
 const DAYS = ["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"];
 const isWork = (t: string) => t === "overtime" || t === "holiday";
 

@@ -31,6 +31,7 @@ import { ShortcutButton } from "@/components/shortcut-button";
 import { StatusIcon } from "@/components/status-icon";
 import { toast } from "@/components/toast";
 import { TodayCard } from "@/components/today-card";
+import { WeekCard } from "@/components/week-card";
 import { Button, Card, COMPACT_AT, CompactBar, Eyebrow, TAB_BAR_SPACE, Txt } from "@/components/ui";
 import { haptic } from "@/lib/haptics";
 import { useToday } from "@/lib/now";
@@ -343,6 +344,9 @@ export default function Home() {
             <Card style={{ marginTop: 8, padding: 20 }}><MonthSummary entries={entries} settings={settings} month={monthKey(parseISO(date))} today={date.slice(0, 7) === todayStr.slice(0, 7) ? today : undefined} /></Card>
           ) : null}
         </View>
+
+        {/* Bu hafta */}
+        {settings && realEntries ? <WeekCard date={date} todayStr={todayStr} today={today} month={key} entries={entries} settings={settings} /> : null}
 
         {/* Seviye */}
         <Card style={{ paddingVertical: 16, paddingHorizontal: 16, gap: 12, opacity: realTotal === null ? 0 : 1 }}>

@@ -29,6 +29,7 @@ import { GoalHero } from "@/components/mesai/goal-hero";
 import { fmtHours } from "@/components/mesai/hours-chips";
 import { Page } from "@/components/mesai/page";
 import { TodayCard } from "@/components/mesai/today-card";
+import { WeekCard } from "@/components/mesai/week-card";
 import { Onboarding } from "@/components/mesai/onboarding";
 import { AnimatedNumber } from "@/components/mesai/animated-number";
 import { haptic } from "@/lib/haptics";
@@ -291,6 +292,7 @@ function HomeView({ today }: { today: Date }) {
         </section>
 
         <div className="space-y-5">
+          {settings && realEntries && <WeekCard date={date} todayStr={todayStr} today={today} month={key} entries={entries} settings={settings} />}
           <Card className={`transition-opacity duration-300 ${realTotal === null ? "opacity-0" : ""}`}>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
