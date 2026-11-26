@@ -28,6 +28,7 @@ export { default as FileSpreadsheet } from "lucide-react-native/icons/file-sprea
 export { default as FileText } from "lucide-react-native/icons/file-text";
 export { default as Home } from "lucide-react-native/icons/house";
 export { default as Info } from "lucide-react-native/icons/info";
+export { default as KeyRound } from "lucide-react-native/icons/key-round";
 export { default as LogOut } from "lucide-react-native/icons/log-out";
 export { default as Minus } from "lucide-react-native/icons/minus";
 export { default as Moon } from "lucide-react-native/icons/moon";

@@ -4,7 +4,8 @@ import { rotationStartFor, scheduleFor, validRotation } from "@mesai/core/shift"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Download, FileJson, FileSpreadsheet, LogOut, Plus, Trash2, Upload } from "lucide-react";
+import { Download, FileJson, FileSpreadsheet, KeyRound, LogOut, Plus, Trash2, Upload } from "lucide-react";
+import { changePassword, MIN_PASSWORD, passwordChangeProblem } from "@mesai/core/auth";
 import { errorText } from "@mesai/core/errors";
 import { createClient } from "@/lib/supabase/client";
 import { backupTables, collectBackup } from "@mesai/core/backup";
@@ -257,6 +258,7 @@ export function AccountSettings() {
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [typed, setTyped] = useState("");
+  const [pwOpen, setPwOpen] = useState(false);
   if (!profile) return <Skeleton />;
   const name = profile.full_name;
   const current = value ?? name;
@@ -302,8 +304,10 @@ export function AccountSettings() {
         </form>
       </SettingsGroup>
       <SettingsGroup>
+        <SettingsRow icon={KeyRound} color="#e08a3c" label="Şifreyi değiştir" onClick={() => setPwOpen(true)} />
         <SettingsRow icon={LogOut} color="#7f8f9c" label="Çıkış yap" onClick={signOut} />
       </SettingsGroup>
+      <PasswordDialog open={pwOpen} onOpenChange={setPwOpen} />
       <SettingsGroup footer="Mesai kayıtların, ayarların, gelir-gider ve bordroların kalıcı olarak silinir. İstersen önce yedek indir.">
         <SettingsRow label="Hesabımı sil" destructive onClick={() => { setTyped(""); setConfirm(true); }} />
       </SettingsGroup>
@@ -322,5 +326,52 @@ export function AccountSettings() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/** Şifreyi değiştir (e-posta gerekmez): mevcut şifre doğrulanır, sonra yenisi yazılır. Mobil: profile/account.tsx PasswordDialog. */
+function PasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [again, setAgain] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  function change(o: boolean) {
+    if (!o) { setCurrent(""); setNext(""); setAgain(""); setMsg(null); }
+    onOpenChange(o);
+  }
+  async function submit() {
+    const problem = passwordChangeProblem(current, next, again);
+    if (problem) { setMsg(problem); return; }
+    setBusy(true);
+    setMsg(null);
+    const supabase = createClient();
+    const email = (await supabase.auth.getSession()).data.session?.user.email;
+    const error = email ? await changePassword(supabase, email, current, next) : "Oturum bulunamadı, yeniden giriş yap.";
+    setBusy(false);
+    if (error) { setMsg(error); haptic("warning"); return; }
+    haptic("success");
+    toast.success("Şifren değiştirildi");
+    change(false);
+  }
+  return (
+    <Dialog open={open} onOpenChange={change}>
+      <DialogContent showCloseButton={false} className="gap-5 p-6 sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Şifreyi değiştir</DialogTitle>
+          <DialogDescription>Yeni şifre en az {MIN_PASSWORD} karakter olmalı.</DialogDescription>
+        </DialogHeader>
+        <form id="pw-form" className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+          <Input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} aria-label="Mevcut şifre" placeholder="Mevcut şifre" autoComplete="current-password" autoFocus />
+          <Input type="password" value={next} onChange={(e) => setNext(e.target.value)} aria-label="Yeni şifre" placeholder="Yeni şifre" autoComplete="new-password" />
+          <Input type="password" value={again} onChange={(e) => setAgain(e.target.value)} aria-label="Yeni şifre (tekrar)" placeholder="Yeni şifre (tekrar)" autoComplete="new-password" />
+          {msg && <p role="alert" className="text-sm text-destructive">{msg}</p>}
+        </form>
+        <div className="grid grid-cols-2 gap-3">
+          <Button variant="secondary" className="h-12" onClick={() => change(false)}>Vazgeç</Button>
+          <Button type="submit" form="pw-form" className="h-12" disabled={busy || !current || !next || !again}>{busy ? "Kaydediliyor…" : "Kaydet"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
